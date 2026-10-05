@@ -1,0 +1,28 @@
+{%- assign titel = 'suche.titel' | t -%}
+{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel -%}
+<section class="sektion">
+  <div class="wrap">
+    <form action="{{ routes.search_url }}" method="get" role="search" class="bw-suche-form">
+      <label class="bw-feld">
+        <span>{{ 'suche.begriff' | t }}</span>
+        <input type="search" name="q" value="{{ search.terms | escape }}">
+      </label>
+      <button type="submit" class="btn btn--primaer">{{ 'suche.suchen' | t }}</button>
+    </form>
+    {%- if search.performed %}
+    {%- paginate search.results by 24 %}
+    <ul class="bw-rohbau-liste">
+      {%- for treffer in search.results %}
+      <li><a href="{{ treffer.url }}">{{ treffer.title }}</a></li>
+      {%- else %}
+      <li>{{ 'suche.nichts' | t: begriff: search.terms }}</li>
+      {%- endfor %}
+    </ul>
+    {%- if paginate.pages > 1 %}{{ paginate | default_pagination }}{% endif %}
+    {%- endpaginate %}
+    {%- endif %}
+  </div>
+</section>
+{% schema %}
+{ "name": "Suche (Rohbau)", "settings": [] }
+{% endschema %}

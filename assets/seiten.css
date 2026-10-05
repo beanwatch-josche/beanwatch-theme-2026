@@ -1,0 +1,3434 @@
+/* ==========================================================================
+   Beanwatch · Unterseiten
+   Ergänzt beanwatch.css um alles, was über die Startseite hinausgeht:
+   Hubs, Wissen, Rezepte, Tools, Artikel- und Rezeptseiten.
+   Tokens, Buttons, Karten und Pills kommen unverändert aus beanwatch.css.
+   ========================================================================== */
+
+/* --- Shell-Ergänzungen ---------------------------------------------------- */
+.nav a.ist-aktiv{color:var(--redorange);}
+.nav a.ist-aktiv::after{transform:scaleX(1);}
+
+/* [hidden] muss gewinnen, sonst überschreibt display:flex das Attribut. */
+.mobilmenue[hidden]{display:none;}
+.mobilmenue{
+  position:fixed;
+  inset:0;
+  z-index:105;
+  background:var(--hellorange);
+  padding:104px 6vw 40px;
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+}
+.mobilmenue nav{display:flex;flex-direction:column;gap:4px;}
+.mobilmenue a{
+  font-weight:800;
+  letter-spacing:-.02em;
+  font-size:clamp(1.7rem,7vw,2.4rem);
+  padding-block:14px;
+  border-bottom:1px solid var(--linie);
+}
+.mobilmenue a:hover{color:var(--redorange);}
+
+/* ==========================================================================
+   Seitenkopf (alle Unterseiten)
+   ========================================================================== */
+.seitenkopf{
+  position:relative;
+  padding-top:clamp(130px,15vh,180px);
+  padding-bottom:clamp(48px,6vw,84px);
+  overflow:hidden;
+}
+.seitenkopf--hell{background:var(--hellorange);}
+.seitenkopf--dunkel{background:var(--dunkelblau);color:var(--hellorange);}
+.seitenkopf--dunkel .brotkrumen a,
+.seitenkopf--dunkel .brotkrumen span{color:rgba(255,243,232,.72);}
+.seitenkopf--dunkel .eyebrow{color:var(--cyanblau);}
+
+.seitenkopf .wrap{position:relative;z-index:3;}
+.seitenkopf-raster{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(28px,5vw,72px);
+  align-items:center;
+}
+.seitenkopf h1{margin-top:20px;}
+.seitenkopf .lead{margin-top:24px;max-width:48ch;}
+.seitenkopf .kopf-aktionen-reihe{display:flex;flex-wrap:wrap;gap:13px;margin-top:34px;}
+
+/* Entwurfsmarke auf den Barista Guides. Die Fachtexte dort sind noch nicht
+   in der Rösterei gegengelesen, das soll man beim Lesen wissen. */
+.entwurfsmarke{
+  margin-top:26px;
+  padding:11px 15px;
+  border-left:3px solid var(--gelb);
+  background:rgba(255,192,0,.12);
+  border-radius:0 var(--radius-button) var(--radius-button) 0;
+  font-size:.85rem;line-height:1.5;
+  max-width:52ch;
+}
+
+.brotkrumen{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  font-size:.8rem;font-weight:600;
+  opacity:.8;
+}
+.brotkrumen a:hover{color:var(--redorange);opacity:1;}
+.brotkrumen .teiler{opacity:.5;}
+
+/* Sonne und Wellen als wiederkehrende Signatur */
+.kopf-sonne{
+  position:absolute;
+  top:clamp(70px,9vh,110px);right:3%;
+  width:clamp(130px,17vw,250px);
+  aspect-ratio:1;
+  z-index:0;
+  opacity:.8;
+  pointer-events:none;
+}
+.kopf-wellen{
+  position:absolute;
+  left:0;right:0;bottom:-1px;
+  height:clamp(60px,8vw,120px);
+  z-index:1;
+  pointer-events:none;
+}
+.kopf-wellen svg{position:absolute;bottom:0;left:0;width:200%;height:100%;}
+/* Drei Schichten Cyanblau, 32 % und 55 % kommen aus beanwatch.css. Die
+   vordere Welle schliesst unten gerade ab und reicht 12 px unter die Kante
+   des Seitenkopfs, damit beim Wiegen kein heller Streifen aufblitzt. */
+.kopf-wellen .welle-vorne{bottom:-12px;height:calc(100% + 12px);}
+
+/* ==========================================================================
+   Illustrationen (Siebträger, V60, Kessel …)
+   ========================================================================== */
+.illu{
+  width:100%;
+  max-width:min(100%,460px);
+  height:auto;
+  margin-inline:auto;
+  display:block;
+  overflow:visible;
+}
+.illu .strich{
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.illu .fluss{fill:none;stroke-linecap:round;}
+
+.illu-buehne{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-height:clamp(300px,38vw,460px);
+}
+.illu-scheibe{
+  position:absolute;
+  width:min(80%,400px);
+  aspect-ratio:1;
+  border-radius:50%;
+  z-index:0;
+}
+/* Die grossen Kopf-Illustrationen dürfen über die Scheibe hinausragen. */
+.illu-siebtraeger,
+.illu-buehne .illu{max-width:min(100%,520px);}
+.illu-buehne .illu{position:relative;z-index:2;}
+
+/* Beschriftungen an der Illustration */
+.illu-notiz{
+  position:absolute;
+  z-index:4;
+  border-radius:var(--radius-pill);
+  padding:8px 15px;
+  font-weight:600;
+  font-size:.8rem;
+  white-space:nowrap;
+  border:1px solid currentColor;
+}
+.illu-notiz--hell{background:var(--hellorange);color:var(--redorange);border-color:transparent;box-shadow:0 10px 24px rgba(0,75,92,.14);}
+
+/* ==========================================================================
+   Hub: Einstiegskacheln
+   ========================================================================== */
+.einstiege{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+}
+.einstieg{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:26px 24px 28px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:190px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.einstieg:hover{border-color:var(--linie-stark);box-shadow:0 20px 40px rgba(0,75,92,.11);}
+.einstieg .icon{
+  width:46px;height:46px;
+  border-radius:var(--radius-pill);
+  display:grid;place-items:center;
+  background:var(--hellorange);
+  color:var(--redorange);
+  flex-shrink:0;
+}
+.einstieg h3{font-size:1.08rem;}
+.einstieg p{font-size:.9rem;opacity:.78;}
+.einstieg .mehr{
+  margin-top:auto;padding-top:12px;
+  font-weight:600;font-size:.84rem;color:var(--redorange);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.einstieg:hover .mehr .pfeil{transform:translateX(5px);}
+.einstieg .mehr .pfeil{transition:transform .34s cubic-bezier(.65,0,.35,1);}
+
+/* ==========================================================================
+   Getränke-Raster (Cappuccino, Flat White …)
+   ========================================================================== */
+.getraenke{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+}
+.getraenk{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:24px 22px 26px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  text-align:left;
+  transition:transform .4s ease,border-color .4s ease,box-shadow .4s ease;
+}
+.getraenk:hover{border-color:var(--linie-stark);box-shadow:0 20px 40px rgba(0,75,92,.11);}
+/* Hell-cyanblauer Grund wie bei den Produktfotos im CI. Ohne ihn
+   verschwinden die hellen Milch- und Schaumschichten auf Weiss. */
+.getraenk-glas{
+  height:132px;
+  /* Flex, nicht Raster: In einem Raster lässt sich die Prozenthöhe der
+     Zeichnung (height:100% unten) nicht auflösen. Sie fällt dann auf auto
+     zurück, und das SVG nimmt seine Ersatzgrösse aus der Containerbreite —
+     188 x 248 statt 82 x 108, quer über den Kartentext. */
+  display:flex;
+  align-items:center;justify-content:center;
+  border-radius:12px;
+  background:linear-gradient(165deg,var(--powderblue),#dcf0f6);
+  padding:12px;
+}
+.getraenk-glas svg{height:100%;width:auto;overflow:visible;}
+.getraenk h3{font-size:1.02rem;}
+.getraenk .verhaeltnis{
+  font-weight:600;
+  font-size:.78rem;
+  letter-spacing:.04em;
+  color:var(--redorange);
+  text-transform:uppercase;
+}
+.getraenk p{font-size:.86rem;opacity:.76;line-height:1.5;}
+.getraenk .zumartikel{
+  margin-top:auto;padding-top:10px;
+  font-size:.82rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:7px;
+}
+
+/* ==========================================================================
+   Brew Guides
+   ========================================================================== */
+.brewguides{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+}
+.brewguide{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.brewguide:hover{border-color:var(--linie-stark);box-shadow:0 22px 44px rgba(0,75,92,.12);}
+.brewguide-bild{
+  aspect-ratio:16/11;
+  display:flex;
+  align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+  padding:22px;
+}
+.brewguide-bild svg{height:100%;width:auto;max-width:100%;overflow:visible;}
+.brewguide-koerper{padding:22px 24px 26px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.brewguide-meta{
+  display:flex;flex-wrap:wrap;gap:8px;
+  font-size:.74rem;font-weight:600;
+}
+.brewguide-meta .wert{
+  border:1px solid var(--linie-stark);
+  border-radius:var(--radius-pill);
+  padding:4px 11px;
+  opacity:.82;
+}
+.brewguide h3{font-size:1.12rem;}
+.brewguide p{font-size:.89rem;opacity:.78;}
+.brewguide .mehr{
+  margin-top:auto;padding-top:12px;
+  font-weight:600;font-size:.84rem;color:var(--redorange);
+  display:inline-flex;align-items:center;gap:7px;
+}
+
+/* Rezeptur-Tabelle im Brew Guide */
+/* Geführte Rezeptur auf dunkelblauem Grund: links die Schritte, rechts das
+   Ergebnis, das beim Scrollen mitläuft. Aufbau wie bei den Rechnern. */
+.rezeptur-fluss{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(28px,4vw,60px);
+  align-items:start;
+  margin-top:clamp(24px,3vw,38px);
+}
+
+/* Die Entscheidung sitzt im Schritt, in dem man sie trifft. */
+.schritt-wahl{
+  margin-top:16px;
+  padding:18px 20px 20px;
+  border-radius:var(--radius-karte);
+  border:1px solid rgba(255,243,232,.22);
+  background:rgba(255,243,232,.06);
+}
+.schritt-wahl > .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;display:block;margin-bottom:12px;
+}
+.schritt-hinweis{margin-top:14px;font-size:.86rem;opacity:.78;}
+.schritt-hinweis strong{font-weight:700;opacity:1;}
+
+/* Röstgrad: zwei Hälften, die redorange Fläche wandert dazwischen. */
+.roestgrad-schalter{
+  position:relative;
+  display:flex;gap:4px;padding:4px;
+  border-radius:var(--radius-pill);
+  background:#fff;
+}
+.roestgrad-schalter button{
+  position:relative;z-index:1;
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:11px 10px 10px;
+  border-radius:var(--radius-pill);
+  font-weight:600;font-size:.8rem;
+  color:var(--dunkelblau);
+  transition:color .3s ease;
+}
+/* 24 px in Knöpfen, wie der Guide es für Funktions-Icons vorgibt. */
+.roestgrad-schalter button svg{width:24px;height:24px;display:block;}
+.roestgrad-schalter button.ist-aktiv{color:var(--hellorange);}
+.schalter-fuellung{
+  position:absolute;
+  top:4px;bottom:4px;left:4px;
+  width:calc(50% - 6px);
+  border-radius:var(--radius-pill);
+  background:var(--redorange);
+  z-index:0;
+}
+
+/* Auswahl-Chips auf dunklem Grund */
+.wahl-optionen{display:flex;flex-wrap:wrap;gap:9px;}
+.schritt-wahl .wahl-optionen button{border-color:rgba(255,243,232,.4);color:var(--hellorange);}
+.schritt-wahl .wahl-optionen button:hover{border-color:var(--hellorange);color:var(--hellorange);}
+.schritt-wahl .wahl-optionen button.ist-aktiv{background:var(--redorange);border-color:var(--redorange);color:var(--hellorange);}
+
+/* Menge: feste Stufen, die getroffene in Redorange. */
+.schritt-wahl .rezeptur-menge{margin:18px 0 0;}
+.rezeptur-menge label{display:flex;align-items:baseline;gap:10px;}
+.mengen-stufen{
+  display:flex;justify-content:space-between;
+  margin-top:7px;font-size:.72rem;opacity:.6;font-weight:500;
+}
+.mengen-stufen span{transition:color .3s ease,opacity .3s ease;}
+.mengen-stufen span.ist-aktiv{color:var(--redorange);opacity:1;font-weight:700;}
+
+/* Das Ergebnis: helle Karte auf dunklem Grund. Redorange auf Dunkelblau wäre
+   ein verbotenes Paar, deshalb bekommen die Zahlen ihre eigene Fläche. */
+.rezeptur-ergebnis{
+  position:sticky;
+  top:var(--ankerabstand);
+  border-radius:var(--radius-karte);
+  background:var(--hellorange);
+  color:var(--dunkelblau);
+  padding:clamp(24px,2.6vw,32px);
+}
+.rezeptur-ergebnis > .eyebrow{color:var(--dunkelblau);opacity:.72;display:block;margin-bottom:16px;}
+/* In der Ergebniskarte stehen die Werte zu zweit statt zu viert, also auf
+   halber Breite. Die Zahlen aus dem alten, vollbreiten Raster liefen dort
+   aus der Karte heraus, und die Einheit rutschte auf eine eigene Zeile. */
+.rezeptur-ergebnis .rezeptur-wert{padding:16px 15px 17px;}
+.rezeptur-ergebnis .rezeptur-wert .zahl{
+  font-size:clamp(1.4rem,2vw,1.85rem);
+  white-space:nowrap;
+}
+.rezeptur-ergebnis .rezeptur-wert .rolle{
+  margin-top:8px;
+  font-size:.62rem;letter-spacing:.1em;
+}
+.ergebnis-verhaeltnis{margin-top:20px;}
+.ergebnis-verhaeltnis > .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;display:block;margin-bottom:8px;opacity:.72;
+}
+.verhaeltnis-zahl{
+  display:block;
+  font-weight:600;font-size:1.28rem;letter-spacing:.02em;
+  color:var(--redorange);
+  margin-bottom:12px;
+}
+.verhaeltnis-balken{display:flex;gap:4px;height:12px;}
+.verhaeltnis-balken .teil{border-radius:var(--radius-pill);display:block;}
+.teil--mehl{flex:1 1 0;background:var(--redorange);}
+.teil--tasse{flex:2.5 1 0;background:var(--linie-stark);}
+.verhaeltnis-skala{
+  display:flex;justify-content:space-between;
+  margin-top:9px;font-size:.72rem;opacity:.6;font-weight:500;
+}
+
+@media (max-width:1080px){
+  .rezeptur-fluss{grid-template-columns:minmax(0,1fr);}
+  .rezeptur-ergebnis{position:static;order:-1;}
+}
+
+.rezeptur{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.rezeptur-wert{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  color:var(--dunkelblau);
+  padding:18px 18px 20px;
+}
+.rezeptur-wert .zahl{
+  font-weight:900;letter-spacing:-.03em;line-height:1;
+  font-size:clamp(1.9rem,3.2vw,2.7rem);
+  color:var(--redorange);
+  display:block;
+}
+.rezeptur-wert .zahl .einheit{font-size:.44em;letter-spacing:0;}
+.rezeptur-wert .rolle{
+  margin-top:11px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;
+}
+.rezeptur-wert p{margin-top:7px;font-size:.85rem;opacity:.74;}
+
+/* ==========================================================================
+   Wissen: Filter und Raster
+   ========================================================================== */
+.filterleiste{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  margin-bottom:clamp(28px,3.5vw,44px);
+}
+.filter-knopf{
+  border-radius:var(--radius-pill);
+  border:1px solid var(--linie-stark);
+  padding:9px 19px;
+  font-weight:600;
+  font-size:.84rem;
+  letter-spacing:.02em;
+  transition:background-color .3s ease,color .3s ease,border-color .3s ease;
+}
+.filter-knopf:hover{border-color:var(--redorange);color:var(--redorange);}
+.filter-knopf.ist-aktiv{
+  background:var(--redorange);
+  border-color:var(--redorange);
+  color:var(--hellorange);
+}
+
+.beitraege{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+}
+.beitrag{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.beitrag:hover{border-color:var(--linie-stark);box-shadow:0 22px 44px rgba(0,75,92,.12);}
+.beitrag-bild{aspect-ratio:16/10;overflow:hidden;background:var(--powderblue);}
+.beitrag-bild img{width:100%;height:100%;object-fit:cover;will-change:transform;}
+.beitrag-bild.ist-leer{
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+}
+.beitrag-bild.ist-leer svg{height:62%;width:auto;overflow:visible;}
+.beitrag-koerper{padding:21px 23px 25px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.beitrag-art{
+  display:inline-flex;align-items:center;gap:7px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.66rem;
+}
+.beitrag-art--wissen{color:var(--dunkelblau);}
+.beitrag-art--rezept{color:var(--redorange);}
+.beitrag-art--guide{color:var(--cyanblau-dunkel);}
+.beitrag-art--tool{color:var(--dragonfruit);}
+.beitrag-art .punkt{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.beitrag h3{font-size:1.06rem;line-height:1.32;}
+.beitrag p{font-size:.87rem;opacity:.76;line-height:1.55;}
+.beitrag .fusszeile{
+  margin-top:auto;padding-top:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-size:.78rem;opacity:.62;font-weight:500;
+}
+
+/* ==========================================================================
+   Tools
+   ========================================================================== */
+.tool-karten{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+}
+.tool-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:28px 26px 30px;
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.tool-karte:hover{border-color:var(--linie-stark);box-shadow:0 22px 44px rgba(0,75,92,.12);}
+.tool-karte .icon{
+  width:52px;height:52px;
+  border-radius:var(--radius-pill);
+  display:grid;place-items:center;
+  background:var(--redorange);
+  color:var(--hellorange);
+}
+.tool-karte h3{font-size:1.12rem;}
+.tool-karte p{font-size:.89rem;opacity:.78;}
+.tool-karte .mehr{
+  margin-top:auto;padding-top:14px;
+  font-weight:600;font-size:.84rem;color:var(--redorange);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.tool-karte.ist-geplant{opacity:.62;}
+.tool-karte.ist-geplant .icon{background:var(--hellorange);color:var(--dunkelblau);}
+
+/* Rechner */
+.rechner{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(28px,4vw,60px);
+  align-items:start;
+}
+.rechner-feld{margin-bottom:24px;}
+.rechner-feld label{
+  display:block;
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;
+  margin-bottom:11px;
+}
+.rechner-feld .hinweis{
+  font-weight:400;text-transform:none;letter-spacing:0;
+  font-size:.8rem;opacity:.62;margin-left:8px;
+}
+.rechner-feld select,
+.rechner-feld input[type="number"],
+.rechner-feld input[type="text"]{
+  width:100%;
+  padding:14px 18px;
+  border-radius:var(--radius-button);
+  border:1.5px solid var(--linie-stark);
+  background:#fff;
+  font:inherit;font-weight:500;
+  color:inherit;
+  outline:none;
+  transition:border-color .3s ease;
+}
+.rechner-feld select:focus,
+.rechner-feld input:focus{border-color:var(--redorange);}
+.rechner-feld input[type="range"]{
+  width:100%;
+  accent-color:var(--redorange);
+  height:28px;
+}
+.rechner-feld .bereich-werte{
+  display:flex;justify-content:space-between;
+  font-size:.78rem;opacity:.6;font-weight:500;
+  margin-top:-4px;
+}
+.rechner-feld .wertanzeige{
+  font-weight:800;
+  font-size:1.15rem;
+  color:var(--redorange);
+  letter-spacing:-.02em;
+}
+
+.rechner-ergebnis{
+  border-radius:var(--radius-karte);
+  background:var(--dunkelblau);
+  color:var(--hellorange);
+  padding:clamp(28px,3.4vw,44px);
+  position:sticky;
+  top:100px;
+}
+.rechner-ergebnis .eyebrow{color:var(--cyanblau);}
+.rechner-ergebnis .gross{
+  font-weight:900;letter-spacing:-.03em;line-height:1;
+  font-size:clamp(2.6rem,5.4vw,4rem);
+  margin-top:16px;
+  display:block;
+}
+.rechner-ergebnis .gross .einheit{font-size:.34em;letter-spacing:0;opacity:.8;}
+.rechner-ergebnis .unterzeile{margin-top:12px;opacity:.84;font-size:.95rem;}
+
+.rechner-balken{
+  margin-top:28px;
+  height:10px;
+  border-radius:var(--radius-pill);
+  background:rgba(255,243,232,.18);
+  overflow:hidden;
+  position:relative;
+}
+.rechner-balken .fuellung{
+  position:absolute;inset:0;
+  transform-origin:0 50%;
+  transform:scaleX(0);
+  border-radius:var(--radius-pill);
+  background:var(--redorange);
+}
+.rechner-skala{
+  display:flex;justify-content:space-between;
+  margin-top:10px;font-size:.76rem;opacity:.7;font-weight:500;
+}
+
+.rechner-zeilen{margin-top:26px;display:flex;flex-direction:column;gap:1px;}
+.rechner-zeile{
+  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,243,232,.14);
+  font-size:.92rem;
+}
+.rechner-zeile:last-child{border-bottom:0;}
+.rechner-zeile .wert{font-weight:700;white-space:nowrap;}
+.rechner-warnung{
+  margin-top:22px;
+  border-radius:var(--radius-button);
+  border:1px solid rgba(255,243,232,.3);
+  padding:14px 17px;
+  font-size:.86rem;
+  opacity:.9;
+}
+
+/* ==========================================================================
+   Artikel- und Rezeptseiten
+   ========================================================================== */
+.beitragskopf{
+  padding-top:clamp(126px,14vh,172px);
+  padding-bottom:clamp(30px,3.6vw,48px);
+  background:var(--hellorange);
+}
+/* Der Kopf ist zweispaltig: links Titel und Lead, rechts das Heldenbild.
+   Das Raster kommt von .seitenkopf-raster, hier nur die Abweichungen.
+
+   Breite und Ränder teilt er sich mit dem Textblock darunter. Dadurch
+   stehen Heldenbild, Fliesstext und Seitenspalte auf denselben Kanten.
+   Die Aufteilung innerhalb des Kopfes bleibt 1.05 zu .95, sonst wäre das
+   Bild nur so breit wie das Inhaltsverzeichnis. */
+/* Die Breite sitzt auf dem Wrap, nicht auf den einzelnen Teilen: ch rechnet
+   gegen die Schrift der Stelle, an der die Variable eingesetzt wird, und die
+   Brotkrume ist kleiner gesetzt. Auf ihr wären dieselben 68ch rund hundert
+   Pixel schmaler. Der Wrap steht in Grundschrift und gilt für alles darin. */
+.beitragskopf .wrap{width:min(var(--seite),var(--inhaltsbreite));}
+.beitragskopf-raster{
+  margin-top:26px;
+  gap:var(--spalten-gap);
+}
+/* Deutlich kleiner als die Startseiten-H1: in einer halben Spalte wäre
+   clamp(2.6rem,5.5vw,5.1rem) erschlagend. Die Spalte begrenzt die Breite,
+   ein max-width braucht es nicht mehr. */
+.beitragskopf h1{font-size:clamp(1.9rem,3.2vw,2.9rem);line-height:1.06;margin-top:16px;}
+.beitragskopf .lead{margin-top:18px;font-size:clamp(1rem,1.2vw,1.12rem);}
+.beitragsmeta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;
+  margin-top:26px;
+  font-size:.85rem;font-weight:500;
+}
+.beitragsmeta .autor{display:flex;align-items:center;gap:10px;font-weight:600;}
+/* Das runde Profilbild aus dem bisherigen Shop (Metafeld bild_des_autoren). */
+.beitragsmeta .autor img{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--powderblue);border:1px solid var(--linie);}
+.beitragsmeta .trenn{opacity:.4;}
+
+/* Sitzt jetzt in der rechten Kopfspalte, nicht mehr über die volle Seite.
+   4:3 statt 16:9, damit es ungefähr so hoch steht wie Titel, Lead und
+   Meta-Zeile zusammen. */
+.beitragsbild{
+  width:100%;
+  min-width:0;
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  aspect-ratio:4/3;
+  background:var(--powderblue);
+}
+.beitragsbild img{width:100%;height:100%;object-fit:cover;}
+
+/* Der Inhalt steht als ein Block in der Mitte der Seite: 68 Zeichen
+   Fliesstext, der übliche Abstand, 320 px Seitenspalte, zusammen rund
+   970 px. Vorher füllte das Raster die ganze Seitenbreite, der Text blieb
+   bei 68 Zeichen — und rechts daneben stand eine leere Fläche.
+
+   ch rechnet immer gegen die Schrift der Stelle, an der die Variable
+   eingesetzt wird, nicht gegen die der Definition. Deshalb darf sie hier
+   oben stehen, eingesetzt wird sie aber nur auf Elementen in Grundschrift.
+   Auf einer H2 wären 68ch fast das Doppelte — genau daran lagen die
+   Überschriften, die früher über die Textbreite hinausragten. */
+:root{
+  --textbreite:68ch;
+  --seitenspalte:320px;
+  --spalten-gap:clamp(32px,4vw,64px);
+  --inhaltsbreite:calc(var(--textbreite) + var(--spalten-gap) + var(--seitenspalte));
+}
+/* Für Abschnitte, die auf derselben Kante stehen sollen wie Kopf und Text:
+   auf den Rezeptseiten die Zutaten und die Zubereitung. */
+.wrap--inhalt{width:min(var(--seite),var(--inhaltsbreite));}
+.beitragslayout{
+  display:grid;
+  grid-template-columns:minmax(0,var(--textbreite)) minmax(0,var(--seitenspalte));
+  gap:var(--spalten-gap);
+  justify-content:center;
+  align-items:stretch;
+  padding-block:clamp(48px,6vw,88px);
+}
+/* Alles bleibt in der Textspalte: Bilder, Diagramme, Kurzübersicht und
+   Tabellen. Was von Natur aus breiter ist, scrollt in sich — wie die
+   Vergleichstabelle es auf dem Handy schon immer tat. */
+.beitragstext{max-width:none;min-width:0;}
+.beitragstext h2{
+  font-size:clamp(1.5rem,2.6vw,2.15rem);
+  margin-top:clamp(38px,4vw,56px);
+}
+.beitragstext h3{
+  font-size:clamp(1.15rem,1.8vw,1.4rem);
+  margin-top:clamp(28px,3vw,38px);
+}
+.beitragstext p{margin-top:18px;line-height:1.7;}
+.beitragstext ul,
+.beitragstext ol{margin-top:18px;padding-left:1.3em;list-style:disc;}
+.beitragstext ol{list-style:decimal;}
+.beitragstext li{margin-bottom:9px;line-height:1.65;padding-left:.3em;}
+.beitragstext a:not(.btn){
+  color:var(--redorange);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1.5px;
+}
+
+.merksatz{
+  border-radius:var(--radius-karte);
+  border-left:4px solid var(--redorange);
+  background:var(--hellorange);
+  color:var(--dunkelblau);
+  padding:24px 28px;
+  margin-top:clamp(28px,3vw,40px);
+  font-weight:500;
+  font-size:1.05rem;
+  line-height:1.6;
+}
+
+/* Seitenspalte */
+.beitragsseite{position:sticky;top:100px;display:flex;flex-direction:column;gap:var(--gap);}
+.inhaltsverzeichnis{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:24px 24px 26px;
+}
+.inhaltsverzeichnis h4{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;margin:0 0 16px;color:var(--redorange);
+}
+.inhaltsverzeichnis a{
+  display:block;
+  padding:8px 0 8px 14px;
+  border-left:2px solid var(--linie);
+  font-size:.88rem;
+  /* Überschriften stehen vollständig da und brauchen manchmal zwei Zeilen. */
+  line-height:1.4;
+  transition:border-color .3s ease,color .3s ease;
+}
+.inhaltsverzeichnis a:hover,
+.inhaltsverzeichnis a.ist-aktiv{border-left-color:var(--redorange);color:var(--redorange);}
+
+/* Dieselbe Liste, eingeklappt am Anfang des Artikels. Nur unter 1080 px,
+   dorthin hängt beitrag.js sie um. Zugeklappt, weil sie sonst ein Drittel
+   des ersten Bildschirms belegt — der Inhalt bleibt trotzdem im Markup und
+   damit für die Suche lesbar. */
+.inhalt-klapp{
+  margin:0 0 32px;
+  border:1px solid var(--linie);
+  border-radius:var(--radius-karte);
+  background:#fff;
+}
+.inhalt-klapp > summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px 20px;
+  cursor:pointer;
+  list-style:none;
+  font-weight:700;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--redorange);
+}
+.inhalt-klapp > summary::-webkit-details-marker{display:none;}
+.inhalt-klapp > summary::after{
+  content:'';
+  width:8px;height:8px;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform .25s ease;
+}
+.inhalt-klapp[open] > summary::after{transform:translateY(2px) rotate(-135deg);}
+/* Der Rahmen kommt von der Hülle, die Liste gibt ihren eigenen ab. */
+.inhalt-klapp .inhaltsverzeichnis{
+  border:0;
+  background:none;
+  padding:0 20px 18px;
+  max-height:none;
+  overflow:visible;
+}
+.inhalt-klapp .inhaltsverzeichnis h4{display:none;}
+/* Im Textbereich färbt .beitragstext a jeden Link rotorange und
+   unterstreicht ihn. Das Verzeichnis behält seine eigene Form. */
+.beitragstext .inhalt-klapp .inhaltsverzeichnis a{
+  color:inherit;
+  text-decoration:none;
+}
+.beitragstext .inhalt-klapp .inhaltsverzeichnis a:hover,
+.beitragstext .inhalt-klapp .inhaltsverzeichnis a.ist-aktiv{color:var(--redorange);}
+
+.seitenbox{
+  border-radius:var(--radius-karte);
+  background:var(--redorange);
+  color:var(--hellorange);
+  padding:26px 24px 28px;
+  position:relative;
+  overflow:hidden;
+}
+.seitenbox h4{font-size:1.1rem;font-weight:800;margin:0 0 10px;letter-spacing:-.02em;}
+.seitenbox p{font-size:.88rem;opacity:.92;margin-bottom:18px;}
+.seitenbox .signet{
+  position:absolute;right:-26px;bottom:-30px;
+  width:130px;opacity:.16;pointer-events:none;
+}
+
+/* Rezept-Bausteine */
+.rezeptkarte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:clamp(26px,3vw,38px);
+  margin-top:clamp(28px,3.4vw,44px);
+}
+.rezeptkarte-kopf{
+  display:flex;flex-wrap:wrap;gap:12px 26px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--linie);
+  margin-bottom:22px;
+}
+.rezeptkarte-kopf .posten{display:flex;flex-direction:column;gap:4px;}
+.rezeptkarte-kopf .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;font-size:.64rem;opacity:.6;
+}
+.rezeptkarte-kopf .wert{font-weight:800;font-size:1.05rem;letter-spacing:-.02em;}
+
+.zutaten{display:flex;flex-direction:column;gap:1px;}
+.zutat{
+  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:12px 0;
+  border-bottom:1px solid var(--linie);
+}
+.zutat:last-child{border-bottom:0;}
+.zutat .menge{font-weight:700;white-space:nowrap;color:var(--redorange);}
+
+.schritte{counter-reset:schritt;display:flex;flex-direction:column;gap:20px;margin-top:24px;}
+.schritt-zeile{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:18px;
+  align-items:start;
+}
+.schritt-zeile .nummer{
+  counter-increment:schritt;
+  width:42px;height:42px;
+  border-radius:50%;
+  background:var(--redorange);
+  color:var(--hellorange);
+  display:grid;place-items:center;
+  font-weight:800;font-size:.98rem;
+  flex-shrink:0;
+}
+.schritt-zeile .nummer::before{content:counter(schritt,decimal-leading-zero);}
+.schritt-zeile h4{margin:0 0 5px;font-size:1.02rem;font-weight:700;letter-spacing:-.01em;}
+.schritt-zeile p{margin:0;font-size:.93rem;opacity:.82;line-height:1.6;}
+
+/* Timer im Brew Guide */
+.brew-timer{
+  border-radius:var(--radius-karte);
+  background:var(--dunkelblau);
+  color:var(--hellorange);
+  padding:clamp(26px,3vw,40px);
+  margin-top:clamp(28px,3.4vw,44px);
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:clamp(24px,3vw,40px);
+  align-items:center;
+}
+.brew-timer .uhr{
+  font-weight:900;letter-spacing:-.03em;
+  font-size:clamp(2.6rem,6vw,4.2rem);
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  min-width:4.5ch;
+}
+.brew-timer .phase{font-weight:700;text-transform:uppercase;letter-spacing:.13em;font-size:.7rem;color:var(--cyanblau);}
+.brew-timer .anweisung{margin-top:9px;font-size:1.02rem;font-weight:500;}
+.brew-timer .steuerung{display:flex;gap:11px;margin-top:20px;flex-wrap:wrap;}
+.brew-timer-spur{
+  margin-top:20px;
+  height:8px;border-radius:var(--radius-pill);
+  background:rgba(255,243,232,.18);
+  position:relative;overflow:hidden;
+}
+.brew-timer-spur .fuellung{
+  position:absolute;inset:0;
+  transform-origin:0 50%;transform:scaleX(0);
+  background:var(--redorange);
+  border-radius:var(--radius-pill);
+}
+
+/* ==========================================================================
+   Verwandtes / Abschluss
+   ========================================================================== */
+.verwandt{background:#fff;border-top:1px solid var(--linie);}
+
+.hub-band{
+  background:var(--redorange);
+  color:var(--hellorange);
+  border-radius:var(--radius-karte);
+  padding:clamp(32px,4.4vw,64px);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:clamp(24px,4vw,56px);
+  align-items:center;
+  position:relative;
+  overflow:hidden;
+}
+.hub-band h2{font-size:clamp(1.7rem,3.2vw,2.7rem);}
+.hub-band p{margin-top:14px;opacity:.92;max-width:44ch;}
+.hub-band .signet{
+  position:absolute;right:-34px;bottom:-44px;
+  width:clamp(150px,18vw,250px);opacity:.15;pointer-events:none;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width:1080px){
+  .einstiege,.getraenke{grid-template-columns:repeat(2,1fr);}
+  .brewguides,.beitraege,.tool-karten{grid-template-columns:repeat(2,1fr);}
+  .rezeptur{grid-template-columns:repeat(2,1fr);}
+  /* Ohne Seitenspalte steht alles in einer Spalte, mittig und so breit wie
+     der Fliesstext. Kopf, Text und Verzeichnis behalten dieselbe Kante. */
+  .beitragslayout{grid-template-columns:minmax(0,var(--textbreite));}
+  .wrap--inhalt{width:min(var(--seite),var(--textbreite));}
+  .beitragskopf .wrap{width:min(var(--seite),var(--textbreite));}
+  .beitragskopf-raster{
+    grid-template-columns:1fr;
+    margin-top:22px;
+    gap:26px;
+  }
+  /* Ohne Deckel füllt das Bild einspaltig den halben Bildschirm, bevor der
+     Titel überhaupt sichtbar wird. */
+  .beitragskopf .beitragsbild{
+    order:-1;
+    aspect-ratio:16/9;
+    max-height:min(42vh,340px);
+  }
+  .beitragskopf .beitragsbild img{object-position:center;}
+  .beitragsseite{position:static;flex-direction:row;flex-wrap:wrap;}
+  .beitragsseite > *{flex:1 1 260px;}
+}
+@media (max-width:860px){
+  .seitenkopf-raster{grid-template-columns:1fr;}
+  .seitenkopf .illu-buehne{order:-1;min-height:clamp(240px,54vw,340px);}
+  .rechner{grid-template-columns:1fr;}
+  .rechner-ergebnis{position:static;}
+  .hub-band{grid-template-columns:1fr;}
+  .brew-timer{grid-template-columns:1fr;}
+}
+/* Der Kopf steht schon ab 1080 px einspaltig, hier bleibt nur der Abstand
+   nach oben, den die kleinere Kopfzeile freigibt. */
+@media (max-width:860px){
+  .beitragskopf{padding-top:clamp(112px,12vh,140px);}
+}
+
+@media (max-width:620px){
+  .einstiege,.getraenke,.brewguides,.beitraege,.tool-karten{grid-template-columns:1fr;}
+  /* Die vier Werte bleiben auch schmal zu zweit, sonst wird die
+     Ergebniskarte unnötig lang. */
+  .rezeptur{gap:10px;}
+  .beitragskopf .beitragsbild{
+    width:100vw;
+    margin-inline:calc(50% - 50vw);
+    border-radius:0;
+  }
+  /* Untereinander wäre flex-basis 260px aus der Regel darüber eine Höhe:
+     Die Bohnen-Box mit rundem Bild schnitte dann ihren Knopf ab. */
+  .beitragsseite{flex-direction:column;}
+  .beitragsseite > *{flex:0 0 auto;}
+}
+
+/* ==========================================================================
+   Produktseite
+   Aufbau wie im Shopify-Shop: Galerie und Kauf oben, danach Geschmack,
+   Röstung, Aufbereitung, Farm und Varietät.
+   ========================================================================== */
+.produktkopf{
+  padding-top:clamp(118px,13vh,164px);
+  padding-bottom:clamp(40px,5vw,72px);
+  background:var(--hellorange);
+}
+.produktkopf-raster{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(30px,4.5vw,68px);
+  align-items:start;
+  margin-top:22px;
+}
+
+/* --- Galerie -------------------------------------------------------------- */
+.galerie-haupt{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  aspect-ratio:1;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+  position:relative;
+}
+.galerie-haupt img{
+  width:100%;height:100%;object-fit:cover;
+  position:absolute;inset:0;
+}
+.galerie-mini{display:flex;gap:12px;margin-top:14px;}
+.galerie-mini button{
+  flex:1;
+  border-radius:12px;
+  overflow:hidden;
+  aspect-ratio:1;
+  border:2px solid transparent;
+  background:var(--powderblue);
+  padding:0;
+  transition:border-color .3s ease;
+}
+.galerie-mini button.ist-aktiv{border-color:var(--redorange);}
+.galerie-mini img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* --- Kaufbereich ---------------------------------------------------------- */
+.produkt-kauf h1{font-size:clamp(2rem,3.6vw,3.1rem);margin-top:14px;}
+.produkt-kauf .herkunftszeile{
+  font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  font-size:.8rem;color:var(--redorange);
+}
+.produkt-kauf .kurzbeschrieb{margin-top:18px;font-size:1.05rem;line-height:1.6;max-width:46ch;}
+
+.notenreihe{display:flex;flex-wrap:wrap;gap:14px;margin-top:24px;}
+.notenreihe .note{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  width:74px;text-align:center;
+}
+.note-icon{width:44px;height:44px;}
+.notenreihe .note span{font-weight:600;font-size:.78rem;line-height:1.2;}
+
+.preiszeile{
+  display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  margin-top:28px;padding-top:24px;
+  border-top:1px solid var(--linie);
+}
+.preiszeile .preis{font-weight:900;letter-spacing:-.03em;font-size:clamp(1.8rem,3vw,2.4rem);line-height:1;}
+.preiszeile .grundpreis{font-size:.86rem;opacity:.65;font-weight:500;}
+.produkt-kauf .kaufreihe{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;}
+
+/* Mahlgrad-Auswahl */
+.mahlgrad{margin-top:24px;}
+.mahlgrad .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;display:block;margin-bottom:11px;
+}
+.mahlgrad-optionen{display:flex;flex-wrap:wrap;gap:9px;}
+.mahlgrad-optionen button,
+.wahl-optionen button{
+  border-radius:var(--radius-pill);
+  border:1px solid var(--linie-stark);
+  padding:9px 17px;
+  font-weight:600;font-size:.84rem;
+  transition:background-color .3s ease,color .3s ease,border-color .3s ease;
+}
+.mahlgrad-optionen button:hover,
+.wahl-optionen button:hover{border-color:var(--redorange);color:var(--redorange);}
+.mahlgrad-optionen button.ist-aktiv,
+.wahl-optionen button.ist-aktiv{
+  background:var(--redorange);border-color:var(--redorange);color:var(--hellorange);
+}
+
+/* Schwesterprodukt, das Reverse-Paar */
+.schwester{
+  margin-top:26px;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:16px 18px;
+  display:flex;align-items:center;gap:16px;
+}
+.schwester img{width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.schwester .text{flex:1;min-width:0;}
+.schwester .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.64rem;color:var(--dragonfruit);
+}
+.schwester h4{margin:4px 0 0;font-size:.98rem;font-weight:700;letter-spacing:-.01em;}
+.schwester .hin{
+  font-weight:600;font-size:.84rem;color:var(--redorange);
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+
+/* --- Meter für Röstung und Profil ---------------------------------------- */
+.meter-paar{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:var(--gap);
+}
+.meter-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:26px 24px 28px;
+}
+.meter-karte .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;color:var(--redorange);
+}
+.meter-karte h3{margin-top:10px;font-size:1.15rem;}
+.meter-karte p{margin-top:11px;font-size:.92rem;opacity:.8;line-height:1.55;}
+.meter{display:flex;gap:6px;margin-top:18px;}
+.meter i{
+  flex:1;height:10px;
+  border-radius:var(--radius-pill);
+  background:var(--linie);
+  transform-origin:0 50%;
+}
+.meter i.ist-voll{background:var(--redorange);}
+.meter-skala{
+  display:flex;justify-content:space-between;
+  margin-top:9px;font-size:.74rem;opacity:.6;font-weight:500;
+}
+
+/* --- Faktentabelle -------------------------------------------------------- */
+.fakten{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--linie);
+  border:1px solid var(--linie);
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+}
+.fakt{background:#fff;padding:22px 20px;}
+.fakt .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.64rem;opacity:.6;display:block;
+}
+.fakt .wert{
+  margin-top:8px;
+  font-weight:800;letter-spacing:-.02em;
+  font-size:1.02rem;line-height:1.3;
+  display:block;
+}
+
+/* --- Bild-Text-Blöcke (Aufbereitung, Varietät) --------------------------- */
+.bildblock{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(28px,4.5vw,68px);
+  align-items:center;
+}
+.bildblock--gedreht{direction:rtl;}
+.bildblock--gedreht > *{direction:ltr;}
+.bildblock-bild{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  aspect-ratio:4/3;
+  background:var(--powderblue);
+}
+.bildblock-bild img{width:100%;height:100%;object-fit:cover;}
+.bildblock h3{font-size:clamp(1.4rem,2.4vw,2rem);font-weight:800;letter-spacing:-.025em;}
+.bildblock p{margin-top:16px;line-height:1.65;opacity:.86;}
+.bildblock .eyebrow{color:var(--redorange);display:block;margin-bottom:14px;}
+
+/* --- Farm ----------------------------------------------------------------- */
+.farm{background:var(--dunkelblau);color:var(--hellorange);}
+.farm .eyebrow{color:var(--cyanblau);}
+.farm-raster{
+  display:grid;
+  grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+  gap:clamp(30px,4.5vw,68px);
+  align-items:start;
+}
+.farm-text p{margin-top:18px;opacity:.88;line-height:1.7;}
+.farm-bilder{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:var(--gap);
+}
+.farm-bild{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  aspect-ratio:1;
+  border:1px solid rgba(255,243,232,.2);
+  background:rgba(255,243,232,.06);
+}
+.farm-bild img{width:100%;height:100%;object-fit:cover;}
+.farm-bild:nth-child(even){margin-top:clamp(18px,3vw,40px);}
+
+.karten-paar{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:var(--gap);
+  margin-top:clamp(28px,3.6vw,46px);
+}
+.karten-paar figure{margin:0;}
+.karten-paar img{
+  width:100%;
+  border-radius:var(--radius-karte);
+  border:1px solid rgba(255,243,232,.2);
+  background:rgba(255,243,232,.06);
+}
+.karten-paar figcaption{
+  margin-top:10px;font-size:.8rem;opacity:.7;font-weight:500;
+}
+
+@media (max-width:1080px){
+  .fakten{grid-template-columns:repeat(2,1fr);}
+  .produktkopf-raster,.farm-raster{grid-template-columns:1fr;}
+  .meter-paar{grid-template-columns:1fr;}
+}
+@media (max-width:860px){
+  .bildblock{grid-template-columns:1fr;}
+  .bildblock--gedreht{direction:ltr;}
+}
+@media (max-width:620px){
+  .fakten{grid-template-columns:1fr;}
+  .farm-bilder,.karten-paar{grid-template-columns:1fr;}
+  .farm-bild:nth-child(even){margin-top:0;}
+}
+
+/* --- Produktkarte anklickbar ---------------------------------------------
+   Der Titel trägt den Link, das ::after-Overlay macht die ganze Karte
+   klickbar. Der Kaufen-Knopf liegt darüber und bleibt eigenständig. */
+.produkt-link{color:inherit;}
+.produkt-link::after{content:'';position:absolute;inset:0;z-index:1;}
+.produkt-link:hover{color:var(--redorange);}
+.produkt .produkt-kaufen{position:relative;z-index:2;}
+
+/* ==========================================================================
+   Rezeptschritte mit Bild
+   Google will zu jedem HowToStep ein eigenes Bild. Es steht deshalb nicht
+   nur im Schema, sondern auch sichtbar im Ablauf.
+   ========================================================================== */
+.schritte--bebildert{gap:clamp(26px,3.2vw,42px);}
+.schritt-bebildert{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) minmax(0,225px);
+  gap:clamp(16px,2.4vw,28px);
+  align-items:start;
+}
+.schritt-bebildert .nummer{
+  width:42px;height:42px;
+  border-radius:50%;
+  background:var(--redorange);
+  color:var(--hellorange);
+  display:grid;place-items:center;
+  font-weight:800;font-size:.98rem;
+  flex-shrink:0;
+}
+.schritt-bebildert h4{margin:0 0 7px;font-size:1.06rem;font-weight:700;letter-spacing:-.01em;}
+.schritt-bebildert p{margin:0;font-size:.95rem;line-height:1.62;opacity:.85;}
+.schritt-bebildert .tipp{
+  margin-top:12px;
+  border-left:3px solid var(--cyanblau);
+  padding:10px 0 10px 14px;
+  font-size:.89rem;
+  opacity:.8;
+}
+.schritt-bebildert .tipp strong{color:var(--dunkelblau);}
+.schritt-bild{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  /* Die Aufnahmen liegen als 4:5 im Hochformat vor. Quer beschnitten
+     fielen Gesichter und Kaffeeobjekte aus dem Bild. */
+  aspect-ratio:4/5;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+  border:1px solid var(--linie);
+}
+.schritt-bild img{width:100%;height:100%;object-fit:cover;}
+
+/* Fragen und Antworten */
+.faq{display:flex;flex-direction:column;gap:1px;margin-top:clamp(24px,3vw,38px);}
+.faq details{
+  border-bottom:1px solid var(--linie);
+  padding:4px 0;
+}
+.faq summary{
+  cursor:pointer;
+  list-style:none;
+  padding:18px 40px 18px 0;
+  font-weight:700;
+  font-size:1.02rem;
+  letter-spacing:-.01em;
+  position:relative;
+}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::after{
+  content:'';
+  position:absolute;right:8px;top:50%;
+  width:11px;height:11px;
+  border-right:2px solid var(--redorange);
+  border-bottom:2px solid var(--redorange);
+  transform:translateY(-70%) rotate(45deg);
+  transition:transform .3s ease;
+}
+.faq details[open] summary::after{transform:translateY(-30%) rotate(-135deg);}
+.faq .antwort{padding:0 0 20px;line-height:1.68;opacity:.85;font-size:.96rem;}
+
+@media (max-width:860px){
+  .schritt-bebildert{grid-template-columns:auto minmax(0,1fr);}
+  .schritt-bild{grid-column:2;margin-top:14px;}
+}
+
+/* ==========================================================================
+   Atmosphäre in den dunklen Sektionen
+   Drei Motive, ein Prinzip: wenige Elemente, langsam, nie aufdringlich.
+   ========================================================================== */
+.atmo{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.atmo + .wrap,
+.atmo ~ .wrap{position:relative;z-index:2;}
+
+/* Decaf: Sterne */
+.atmo-stern{
+  position:absolute;
+  border-radius:50%;
+  background:var(--hellorange);
+  opacity:.5;
+}
+
+/* Espresso: aufsteigender Dampf */
+.atmo-dampf{
+  position:absolute;
+  bottom:-10%;
+  border-radius:50% 50% 44% 56% / 60% 58% 42% 40%;
+  background:radial-gradient(circle at 50% 60%, rgba(255,243,232,.5), rgba(255,243,232,0) 70%);
+  filter:blur(6px);
+  will-change:transform,opacity;
+}
+
+/* Filterkaffee: fallende Tropfen */
+.atmo-tropfen{
+  position:absolute;
+  top:-6%;
+  width:3px;
+  border-radius:999px;
+  background:linear-gradient(180deg, rgba(79,196,226,0), var(--cyanblau));
+  will-change:transform,opacity;
+}
+
+/* --- Zutaten in der Seitenspalte ------------------------------------------
+   Beim Nachmachen will man sie im Blick behalten, und sie geben der
+   Spalte genug Höhe, damit neben dem langen Ablauf kein Loch entsteht. */
+.zutaten-box{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:24px 24px 26px;
+}
+.zutaten-box h4{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;margin:0 0 18px;color:var(--redorange);
+}
+.zutaten-box .eckdaten{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px 12px;
+  padding-bottom:20px;
+  margin-bottom:6px;
+  border-bottom:1px solid var(--linie);
+}
+.zutaten-box .eckdaten > span{display:flex;flex-direction:column;gap:3px;}
+.zutaten-box .eckdaten .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.6rem;opacity:.55;
+}
+.zutaten-box .eckdaten .wert{font-weight:800;font-size:.95rem;letter-spacing:-.01em;}
+.zutaten-box .zutat{padding:11px 0;font-size:.92rem;}
+
+/* Die Spalte bleibt beim Scrollen stehen, solange sie kürzer ist als
+   der Fliesstext daneben. */
+.beitragsseite{align-self:start;}
+
+/* ==========================================================================
+   Ergebnisbox: Kopf, Fuss und das Teilen
+   ========================================================================== */
+.box-kopf{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding-bottom:18px;
+  border-bottom:1px solid rgba(255,243,232,.16);
+}
+.box-signet{width:44px;height:45px;opacity:.9;flex-shrink:0;}
+
+.box-fuss{
+  margin-top:26px;padding-top:20px;
+  border-top:1px solid rgba(255,243,232,.16);
+  display:flex;flex-direction:column;gap:4px;
+  font-size:.88rem;
+}
+.box-fuss span{opacity:.8;}
+.box-fuss strong{color:var(--cyanblau);font-weight:700;letter-spacing:.01em;}
+
+.sternchen{
+  margin-top:20px;
+  font-size:.8rem;
+  line-height:1.6;
+  opacity:.66;
+  max-width:78ch;
+}
+
+/* Dialog zum Teilen */
+.teilen-dialog{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(33,31,29,.6);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:grid;place-items:center;
+  padding:20px;
+  overflow-y:auto;
+}
+.teilen-fenster{
+  background:var(--hellorange);
+  border-radius:var(--radius-karte);
+  padding:clamp(26px,3vw,38px);
+  width:min(460px,100%);
+  position:relative;
+  max-height:92vh;
+  overflow-y:auto;
+}
+.teilen-zu{
+  position:absolute;top:14px;right:16px;
+  width:34px;height:34px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  font-size:1rem;
+  opacity:.55;
+  transition:opacity .25s ease,background-color .25s ease;
+}
+.teilen-zu:hover{opacity:1;background:rgba(0,75,92,.08);}
+.teilen-fenster h3{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;}
+.teilen-vorschau{
+  margin:22px 0;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid var(--linie);
+  background:var(--dunkelblau);
+  max-height:320px;
+  display:grid;place-items:center;
+}
+.teilen-vorschau img{width:100%;height:auto;display:block;}
+.teilen-knoepfe{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.teilen-knoepfe .btn{justify-content:center;padding-inline:12px;}
+.teilen-hinweis{
+  margin-top:16px;font-size:.86rem;
+  color:var(--redorange);font-weight:600;min-height:1.2em;
+}
+
+@media (max-width:520px){
+  .teilen-knoepfe{grid-template-columns:1fr;}
+}
+
+/* ==========================================================================
+   Zubereitung über die volle Breite
+   Im zweispaltigen Layout entstand rechts neben dem langen Ablauf ein
+   grosses Loch, weil die Seitenspalte viel früher endet. Die Schritte
+   brechen deshalb aus und stehen als Raster über die ganze Breite. Das
+   füllt die Fläche und die Hochformat-Bilder werden endlich gross genug.
+   ========================================================================== */
+.zubereitung-voll{background:#fff;border-block:1px solid var(--linie);}
+
+.schritte-raster{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+  margin-top:clamp(28px,3.5vw,46px);
+}
+.schritt-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:var(--hellorange);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.schritt-karte-bild{
+  aspect-ratio:4/5;
+  overflow:hidden;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+  position:relative;
+}
+.schritt-karte-bild img{width:100%;height:100%;object-fit:cover;will-change:transform;}
+/* Hellorange auf Redorange statt umgekehrt: Die Küche in Julias Bildern
+   ist selbst redorange, ein roter Kreis verschwindet darauf. */
+.schritt-karte-bild .nummer{
+  position:absolute;top:16px;left:16px;
+  /* Das Bild steht im Markup danach und läge sonst darüber. */
+  z-index:2;
+  width:46px;height:46px;
+  border-radius:50%;
+  background:var(--hellorange);
+  color:var(--redorange);
+  display:grid;place-items:center;
+  font-weight:800;font-size:1.02rem;
+  box-shadow:0 6px 18px rgba(33,31,29,.28);
+}
+.schritt-karte-koerper{padding:24px 24px 28px;display:flex;flex-direction:column;gap:11px;flex:1;}
+.schritt-karte h3{font-size:1.12rem;font-weight:700;letter-spacing:-.01em;}
+.schritt-karte p{font-size:.93rem;line-height:1.62;opacity:.84;}
+.schritt-karte .tipp{
+  margin-top:auto;padding-top:14px;
+  border-top:1px solid var(--linie);
+  font-size:.86rem;opacity:.8;line-height:1.55;
+}
+.schritt-karte .tipp strong{color:var(--redorange);}
+
+@media (max-width:1080px){ .schritte-raster{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:620px){ .schritte-raster{grid-template-columns:1fr;} }
+
+/* Textblock ohne Seitenspalte, nach der Vollbreiten-Zubereitung. */
+.beitragstext--solo{
+  max-width:68ch;
+  margin-inline:auto;
+  padding-block:clamp(48px,6vw,80px);
+}
+
+/* Erklärzeile im Teilen-Dialog */
+.teilen-erklaerung{
+  font-size:.88rem;
+  line-height:1.55;
+  opacity:.78;
+  margin:0 0 16px;
+}
+
+/* ==========================================================================
+   Mitlaufendes Inhaltsverzeichnis
+   Der Fliesstext ist deutlich länger als die Seitenspalte. Bisher stand die
+   Spalte oben und liess darunter eine grosse Lücke. Jetzt bleibt das
+   Verzeichnis beim Scrollen stehen und begleitet den Leser.
+
+   Es klebt die ganze Spalte, nicht jedes Element für sich. Vorher stand die
+   Produktbox auf einem festen Abstand, der eine Verzeichnishöhe von 260 px
+   annahm — bei längeren Artikeln schob sie sich dann über die letzten
+   Einträge. Jetzt teilen sich beide den Platz: Ist die Spalte höher als das
+   Fenster, schrumpft das Verzeichnis und scrollt in sich, die Box bleibt
+   immer vollständig sichtbar.
+   ========================================================================== */
+.beitragslayout{align-items:start;}
+.beitragsseite{
+  position:sticky;
+  top:104px;
+  align-self:start;
+  max-height:calc(100vh - 128px);
+}
+.beitragsseite .inhaltsverzeichnis{
+  position:static;
+  min-height:0;      /* sonst schrumpft es im Flex-Kontext nicht */
+  overflow-y:auto;
+}
+.beitragsseite .seitenbox{position:static;flex-shrink:0;}
+
+@media (max-width:1080px){
+  .beitragsseite{position:static;max-height:none;}
+  /* Unter dem Text steht das Verzeichnis ganz ausgeklappt. min-height wieder
+     auf auto, sonst staucht der Flex-Container es und die letzten Einträge
+     verschwinden. */
+  .beitragsseite .inhaltsverzeichnis{
+    position:static;max-height:none;
+    min-height:auto;overflow-y:visible;
+  }
+  /* relative, nicht static: sonst verliert das angeschnittene Signet in der
+     Box seinen Bezugsrahmen, hängt sich an die Seite und schiebt sie auf. */
+  .beitragsseite .seitenbox{position:relative;max-height:none;}
+}
+
+/* ==========================================================================
+   Vorbereitung: Eckdaten, Zutaten und Equipment nebeneinander
+   Löst gleichzeitig zwei Dinge: den leeren Raum neben der kurzen Einleitung
+   und den fehlenden Equipment-Abschnitt aus der bisherigen Website.
+   ========================================================================== */
+.vorbereitung{background:var(--hellorange);}
+.vorbereitung-raster{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+}
+.vorb-block{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:28px 26px 30px;
+  display:flex;
+  flex-direction:column;
+}
+.vorb-block h3{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;margin:0 0 20px;color:var(--redorange);
+}
+.vorb-block .eckdaten{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px 14px;
+}
+.vorb-block .eckdaten > span{display:flex;flex-direction:column;gap:4px;}
+.vorb-block .eckdaten .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.6rem;opacity:.55;
+}
+.vorb-block .eckdaten .wert{font-weight:800;font-size:1.14rem;letter-spacing:-.02em;}
+
+.equipment{display:flex;flex-direction:column;gap:1px;}
+.equipment-teil{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 0;
+  border-bottom:1px solid var(--linie);
+}
+.equipment-teil:last-child{border-bottom:0;}
+.equipment-teil .zeichen{
+  width:42px;height:42px;
+  border-radius:var(--radius-pill);
+  background:var(--hellorange);
+  color:var(--dunkelblau);
+  display:grid;place-items:center;
+  flex-shrink:0;
+}
+.equipment-teil .name{font-weight:700;font-size:.96rem;}
+.equipment-teil .zusatz{display:block;font-weight:500;font-size:.82rem;opacity:.68;margin-top:2px;}
+/* Variante mit echten Fotos statt Zeichen, für die Rezeptseiten.
+   Die Zeilenvariante darüber bleibt für die Brew Guides in Gebrauch. */
+.equipment--fotos{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
+.equipment-foto{margin:0;}
+.equipment-foto img{
+  width:100%;aspect-ratio:1/1;object-fit:cover;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:var(--hellorange);
+  display:block;
+}
+.equipment-foto figcaption{
+  margin-top:9px;
+  font-weight:700;font-size:.88rem;line-height:1.35;
+}
+
+.vorb-block .fussnote{
+  margin-top:auto;padding-top:18px;
+  font-size:.86rem;line-height:1.55;opacity:.78;
+}
+
+@media (max-width:900px){ .vorbereitung-raster{grid-template-columns:1fr;} }
+@media (max-width:520px){ .equipment--fotos{grid-template-columns:1fr 1fr;gap:12px;} }
+
+/* ==========================================================================
+   Bilder im Artikeltext
+   Der bisherige Shop nutzt vier Typen, die hier alle vorkommen:
+   ein Kontextbild pro Abschnitt, eine Vergleichsreihe, Vergleichsgrafiken
+   mit eigener Mobilfassung und das Autorenbild am Schluss.
+   ========================================================================== */
+
+/* Ein Bild im Textfluss, darf über die Textspalte hinausragen. */
+.artikelbild{
+  margin:clamp(28px,3.4vw,44px) 0 0;
+}
+.artikelbild img{
+  width:100%;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:var(--powderblue);
+  display:block;
+}
+.artikelbild figcaption{
+  margin-top:11px;
+  font-size:.84rem;
+  opacity:.68;
+  line-height:1.5;
+}
+/* Trug die Vergleichsgrafiken früher über die Textspalte hinaus. Seit der
+   Inhalt mittig in seiner eigenen Spalte steht, bleiben auch sie darin. */
+.artikelbild--breit{width:100%;}
+
+/* Vier Getränke nebeneinander */
+.vergleichsreihe{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+  margin-top:clamp(26px,3.2vw,40px);
+}
+.vergleich-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.vergleich-karte .bild{aspect-ratio:1;overflow:hidden;background:var(--powderblue);}
+.vergleich-karte .bild img{width:100%;height:100%;object-fit:cover;}
+.vergleich-karte .text{padding:16px 16px 18px;}
+.vergleich-karte h4{margin:0;font-size:.98rem;font-weight:700;letter-spacing:-.01em;}
+.vergleich-karte .anteil{
+  display:block;margin-top:5px;
+  font-weight:600;font-size:.76rem;
+  color:var(--redorange);
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.vergleich-karte.ist-gemeint{border-color:var(--redorange);border-width:2px;}
+
+/* Autorenbild am Ende */
+.autorbox{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:clamp(20px,2.6vw,32px);
+  align-items:center;
+  margin-top:clamp(36px,4.4vw,60px);
+  padding-top:clamp(28px,3.4vw,42px);
+  border-top:1px solid var(--linie);
+}
+.autorbox .portrait{
+  width:clamp(96px,11vw,140px);
+  aspect-ratio:1;
+  border-radius:50%;
+  overflow:hidden;
+  background:var(--powderblue);
+}
+.autorbox .portrait img{width:100%;height:100%;object-fit:cover;}
+.autorbox .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.66rem;color:var(--redorange);
+}
+.autorbox h3{margin:8px 0 0;font-size:1.22rem;}
+.autorbox p{margin-top:10px;font-size:.93rem;line-height:1.6;opacity:.82;}
+
+/* ==========================================================================
+   Bausteine der Wissensartikel
+   Der bisherige Shop nutzt in den Artikeln vier Dinge, für die es hier noch
+   nichts gab: eine Vergleichstabelle mit Fotos als Spaltenköpfen, die
+   Kurzübersicht am Anfang, die Verweiszeile zwischen den Absätzen und den
+   Quellenapparat am Ende.
+   ========================================================================== */
+
+/* --- Kurzübersicht: je Aussage eine Karte mit Ziffer --------------------- */
+/* Zwei Karten nebeneinander, innerhalb der Textspalte. */
+.kurzuebersicht{margin:34px 0 44px;}
+.beitragstext .kurzuebersicht h2{
+  margin:0 0 18px;
+  font-size:.68rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--redorange);
+}
+.kurzuebersicht ol{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin:0;padding:0;
+  list-style:none;
+  counter-reset:none;
+}
+.kurzuebersicht li{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:14px;
+  align-items:start;
+  margin:0;
+  padding:20px 22px;
+  border-radius:var(--radius-karte);
+  background:var(--hellorange);
+  border:1px solid var(--linie);
+}
+.kurzuebersicht .ziffer{
+  font-size:1.35rem;font-weight:900;
+  letter-spacing:-.03em;line-height:1;
+  color:var(--redorange);
+  padding-top:1px;
+}
+.kurzuebersicht .aussage{
+  font-size:.95rem;line-height:1.55;
+}
+
+/* --- Verweis auf die Anleitung ------------------------------------------- */
+/* Zwei Stellen: eine schlanke Zeile im Kopf für alle, die gleich loslegen
+   wollen, und ein Kasten dort, wo der Artikel die Zubereitung erklärt. */
+.kopfverweis{
+  margin:18px 0 0;
+  font-size:.94rem;
+  opacity:.9;
+}
+.kopfverweis a{
+  color:var(--redorange);
+  font-weight:700;
+  text-decoration:none;
+  border-bottom:2px solid currentColor;
+  padding-bottom:1px;
+  margin-left:4px;
+}
+.kopfverweis a:hover{color:var(--dunkelblau);}
+
+.verweiskasten{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:clamp(20px,3vw,34px);
+  align-items:center;
+  margin:clamp(34px,4vw,48px) 0;
+  padding:clamp(24px,3vw,32px);
+  border-radius:var(--radius-karte);
+  background:var(--hellorange);
+  border:1px solid var(--linie);
+}
+/* Weisser Grund unter dem Glas: Die Milchschicht ist hellorange und wäre auf
+   dem Kastengrund unsichtbar. */
+.verweis-glas{
+  display:grid;place-items:center;
+  aspect-ratio:1;
+  border-radius:var(--radius-pill);
+  background:#fff;
+  padding:16px;
+}
+.verweis-glas svg{width:100%;max-width:112px;height:auto;display:block;}
+.beitragstext .verweis-text .eyebrow{
+  display:block;
+  color:var(--redorange);
+  margin-bottom:8px;
+}
+.beitragstext .verweis-text h3{margin:0 0 8px;font-size:1.25rem;}
+.beitragstext .verweis-text p{margin:0 0 18px;font-size:.95rem;line-height:1.55;}
+
+/* --- Verweiszeile, im Shop der Absatz mit dem Pfeil ---------------------- */
+/* Kein Flex-Container: darin wird jedes Element ein eigenes Flex-Element,
+   also auch der Link. Er stand dann als schmale zweite Spalte im Satz und
+   brach mitten im Linktext um. Jetzt hängt nur der Pfeil links aussen, der
+   Satz läuft als gewöhnlicher Text durch. */
+.beitragstext .verweiszeile{
+  position:relative;
+  margin:22px 0;
+  padding-left:26px;
+  font-size:.95rem;line-height:1.55;
+}
+.verweiszeile .pfeil{
+  position:absolute;
+  left:0;
+  top:0;
+  color:var(--redorange);
+  font-weight:700;
+}
+
+/* --- Vergleichstabelle --------------------------------------------------- */
+/* Sie ist breiter als die Textspalte und darf deshalb ausbrechen. Auf dem
+   Handy scrollt sie in sich, statt die Seite zu sprengen. Die erste Spalte
+   benennt die Zeile und bleibt beim Scrollen stehen. */
+.tabellenrahmen{
+  width:100%;
+  margin:34px 0;
+  overflow-x:auto;
+  border:1px solid var(--linie);
+  border-radius:var(--radius-karte);
+  background:#fff;
+  -webkit-overflow-scrolling:touch;
+}
+.vergleichstabelle{
+  border-collapse:collapse;
+  width:100%;
+  min-width:640px;
+  font-size:.92rem;
+}
+.vergleichstabelle caption{
+  caption-side:top;
+  text-align:left;
+  padding:18px 22px 4px;
+  font-weight:700;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--redorange);
+}
+.vergleichstabelle th,
+.vergleichstabelle td{
+  padding:13px 16px;
+  text-align:left;
+  vertical-align:top;
+  border-bottom:1px solid var(--linie);
+  line-height:1.45;
+}
+.vergleichstabelle thead th{
+  background:var(--dunkelblau);
+  color:var(--hellorange);
+  font-weight:700;
+  font-size:.82rem;
+  letter-spacing:.02em;
+  border-bottom:0;
+}
+.vergleichstabelle thead .bildzeile td{
+  background:var(--hellorange);
+  padding:12px 16px;
+  border-bottom:1px solid var(--linie);
+}
+.vergleichstabelle thead .bildzeile img{
+  width:100%;max-width:104px;
+  aspect-ratio:1;object-fit:cover;
+  border-radius:var(--radius-karte);
+  display:block;
+}
+.vergleichstabelle tbody th{
+  font-weight:700;
+  background:#fff;
+  position:sticky;left:0;
+  box-shadow:1px 0 0 var(--linie);
+}
+.vergleichstabelle tbody tr:last-child th,
+.vergleichstabelle tbody tr:last-child td{border-bottom:0;}
+.vergleichstabelle tbody tr:hover th,
+.vergleichstabelle tbody tr:hover td{background:var(--hellorange);}
+.vergleichstabelle a{color:var(--redorange);}
+
+
+/* --- Quellen, bislang nur in der Kaffeegeschichte ------------------------ */
+.beitragstext ul.quellen{
+  margin-top:18px;
+  font-size:.86rem;line-height:1.5;
+  opacity:.78;
+}
+.beitragstext ul.quellen li{margin-bottom:9px;}
+.beitragstext ul.quellen a{word-break:break-word;}
+
+@media (max-width:900px){
+  .vergleichsreihe{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:560px){
+  .autorbox{grid-template-columns:1fr;text-align:left;}
+  .verweiskasten{grid-template-columns:1fr;text-align:left;}
+  /* Einspaltig hatte der weisse Kreis keine Breite mehr, die ihn hält, und
+     lief über die ganze Spalte. Jetzt steht er klein und links. */
+  .verweis-glas{width:104px;justify-self:start;padding:12px;}
+  .verweis-glas svg{max-width:none;}
+  .kurzuebersicht ol{grid-template-columns:1fr;}
+  .vergleichstabelle{font-size:.86rem;}
+  .vergleichstabelle th,
+  .vergleichstabelle td{padding:11px 13px;}
+}
+
+/* ==========================================================================
+   Kaffeefinder (welcher-kaffee.html)
+   Es steht immer eine Frage oder ein Ergebnis im Bild; kaffeefinder.js
+   wechselt. Die Antworten sind Knöpfe der Mahlgradwahl, nur grösser und
+   mit Platz für eine zweite Zeile.
+   ========================================================================== */
+.finder{max-width:980px;}
+.finder-leiste{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.finder-schritt{color:var(--redorange);}
+.finder-zurueck{
+  font-weight:600;font-size:.88rem;
+  color:var(--dunkelblau);opacity:.75;
+  text-decoration:underline;text-underline-offset:3px;
+}
+.finder-zurueck:hover{opacity:1;}
+.finder-titel{
+  font-size:clamp(1.7rem,3.4vw,2.6rem);
+  line-height:1.08;
+  max-width:22ch;
+  margin:14px 0 clamp(22px,3vw,34px);
+}
+.finder-titel:focus{outline:none;}
+.finder-antworten{gap:12px;}
+.finder-antworten button{
+  display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;
+  padding:14px 22px;
+  font-size:1rem;
+  text-align:left;
+  border-radius:var(--radius-karte);
+}
+.finder-antworten .zusatz{font-weight:400;font-size:.8rem;opacity:.75;}
+.finder-treffer h2{margin-top:12px;max-width:20ch;}
+.finder-treffer h2:focus{outline:none;}
+.finder-treffer > p{margin-top:12px;max-width:52ch;}
+.finder-treffer .produkt-raster{grid-template-columns:repeat(3,1fr);margin-top:clamp(24px,3vw,36px);}
+.finder-anleitung{margin-top:clamp(22px,3vw,32px);font-weight:500;}
+.finder-anleitung a{color:var(--redorange);text-decoration:underline;text-underline-offset:3px;}
+.finder-aktionen{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-top:clamp(24px,3vw,36px);}
+.finder-genauer{font-weight:600;color:var(--dunkelblau);text-decoration:underline;text-underline-offset:3px;}
+.finder-ohne-js{font-size:1.05rem;}
+.finder-ohne-js a{color:var(--redorange);text-decoration:underline;}
+@media (max-width:860px){
+  .finder-treffer .produkt-raster{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:620px){
+  .finder-treffer .produkt-raster{grid-template-columns:1fr;}
+}
+
+/* ==========================================================================
+   Rezept: Bohnen-Box mit rundem Produktbild
+   Die Bohne steht nur noch hier, nicht mehr zusätzlich im Text.
+   ========================================================================== */
+.seitenbox .kaffee-bild{
+  display:block;
+  width:112px;height:112px;
+  border-radius:50%;
+  overflow:hidden;
+  border:3px solid var(--hellorange);
+  background:var(--hellorange);
+  margin-bottom:18px;
+}
+.seitenbox .kaffee-bild img{width:100%;height:100%;object-fit:cover;}
+.seitenbox .eyebrow{display:block;opacity:.85;margin-bottom:8px;}
+
+/* ==========================================================================
+   Rezept: Koffein und Nährwerte, 1:1 aus den Shop-Metaobjekten
+   ========================================================================== */
+.naehrwerte{background:var(--hellorange);}
+.naehrwert-raster{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--gap);}
+.naehrwert{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:22px 18px 20px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+}
+.naehrwert .icon{
+  width:42px;height:42px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--hellorange);color:var(--redorange);
+  margin-bottom:8px;
+}
+.naehrwert .icon svg{width:20px;height:20px;}
+.naehrwert .wert{font-weight:800;font-size:1.35rem;letter-spacing:-.02em;line-height:1.1;}
+.naehrwert .rolle{font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.64rem;opacity:.7;}
+.naehrwerte .fussnote{margin-top:16px;max-width:70ch;}
+
+@media (max-width:1080px){
+  .naehrwert-raster{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:620px){
+  .naehrwert-raster{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ==========================================================================
+   Über uns (ueber-uns.html)
+   ========================================================================== */
+.werte-raster{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);}
+.wert-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:clamp(24px,2.6vw,34px);
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+}
+.wert-karte .icon{
+  width:50px;height:50px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--hellorange);color:var(--redorange);
+}
+.wert-karte h3{font-size:1.25rem;}
+.wert-karte p{opacity:.86;}
+.wert-link{margin-top:auto;font-weight:600;color:var(--redorange);text-decoration:underline;text-underline-offset:3px;}
+.team-raster{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--gap);}
+.team-karte{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:clamp(18px,2.4vw,30px);
+  align-items:start;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:clamp(24px,2.6vw,34px);
+}
+.team-karte .portrait{width:clamp(96px,10vw,132px);aspect-ratio:1;border-radius:50%;overflow:hidden;background:var(--powderblue);}
+.team-karte .portrait img{width:100%;height:100%;object-fit:cover;}
+.team-karte .rolle{font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.66rem;color:var(--redorange);}
+.team-karte h3{margin-top:8px;font-size:1.35rem;}
+.team-karte p{margin-top:12px;opacity:.86;}
+.team-karte p a{color:var(--redorange);text-decoration:underline;text-underline-offset:3px;}
+@media (max-width:860px){
+  .werte-raster,.team-raster{grid-template-columns:1fr;}
+}
+@media (max-width:620px){
+  .team-karte{grid-template-columns:1fr;}
+}
+
+/* ==========================================================================
+   Rezept: Bewertung im Kopf, klein wie im bisherigen Shop
+   «Bewerte dieses Rezept», fünf Sterne, darunter der Stand. bewertung.js.
+   ========================================================================== */
+.beitragsmeta{gap:14px 30px;}
+.rezept-bewertung--kopf{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+.bewertung-titel{font-size:.85rem;font-weight:600;line-height:1.3;}
+.rezept-bewertung--kopf .bewertung-sterne{display:flex;margin-left:-4px;}
+.rezept-bewertung--kopf .bewertung-sterne button{
+  width:28px;height:28px;border-radius:50%;
+  font-size:1.35rem;line-height:1;
+  color:rgba(0,75,92,.22);
+  transition:color .2s ease,transform .25s cubic-bezier(.65,0,.35,1);
+}
+.rezept-bewertung--kopf .bewertung-sterne button.ist-voll{color:var(--redorange);}
+.rezept-bewertung--kopf .bewertung-sterne button:hover{transform:scale(1.15);}
+.rezept-bewertung--kopf .bewertung-sterne button:focus-visible{outline:2px solid var(--redorange);outline-offset:1px;}
+.rezept-bewertung--kopf .bewertung-sterne button:disabled{cursor:progress;}
+.rezept-bewertung--kopf .bewertung-ergebnis{font-size:.84rem;font-weight:500;opacity:.75;line-height:1.35;}
+
+/* ==========================================================================
+   Rezept: Boxen-Raster
+   Desktop drei Spalten. Oben Auf einen Blick, Zutaten, Nährwerte; unten
+   «Was brauche ich …» über zwei Spalten und die Bohne. Ohne Nährwerte rückt
+   die Bohne nach oben und das Equipment nimmt unten die volle Breite.
+   ========================================================================== */
+.vorb-block .vorb-titel{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;line-height:1.5;margin:0 0 20px;color:var(--redorange);
+}
+.vorb-block--equipment{grid-column:span 2;}
+.vorbereitung-raster--ohne-naehrwerte .vorb-block--equipment{grid-column:1 / -1;}
+/* Wie im bisherigen Shop: Die Bilder nehmen die ganze Breite der Box ein,
+   höchstens vier pro Zeile, der Text steht immer darunter. 1.05rem hält die
+   Zeilen in der zweispaltigen Box bei gut 65 Zeichen; über die volle Breite
+   begrenzt max-width sie auf 68 Zeichen. */
+.equipment-inhalt{display:flex;flex-direction:column;gap:clamp(18px,2vw,26px);}
+.equipment-inhalt > *{min-width:0;}
+.vorb-block--equipment .equipment--fotos{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.equipment-text{font-size:1.05rem;line-height:1.7;max-width:68ch;}
+.vorbereitung-raster > .seitenbox{display:flex;flex-direction:column;align-items:flex-start;}
+.vorbereitung-raster > .seitenbox .btn{margin-top:auto;}
+
+/* Zutaten mit Portionen */
+/* Die Überschrift schrumpft nicht; reicht der Platz nicht, rutschen die
+   Knöpfe in die nächste Zeile. */
+.zutaten-kopf{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 12px;margin-bottom:20px;}
+.zutaten-kopf h3{margin:0 !important;flex:1 0 auto;max-width:100%;}
+.portionen{display:flex;gap:6px;flex-shrink:0;margin-top:-6px;}
+.portionen[hidden]{display:none;}
+.portionen button{
+  width:30px;height:30px;border-radius:50%;
+  border:1.5px solid var(--dunkelblau);color:var(--dunkelblau);
+  font-weight:700;font-size:1.05rem;line-height:1;
+  display:grid;place-items:center;
+  transition:background-color .25s ease,color .25s ease,opacity .25s ease;
+}
+.portionen button:hover:not(:disabled),
+.portionen button:focus-visible{background:var(--dunkelblau);color:var(--hellorange);}
+.portionen button:disabled{opacity:.3;cursor:default;}
+.portionen-hinweis{margin-top:14px;font-size:.84rem;line-height:1.5;opacity:.75;}
+
+/* Nährwerte als Liste, gebaut wie die Zutaten */
+.naehrwert-liste{display:flex;flex-direction:column;gap:1px;}
+.naehrwert-zeile{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--linie);}
+.naehrwert-zeile:last-child{border-bottom:0;}
+.naehrwert-zeile svg{width:17px;height:17px;color:var(--redorange);flex-shrink:0;}
+.naehrwert-zeile .rolle{color:var(--dunkelblau);}
+.naehrwert-zeile .wert{margin-left:auto;font-weight:700;white-space:nowrap;color:var(--redorange);}
+
+/* Varianten direkt unter den Schritten */
+.varianten-block{margin-top:clamp(34px,4vw,54px);max-width:var(--textbreite);}
+.varianten-block h2{font-size:clamp(1.5rem,2.6vw,2.15rem);}
+.varianten-block ul{margin-top:18px;padding-left:1.3em;list-style:disc;}
+.varianten-block li{margin-bottom:9px;line-height:1.65;padding-left:.3em;}
+
+/* Ohne Seitenspalte: Fliesstext und Fragen einspaltig */
+.beitragslayout--einspaltig{grid-template-columns:minmax(0,var(--textbreite));}
+
+/* Nährwerte: auf dem Desktop als Box oben, bis 900 px als Abschnitt nach
+   der Zubereitung. */
+@media (min-width:901px){
+  .naehrwerte--mobil{display:none;}
+}
+/* Zwischen 901 und 1080 px ist der Inhaltsbereich nur so breit wie die
+   Textspalte. Drei Boxen würden zu schmal, deshalb zwei Spalten: oben Auf
+   einen Blick und Zutaten, darunter Nährwerte und Bohne, zuletzt «Was
+   brauche ich …» über die volle Breite. */
+@media (min-width:901px) and (max-width:1080px){
+  .vorbereitung-raster{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .vorbereitung-raster > .seitenbox{order:1;}
+  .vorb-block--equipment,
+  .vorbereitung-raster--ohne-naehrwerte .vorb-block--equipment{grid-column:1 / -1;order:2;}
+  .vorbereitung-raster--ohne-naehrwerte > .seitenbox{grid-column:1 / -1;order:3;}
+}
+@media (max-width:900px){
+  .vorb-block--naehrwerte{display:none;}
+  .vorb-block--equipment{grid-column:auto;}
+  .vorbereitung-raster--ohne-naehrwerte .vorb-block--equipment{grid-column:auto;}
+  .vorbereitung-raster--ohne-naehrwerte > .seitenbox{order:1;}
+  .vorb-block--equipment .equipment--fotos{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+/* ==========================================================================
+   Rezept: Kopf wie im bisherigen Shop
+   Titel, Lead, Autor mit Bewertung und der Zeitstempel in einer Spalte, das
+   Heldenbild über zwei (im Shop 318 zu 635 px, 50 px Abstand). Der Titel
+   ist deshalb kleiner als bei den Artikeln, rund 35 px auf 1440.
+
+   Der Eyebrow steht in einer eigenen Rasterzeile über Titel und Bild. So
+   schliesst die Oberkante der Grossbuchstaben bündig mit dem Bild ab: Bei
+   Gabarito mit Zeilenhöhe 1.1 liegt sie 0,2em unter der Zeilenoberkante,
+   um so viel rückt der Titel hoch. text-box: trim-start wäre genauer,
+   schnitte aber in der Zeilenmaske der Titelanimation Akzente und
+   Oberlängen ab (É ragt 0,29em über die Versalhöhe).
+   ========================================================================== */
+.beitragskopf-raster--rezept{
+  grid-template-columns:minmax(0,1fr) minmax(0,2fr);
+  grid-template-rows:auto auto;
+  gap:16px 50px;
+  align-items:start;
+}
+.beitragskopf-raster--rezept > .beitrag-art{grid-column:1;grid-row:1;justify-self:start;display:inline-flex;margin-top:22px;}
+.beitragskopf-raster--rezept > .beitragskopf-text{grid-column:1;grid-row:2;}
+.beitragskopf-raster--rezept > .beitragsbild{grid-column:2;grid-row:2;}
+.beitragskopf-raster--rezept h1{
+  font-size:clamp(1.6rem,2.4vw,2.2rem);line-height:1.1;
+  margin-top:-.2em;
+}
+.beitragskopf-raster--rezept .lead{font-size:1rem;}
+.beitragskopf-raster--rezept .beitragsmeta{flex-direction:column;align-items:flex-start;gap:14px;margin-top:22px;}
+.aktualisiert{margin-top:14px;font-size:.8rem;font-weight:500;opacity:.7;}
+@media (max-width:1080px){
+  .beitragskopf-raster--rezept{grid-template-columns:1fr;grid-template-rows:none;gap:0;}
+  .beitragskopf-raster--rezept > .beitrag-art,
+  .beitragskopf-raster--rezept > .beitragskopf-text,
+  .beitragskopf-raster--rezept > .beitragsbild{grid-column:auto;grid-row:auto;}
+  .beitragskopf-raster--rezept > .beitragsbild{margin-bottom:4px;}
+  .beitragskopf-raster--rezept > .beitragskopf-text{margin-top:16px;}
+}
+
+/* ==========================================================================
+   Hub: Wegweiser
+   Der nummerierte Weg durch eine Hub-Seite, erste Sektion nach dem Kopf.
+   Baut auf der Einstiegskachel auf: gleicher Radius, gleiche Linie, gleicher
+   weisser Grund, gleiche Hover-Regel. Dazu kommt die Ziffer, die aus einem
+   CSS-Zaehler stammt. Eine spaetere Umsortierung betrifft damit nur die
+   Reihenfolge der <li>, nie eine Zahl im Markup.
+   ========================================================================== */
+.wegweiser{
+  counter-reset:station;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--gap);
+  margin:0;padding:0;
+  list-style:none;
+}
+.station{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:24px 24px 26px;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.station:hover,
+.station:focus-visible{border-color:var(--linie-stark);box-shadow:0 20px 40px rgba(0,75,92,.11);}
+.station .marke{display:flex;align-items:center;gap:13px;}
+.station .nummer{
+  counter-increment:station;
+  font-weight:800;font-size:1.02rem;letter-spacing:-.01em;
+  color:var(--redorange);
+  flex-shrink:0;
+}
+.station .nummer::before{content:counter(station,decimal-leading-zero);}
+.station .icon{
+  width:46px;height:46px;
+  border-radius:var(--radius-pill);
+  display:grid;place-items:center;
+  background:var(--hellorange);
+  color:var(--redorange);
+  flex-shrink:0;
+}
+.station .titel{
+  display:flex;align-items:center;gap:8px;
+  font-size:1.08rem;font-weight:700;letter-spacing:-.02em;line-height:1.2;
+}
+.station .satz{font-size:.9rem;line-height:1.55;opacity:.78;}
+.station .pfeil{
+  color:var(--redorange);flex-shrink:0;
+  transition:transform .34s cubic-bezier(.65,0,.35,1);
+}
+.station:hover .pfeil,
+.station:focus-visible .pfeil{transform:translateX(5px);}
+
+@media (max-width:1080px){
+  .wegweiser{grid-template-columns:repeat(2,1fr);}
+}
+/* Auf dem Handy waeren sechs Karten untereinander sehr hoch. Deshalb dort
+   kein Rahmen mehr, sondern Zeilen mit Haarlinie, wie bei den Zutaten. */
+@media (max-width:620px){
+  .wegweiser{grid-template-columns:1fr;gap:0;}
+  .station{
+    border:0;border-bottom:1px solid var(--linie);
+    border-radius:0;background:none;
+    padding:18px 0;gap:8px;
+  }
+  .station:hover{box-shadow:none;}
+  .wegweiser li:last-child .station{border-bottom:0;}
+  .station .icon{width:38px;height:38px;}
+  .station .titel{font-size:1rem;}
+}
+
+/* ==========================================================================
+   Weiter-Link am Sektionsende
+   Die Bruecke zur naechsten Sektion. Der Link selbst ist .besser-alle, hier
+   kommt nur die Platzierung dazu. Flex, damit auf Dunkelblau ein Knopf
+   daneben stehen kann.
+   ========================================================================== */
+.sektion-weiter{
+  display:flex;flex-wrap:wrap;align-items:center;
+  gap:14px 24px;
+  margin-top:clamp(28px,3.4vw,44px);
+}
+/* Auf Dunkelblau ist Redorange zu dunkel, dort fuehrt der Link in Hellorange. */
+.sektion-weiter--hell .besser-alle{color:var(--hellorange);}
+@media (max-width:420px){
+  .sektion-weiter{flex-direction:column;align-items:flex-start;gap:16px;}
+}
+
+/* ==========================================================================
+   Rezeptur, breite Fassung
+   Seit 26.09.2026 steht das Grundrezept breit oben, darunter die Regler,
+   darunter die Anleitung. Die zweispaltige, klebende Fassung ab Z. 288
+   bleibt unberuehrt stehen, damit die Zeilenangaben im Marken-Guide halten.
+   Diese Modifikatoren setzen sie ausser Kraft: gleiche Spezifitaet, aber
+   spaeter in der Datei.
+   ========================================================================== */
+.rezeptur-fluss--breit{
+  grid-template-columns:minmax(0,1fr);
+  gap:clamp(26px,3.2vw,44px);
+}
+.rezeptur-ergebnis--breit{position:static;}
+/* Vier Werte nebeneinander statt zu zweit, die Zahlen duerfen wieder gross. */
+.rezeptur-ergebnis--breit .rezeptur{grid-template-columns:repeat(4,minmax(0,1fr));}
+.rezeptur-ergebnis--breit .rezeptur-wert{padding:18px 18px 20px;}
+.rezeptur-ergebnis--breit .rezeptur-wert .zahl{font-size:clamp(1.7rem,2.9vw,2.4rem);}
+.rezeptur-ergebnis--breit .rezeptur-wert .rolle{margin-top:11px;font-size:.66rem;letter-spacing:.12em;}
+
+/* Der Satz fasst die beiden Entscheidungen zusammen und wechselt mit ihnen.
+   Die Grammzahl steht bewusst nicht drin: Sie aendert sich beim Ziehen am
+   Regler laufend und steht ohnehin gross darueber. */
+.rezeptur-satz{
+  margin:20px 0 0;
+  padding-top:16px;
+  border-top:1px solid rgba(0,75,92,.14);
+  font-size:.92rem;font-weight:600;
+  opacity:.82;
+}
+
+.rezeptur-regler-satz{font-weight:600;margin:0 0 14px;opacity:.9;}
+.rezeptur-regler-raster{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--gap);
+  align-items:start;
+}
+/* .schritt-wahl bringt aus dem Schrittfluss einen oberen Abstand mit, den es
+   als eigenstaendige Box nicht braucht. */
+.rezeptur-regler-raster > .schritt-wahl{margin-top:0;height:100%;}
+
+@media (max-width:860px){
+  .rezeptur-regler-raster{grid-template-columns:minmax(0,1fr);}
+  .rezeptur-ergebnis--breit .rezeptur{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+/* ==========================================================================
+   Vertiefungslinks in den Rezeptur-Schritten
+   Jeder Schritt kann Ausgangspunkt fuer tiefere Recherche sein. Eigene
+   Klasse statt .verweiszeile (Z. 1860): die ist auf .beitragstext gescopet
+   und traegt Redorange, was auf Dunkelblau ein verbotenes Paar waere.
+   Schritte ohne Ziel bekommen gar keine Liste, nie eine leere.
+   ========================================================================== */
+.schritt-tiefer{
+  margin:14px 0 0;padding:0;
+  list-style:none;
+  display:flex;flex-wrap:wrap;
+  gap:6px 22px;
+}
+.schritt-tiefer li{font-size:.86rem;font-weight:600;}
+.schritt-tiefer a{
+  color:var(--hellorange);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1.5px;
+  text-decoration-color:rgba(255,243,232,.42);
+  transition:text-decoration-color .3s ease;
+}
+.schritt-tiefer a:hover,
+.schritt-tiefer a:focus-visible{text-decoration-color:var(--hellorange);}
+
+/* ==========================================================================
+   Rezeptraster mit Filter
+   Die Kachel traegt data-art, nicht die Karte: werkzeug/teaser-abgleichen.rb
+   erkennt die Karte an ihrem Anker mit genau der Klasse rezept, ein weiteres
+   Attribut dort macht sie fuer das Skript unsichtbar. Die Kachel ist deshalb
+   eine reine Huelle und muss die Karte auf volle Hoehe bringen.
+   ========================================================================== */
+.rezepte-raster--filterbar > .rezept-kachel{display:flex;}
+.rezepte-raster--filterbar > .rezept-kachel > .rezept{flex:1;}
+/* Ohne eigene Regel gewinnt display:flex gegen das hidden-Attribut. */
+.rezepte-raster--filterbar > .rezept-kachel[hidden]{display:none;}
+
+@media (max-width:860px){
+  .rezepte-raster--filterbar{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:560px){
+  .rezepte-raster--filterbar{grid-template-columns:minmax(0,1fr);}
+}
+
+/* ==========================================================================
+   Maschinenfinder auf dem Espresso-Hub
+   Derselbe Fragebogen wie auf welcher-kaffee.html, nur eine Ebene tiefer:
+   Die Sektion hat schon eine h2, deshalb sind Frage und Ergebnis h3 und
+   brauchen eine kleinere Stufe. Das Ergebnis stellt die Begruendung neben
+   die eine Guide-Karte; .brewguides waere dreispaltig und liesse die Karte
+   allein im linken Drittel stehen.
+   ========================================================================== */
+.finder--hub{margin-bottom:clamp(34px,4.2vw,56px);}
+.finder--hub .finder-titel{font-size:clamp(1.25rem,2.2vw,1.7rem);max-width:26ch;}
+.finder--hub .finder-treffer h3{margin-top:12px;font-size:clamp(1.3rem,2.4vw,1.8rem);}
+.finder--hub .finder-treffer h3:focus{outline:none;}
+.finder--hub .finder-treffer > div > p{margin-top:12px;max-width:52ch;}
+.maschinen-treffer{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,.8fr);
+  gap:var(--gap);
+  align-items:start;
+}
+/* Die Zwischenueberschrift ueber dem Sechser-Raster. */
+.raster-titel{
+  font-size:1.05rem;
+  margin-bottom:clamp(16px,2vw,22px);
+}
+@media (max-width:860px){
+  .maschinen-treffer{grid-template-columns:minmax(0,1fr);}
+}
+
+/* ==========================================================================
+   Überschriften messen in ihrer eigenen Schrift
+   Bis zum 27.09.2026 deckelte .sektion-kopf .text alles gemeinsam auf 46ch,
+   gemessen in der 16-px-Fliesstextschrift, also rund 400 px. Darin stand eine
+   bis zu 62 px grosse Überschrift: zwölf bis vierzehn Zeichen pro Zeile, und
+   ein langes Wort wie «Espressogetränk» lief heraus und wurde von der
+   Zeilenmaske der Titelanimation (basis.js, mask:'lines') abgeschnitten.
+   Ein Breitendeckel gehoert an das Element, dessen Schrift er meint.
+   16ch ist dabei die Obergrenze: Ab etwa 20ch faellt der rechte Block des
+   Sektionskopfs in eine zweite Flex-Zeile.
+   ========================================================================== */
+.sektion-kopf h2{max-width:16ch;}
+.sektion-kopf .eyebrow{max-width:46ch;}
+
+/* ==========================================================================
+   Rezeptur: Bedienelemente in der hellen Box
+   Seit 27.09.2026 stehen die beiden Entscheidungen in der Ergebniskarte statt
+   darunter. .schritt-wahl (Z. 299) trug Rahmen, Grund und Schrift fuer
+   dunklen Grund und waere hier unsichtbar gewesen; .wahl-feld ist die
+   schlanke Fassung ohne eigene Flaeche.
+   ========================================================================== */
+.rezeptur-ergebnis--breit .rezeptur-regler{
+  margin-top:20px;
+  padding-top:18px;
+  border-top:1px solid rgba(0,75,92,.14);   /* wie .rezeptur-satz */
+}
+.rezeptur-regler-satz{opacity:.72;font-size:.88rem;}
+.wahl-feld > .rolle{
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;display:block;margin-bottom:10px;opacity:.72;
+}
+.wahl-feld .rezeptur-menge{margin:16px 0 0;}
+.wahl-feld .schritt-hinweis{margin-top:10px;font-size:.82rem;}
+/* Bekannter Fehler: .rezeptur-menge label (Z. 350) und .rechner-feld label
+   (Z. 544) haben dieselbe Spezifitaet, die spaetere gewann mit display:block.
+   Deshalb standen «Kaffeemehl» und «18 g» untereinander. Zwei Klassen im
+   Selektor drehen das stabil um. */
+.rezeptur-menge.rechner-feld label{
+  display:flex;align-items:baseline;gap:10px;
+  margin-bottom:8px;
+}
+
+/* Der Roestgrad-Umschalter: Icon neben dem Text statt darueber, rund 43 px
+   statt 80. Polster und Luecke der Schiene bleiben bei 4 px, deshalb stimmen
+   .schalter-fuellung width:calc(50% - 6px) (Z. 336) und left:calc(50% + 2px)
+   in hubs.js unveraendert weiter. Der Rahmen ist noetig, weil die weisse
+   Schiene auf Hellorange sonst konturlos schwimmt. */
+.wahl-feld .roestgrad-schalter{border:1px solid var(--linie);}
+.wahl-feld .roestgrad-schalter button{
+  flex-direction:row;
+  gap:8px;
+  padding:7px 14px 8px;
+}
+.wahl-feld .roestgrad-schalter button svg{width:18px;height:18px;}
+
+/* ==========================================================================
+   Die Anleitung zweispaltig
+   Mehrspaltensatz statt Raster: Die Schritte sind sehr unterschiedlich lang,
+   ein Raster liesse unter den kurzen Loecher. break-after am dritten erzwingt
+   drei links und zwei rechts, sonst entscheidet der Hoehenausgleich.
+   ========================================================================== */
+.schritte--zwei{
+  display:block;
+  columns:2;
+  column-gap:clamp(26px,3.4vw,52px);
+}
+.schritte--zwei > .schritt-zeile{
+  break-inside:avoid;
+  margin-bottom:26px;
+}
+.schritte--zwei > .schritt-zeile:nth-child(3){break-after:column;}
+.schritte--zwei > .schritt-zeile:last-child{margin-bottom:0;}
+
+/* Zwischenueberschrift ueber der Anleitung. .raster-titel allein waere mit
+   1.05rem so gross wie die h4 der Schritte darunter, also keine Stufe. */
+.rezeptur-fluss--breit > .raster-titel{
+  font-size:clamp(1.2rem,1.9vw,1.55rem);
+  margin-bottom:clamp(18px,2.2vw,26px);
+}
+
+@media (max-width:860px){
+  .schritte--zwei{columns:1;}
+  .schritte--zwei > .schritt-zeile:nth-child(3){break-after:auto;}
+}
+
+/* ==========================================================================
+   Rezeptraster: vier Spalten und teilweise eingeklappt
+   .rezepte-raster traegt auch filterkaffee.html und archiv.html mit je drei
+   Karten, deshalb ein Modifikator statt einer Aenderung an der Basis.
+   Die Leiter endet bei 620 px wie .rezepte-raster in beanwatch.css Z. 1331.
+   Bisher sprang --filterbar erst bei 560 px, dadurch verhielten sich
+   espresso und filterkaffee zwischen 561 und 620 px unterschiedlich.
+   ========================================================================== */
+.rezepte-raster--vier{grid-template-columns:repeat(4,minmax(0,1fr));}
+@media (max-width:1080px){.rezepte-raster--vier{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media (max-width:860px) {.rezepte-raster--vier{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:620px) {.rezepte-raster--vier{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+/* Im Vierer sind die Karten schmaler, also darf auch das Innere kleiner
+   werden. Mass nach .vergleichsreihe (Z. 1711), dem bestehenden Vierer-
+   Bildraster des Projekts. */
+@media (min-width:1081px){
+  .rezepte-raster--vier .rezept-koerper{padding:16px 17px 19px;gap:8px;}
+  .rezepte-raster--vier .rezept h3{font-size:1rem;line-height:1.28;}
+  .rezepte-raster--vier .rezept-meta{font-size:.74rem;gap:9px;}
+  .rezepte-raster--vier .rezept .mehr{font-size:.8rem;gap:6px;margin-top:4px;}
+}
+
+/* Eine Reihe voll, die naechste halb hoch und nach unten ausblendend, der
+   Rest weg. Der Block gilt fuer jedes Raster mit .ist-eingeklappt. Die
+   Leitern darunter sagen je Raster, wie viele Reihen stehen bleiben: das
+   Rezeptraster gleich hier, das Maschinenraster am Dateiende.
+   Das CSS bestimmt ueber display:none, wie viele Reihen im Layout stehen,
+   hubs.js blendet immer die letzte davon aus und misst die Hoehen zur
+   Laufzeit. Feste Werte gingen nicht: Zwei Reihen koennen verschieden hoch
+   sein, weil ein Titel umbricht, und --gap waechst mit dem Fenster.
+   Das display:none bleibt, obwohl die Maske ohnehin verbirgt: Sonst blieben
+   die Karten im Tabulator, und getClientRects() in hubs.js erkennt die
+   verborgenen Kacheln genau daran.
+   mask-repeat:no-repeat ist Pflicht, der Vorgabewert waere repeat. */
+.ist-eingeklappt{
+  max-height:var(--klapp-hoehe,none);
+  overflow:hidden;
+  /* Raum fuer das Anheben um 8 px beim Hover, sonst schneidet overflow die
+     oberste Reihe an. Das negative margin haelt die Lage. */
+  padding-top:10px;
+  margin-top:-10px;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 var(--klapp-voll,100%),rgba(0,0,0,.55) var(--klapp-zwei,100%),transparent 100%);
+          mask-image:linear-gradient(to bottom,#000 0,#000 var(--klapp-voll,100%),rgba(0,0,0,.55) var(--klapp-zwei,100%),transparent 100%);
+  -webkit-mask-repeat:no-repeat;
+          mask-repeat:no-repeat;
+}
+.rezepte-raster--vier.ist-eingeklappt > .rezept-kachel:nth-child(n+9){display:none;}
+@media (max-width:1080px){.rezepte-raster--vier.ist-eingeklappt > .rezept-kachel:nth-child(n+7){display:none;}}
+@media (max-width:860px) {.rezepte-raster--vier.ist-eingeklappt > .rezept-kachel:nth-child(n+7){display:none;}}
+@media (max-width:620px) {.rezepte-raster--vier.ist-eingeklappt > .rezept-kachel:nth-child(n+7){display:none;}}
+
+.mehr-knopf{margin-top:clamp(24px,3vw,38px);}
+
+/* Auf der eigenen Finder-Seite steht das Ergebnis eine Ebene hoeher als im
+   Hub, also h2 statt h3. .finder--hub (Z. 2434) bleibt ungenutzt stehen,
+   damit keine Zeilenangabe im Marken-Guide wandert. */
+.maschinen-treffer h2{margin-top:12px;font-size:clamp(1.3rem,2.4vw,1.8rem);max-width:none;}
+.maschinen-treffer h2:focus{outline:none;}
+.maschinen-treffer > div > p{margin-top:12px;max-width:52ch;}
+
+/* ==========================================================================
+   Vierspaltige Raster auf dem Espresso-Hub
+   .brewguides traegt neun Seiten, davon sechs Barista-Guides mit je fuenf
+   Karten, .beitraege traegt 38 Seiten. Beide bekommen deshalb einen
+   Modifikator statt einer Aenderung an der Basis. Die Leitern stehen
+   vollstaendig hier, weil die bestehenden Medienabfragen (Z. 958, 997)
+   dieselbe Spezifitaet haben und frueher in der Datei stehen.
+   ========================================================================== */
+.brewguides--vier{grid-template-columns:repeat(4,minmax(0,1fr));}
+@media (max-width:1080px){.brewguides--vier{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:620px) {.brewguides--vier{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+@media (min-width:1081px){
+  .brewguides--vier .brewguide-bild{padding:16px;}
+  .brewguides--vier .brewguide-koerper{padding:16px 18px 20px;gap:8px;}
+  .brewguides--vier .brewguide h3{font-size:1rem;}
+  .brewguides--vier .brewguide p{font-size:.84rem;}
+  .brewguides--vier .brewguide-meta{font-size:.7rem;gap:6px;}
+  .brewguides--vier .brewguide-meta .wert{padding:3px 9px;}
+}
+
+/* Drei Beitragskarten und die Verweisbox in einer Reihe. Der Sprung auf zwei
+   Spalten liegt bei 1180 px statt 1080, sonst werden vier Karten zu schmal. */
+.beitraege--vier{grid-template-columns:repeat(4,minmax(0,1fr));}
+@media (max-width:1180px){.beitraege--vier{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:620px) {.beitraege--vier{grid-template-columns:minmax(0,1fr);}}
+
+/* Die Seitenbox als Rasterzelle, wie im Vorbereitungsraster der Rezepte
+   (Z. 2143): Der Knopf klebt unten, egal wie hoch die Nachbarkarten sind. */
+.beitraege > .seitenbox{display:flex;flex-direction:column;align-items:flex-start;}
+.beitraege > .seitenbox .btn{margin-top:auto;}
+.beitraege > .seitenbox .eyebrow{color:var(--hellorange);opacity:.72;display:block;margin-bottom:10px;}
+
+@media (min-width:1181px){
+  .beitraege--vier .beitrag-koerper{padding:16px 17px 20px;gap:8px;}
+  .beitraege--vier .beitrag h3{font-size:.98rem;line-height:1.3;}
+  .beitraege--vier .beitrag p{font-size:.82rem;}
+  .beitraege--vier .beitrag .fusszeile{font-size:.74rem;padding-top:11px;}
+  .beitraege--vier > .seitenbox{padding:20px 19px 22px;}
+  .beitraege--vier > .seitenbox h4{font-size:.98rem;}
+  .beitraege--vier > .seitenbox p{font-size:.82rem;margin-bottom:14px;}
+}
+
+/* ==========================================================================
+   Ausnahme zur Regel aus Element 79
+   Die letzte Sektion vor dem Fuss traegt padding-top:0, damit das Band nicht
+   doppelt Luft bekommt. Auf espresso.html steht darueber .wissen mit weissem
+   Grund und border-block; dort saesse das redorange Band sonst genau auf der
+   Kante Weiss zu Redorange, samt Linie dazwischen. Der Geschwisterselektor
+   trifft genau diesen einen Fall im ganzen Bestand.
+   ========================================================================== */
+.wissen + .sektion .hub-band{margin-top:clamp(44px,5.5vw,80px);}
+
+/* ==========================================================================
+   Die Verweisbox im Guide-Raster
+   Seit 27.09.2026 steht die Box zum Maschinenfinder als erste Zelle im Raster
+   der Espressomaschinen, nicht mehr bei den Artikeln. Die Hoehe kommt
+   geschenkt: .brewguides setzt kein align-items, also gilt stretch. Fehlen tut
+   nur, dass der Knopf unten klebt.
+   Dieselben drei Zeilen stehen schon bei .vorbereitung-raster (Z. 2143) und
+   .beitraege (Z. 2629). Zusammenziehen ginge nur durch Loeschen in der
+   Dateimitte, und das verschoebe alle Zeilenangaben, die der Guide haelt.
+   ========================================================================== */
+.brewguides > .seitenbox{display:flex;flex-direction:column;align-items:flex-start;}
+.brewguides > .seitenbox .btn{margin-top:auto;}
+
+/* Im Vierer sind die Zellen schmal, die Karten schrumpfen dort mit (Z. 2612).
+   Die Box bekommt dasselbe Mass. */
+@media (min-width:1081px){
+  .brewguides--vier > .seitenbox{padding:20px 19px 22px;}
+  .brewguides--vier > .seitenbox h4{font-size:1rem;}
+  .brewguides--vier > .seitenbox p{font-size:.84rem;margin-bottom:14px;}
+}
+
+/* .beitraege--vier und .beitraege > .seitenbox (Z. 2623 bis 2641) tragen seit
+   diesem Umzug niemanden mehr. Sie bleiben nach Hausregel stehen, damit die
+   Zeilenangaben im Marken-Guide halten. */
+
+/* Dieselbe Klappmechanik im Maschinenraster (Z. 2574). Eigene Leiter, weil
+   .brewguides--vier von vier Spalten direkt auf zwei springt und sieben
+   Zellen traegt: die Verweisbox plus sechs Guides. Vier Spalten ergeben nur
+   zwei Reihen, dort faellt nichts aus dem Layout, die Maske halbiert die
+   zweite. Zwei Spalten lassen vier Zellen voll stehen, eine Spalte drei.
+   Der Zeiger sagt, dass die angedeutete Reihe etwas tut: Ein Klick darauf
+   klappt auf, statt die einzelne Karte zu oeffnen. hubs.js setzt die Klasse
+   beim Messen auf die Zellen der letzten sichtbaren Reihe. */
+@media (max-width:1080px){.brewguides--vier.ist-eingeklappt > *:nth-child(n+7){display:none;}}
+@media (max-width:620px) {.brewguides--vier.ist-eingeklappt > *:nth-child(n+6){display:none;}}
+.ist-angedeutet{cursor:pointer;}
+
+/* ==========================================================================
+   Die Espresso-Routine als flache Schrittkarten
+   Struktur wie auf den Rezeptseiten (.schritte-raster / .schritt-karte,
+   Z. 1500), aber quer statt hoch. Der Grund: Dort sitzt das Bild hochkant
+   oben mit aspect-ratio 4/5, und das waechst mit der Spaltenbreite. Bei drei
+   Spalten auf 1280 px ist allein das Bildfeld 510 px hoch, die Karte knapp
+   900. Fuer eine Anleitung, die man ueberfliegen soll, ist das zu viel.
+   Hier also: vier Spalten, jede Karte ueber zwei, das Bild quadratisch links
+   und der Text rechts daneben. Das druckt die Karte auf rund ein Viertel.
+   Kein Einklappen und keine Verlaufsmaske: Auf dem petrolblauen Grund wirkt
+   der Verlauf nicht, und flach gelegt passen alle fuenf Schritte ohnehin.
+   ========================================================================== */
+.schritte-raster--routine{grid-template-columns:repeat(4,minmax(0,1fr));}
+
+/* Jede Karte ueber zwei Spalten, also zwei pro Zeile. Die fuenfte steht in
+   der letzten Zeile allein links und behaelt dieselbe Breite.
+   Der Deckel von 260 px ist das Herzstueck. Ein blosser Prozentsatz waere
+   die Falle: Sobald die Karte breiter wird, waechst das quadratische Bild
+   mit und zieht die Karte in die Hoehe. Gemessen bei 1000 px, wo die Karte
+   ueber die volle Breite lief: 38 Prozent ergaben 349 px Bild und damit ein
+   1834 px hohes Raster, also mehr als die Fassung, die zu hoch war. */
+.schritte-raster--routine > .schritt-karte{
+  grid-column:span 2;
+  /* Ueberschreibt die Flex-Spalte der Basisregel (Z. 1511). */
+  display:grid;
+  grid-template-columns:minmax(0,min(38%,260px)) minmax(0,1fr);
+  align-items:stretch;
+}
+
+/* Quadratisch statt 4:5. Die Nummer sitzt absolut darin und bleibt, wo sie
+   ist. Ohne Foto traegt der Verlauf aus der Basisregel das Feld.
+   align-self:start ist dabei Pflicht. Ohne es streckt das Grid die Bildzelle
+   auf die Kartenhoehe, und aspect-ratio macht daraus eine Breitenforderung:
+   Karten mit langem Text bekaemen dann ein breiteres Bild als die anderen.
+   Gemessen waren das 323 px gegen 237 px in derselben Reihe. So bleibt die
+   Bildbreite an der Spalte und alle fuenf Quadrate sind gleich gross. */
+.schritte-raster--routine .schritt-karte-bild{aspect-ratio:1;align-self:start;}
+
+/* Der Text darf enger am Bild stehen, die Karte ist flach. */
+.schritte-raster--routine .schritt-karte-koerper{padding:20px 22px 22px;gap:9px;}
+
+/* Farbe. Sektion 01 setzt color:var(--hellorange) fuer ihren dunkelblauen
+   Grund, und .schritt-karte hat genau diese Farbe als Kartengrund. Ohne die
+   Gegenwehr stuende hellorange Text auf hellorangem Grund, also nichts. */
+.schritte-raster--routine .schritt-karte{color:var(--offblack);}
+
+/* Ueberschriftenebene. Auf den Rezeptseiten ist die Karte eine h3, hier steht
+   darueber schon die h3 der Zwischenueberschrift. Also h4, damit die
+   Hierarchie nicht springt, und etwas kleiner als dort. */
+.schritte-raster--routine .schritt-karte h4{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;}
+.schritte-raster--routine .schritt-karte p{font-size:.88rem;line-height:1.58;}
+
+/* Die weiterfuehrenden Links ersetzen hier den p.tipp der Rezeptseiten:
+   gleiche Position am Kartenfuss, gleiche Trennlinie. margin-top:auto
+   braucht den Flex-Koerper darueber, den .schritt-karte-koerper behaelt. */
+.schritte-raster--routine .schritt-karte .schritt-tiefer{
+  margin-top:auto;padding-top:12px;
+  border-top:1px solid var(--linie);
+  font-size:.8rem;gap:4px 16px;
+}
+/* Die Linkfarbe muss mit: .schritt-tiefer a traegt Hellorange (Z. 2397), weil
+   es fuer den dunkelblauen Grund gebaut wurde. Auf der hellorangen Karte
+   waere das unsichtbar. Hier gilt wieder Redorange auf Hell, wie ueberall. */
+.schritte-raster--routine .schritt-karte .schritt-tiefer a{
+  color:var(--redorange);
+  text-decoration-color:rgba(255,70,18,.42);
+}
+.schritte-raster--routine .schritt-karte .schritt-tiefer a:hover,
+.schritte-raster--routine .schritt-karte .schritt-tiefer a:focus-visible{
+  text-decoration-color:var(--redorange);
+}
+.schritte-raster--routine .schritt-karte .schritt-tiefer li{font-size:inherit;}
+
+/* Ab hier eine Karte pro Zeile. Das Raster faellt auf zwei Spalten, die
+   Karte spannt weiter ueber beide. Das Bild bleibt links und laeuft gegen
+   seinen Deckel: Quer gelesen braucht die Zeile weniger Hoehe als Bild
+   ueber Text, und der Text bekommt den ganzen Gewinn an Breite. */
+@media (max-width:1080px){
+  .schritte-raster--routine{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+/* Schmal wird das Bild anteilig kleiner, sonst bleibt dem Text zu wenig.
+   Bei 375 px traegt die Zeile 345 px: 32 Prozent sind 110 px Bild und
+   rund 190 px Text, abzueglich Polster. */
+@media (max-width:620px){
+  .schritte-raster--routine > .schritt-karte{grid-template-columns:minmax(0,min(34%,150px)) minmax(0,1fr);}
+  .schritte-raster--routine .schritt-karte-koerper{padding:14px 15px 16px;gap:7px;}
+  .schritte-raster--routine .schritt-karte h4{font-size:.95rem;line-height:1.26;}
+  .schritte-raster--routine .schritt-karte p{font-size:.82rem;line-height:1.52;}
+  .schritte-raster--routine .schritt-karte-bild .nummer{
+    width:34px;height:34px;top:10px;left:10px;font-size:.84rem;
+  }
+}
+
+/* ==========================================================================
+   Eingeklappt: zwei Karten, saubere Kante
+   Kein Anschnitt und kein Verlauf. Auf breiten Schirmen sind zwei Karten
+   genau eine volle Reihe, darunter steht sofort der Knopf. Deshalb genuegt
+   eine einzige Stufe ohne Medienabfrage: Bei zwei Karten pro Zeile bleibt
+   eine Reihe stehen, bei einer Karte pro Zeile bleiben zwei.
+   ========================================================================== */
+@media (max-width:859px){
+  .schritte-raster--routine.ist-eingeklappt > *:nth-child(n+3){display:none;}
+}
+
+/* .ist-eingeklappt (Z. 2574) ist allgemein und bringt Maske und max-height
+   mit, weil Sektion 03 und 04 beides brauchen. Hier nicht: display:none
+   regelt die Hoehe allein, und der Verlauf wirkte auf dem petrolblauen
+   Grund nicht. Das Polsterpaar faellt mit weg, es haelt dort nur Raum fuer
+   das Anheben beim Hover, und .schritt-karte ist die einzige Kartenart, die
+   basis.js (Z. 308) nicht anhebt. */
+.schritte-raster--routine.ist-eingeklappt{
+  max-height:none;
+  -webkit-mask-image:none;
+          mask-image:none;
+  padding-top:0;
+  margin-top:0;
+}
+
+/* Der Lead unter der Zwischenueberschrift. Er ist direktes Kind von
+   .rezeptur-fluss--breit wie die h3 daneben (Z. 2529) und erbt deshalb
+   nichts von .sektion-kopf p. */
+.raster-lead{
+  max-width:58ch;
+  margin:calc(-1 * clamp(10px,1.2vw,14px)) 0 clamp(18px,2.2vw,26px);
+  opacity:.86;
+}
+
+/* ==========================================================================
+   Zwei Karten pro Zeile auf dem Handy
+   Bei 375 px traegt eine Zelle noch 164 px: (92vw - 16px gap) / 2. Die
+   Basiswerte sind fuer eine ganze Zeile gemacht, 24 px Polster und 1.16rem
+   Titel liessen davon 116 px Textbreite und rund sechs Zeichen pro Zeile.
+   Also dasselbe Schrumpfen wie im Vierer (Z. 2555, 2612), nur nach unten.
+   Mass genommen an .vergleichsreihe (Z. 1711), die seit je zweispaltig bis
+   320 px steht: 16 px Polster, Titel unter 1 rem.
+   ========================================================================== */
+@media (max-width:620px){
+  .rezepte-raster--vier .rezept-koerper{padding:14px 14px 16px;gap:7px;}
+  .rezepte-raster--vier .rezept h3{font-size:.95rem;line-height:1.26;}
+  .rezepte-raster--vier .rezept-meta{font-size:.7rem;gap:7px;}
+  .rezepte-raster--vier .rezept .mehr{font-size:.76rem;gap:5px;margin-top:2px;}
+
+  .brewguides--vier .brewguide-bild{padding:13px;}
+  .brewguides--vier .brewguide-koerper{padding:14px 14px 16px;gap:7px;}
+  .brewguides--vier .brewguide h3{font-size:.95rem;line-height:1.26;}
+  .brewguides--vier .brewguide p{font-size:.8rem;}
+  .brewguides--vier .brewguide-meta{font-size:.66rem;gap:5px;}
+  .brewguides--vier .brewguide-meta .wert{padding:3px 8px;}
+  .brewguides--vier .brewguide .mehr{font-size:.76rem;gap:5px;}
+
+  /* Die Verweisbox behaelt die ganze Zeile: Sie traegt vier Zeilen Text und
+     einen Knopf, auf halber Breite bliebe davon nichts Lesbares. Muster wie
+     .vorbereitung-raster--ohne-naehrwerte > .seitenbox (Z. 2196). */
+  .brewguides--vier > .seitenbox{grid-column:1 / -1;}
+}
+
+/* ==========================================================================
+   Die Routine als waagrechtes Band
+   Ab 860 px stehen die fuenf Schritte nebeneinander und man wischt nach
+   rechts, darunter bleibt es beim Klappen. Gebaut nach .kaffee-spur
+   (beanwatch.css Z. 755), dem einzigen Wischband des Projekts: nativer
+   Overflow statt gepinnter Buehne, damit die Seite beim Lesen nicht
+   stehenbleibt. Die Pfeile steuert BW.spurPfeile() aus basis.js.
+   ========================================================================== */
+@media (min-width:860px){
+  .schritte-raster--routine{
+    /* --rand ist genau der Aussenabstand, den .wrap frei laesst. Negativ als
+       Margin, positiv als Padding: Der Scrollbereich laeuft bis zum
+       Fensterrand, der Inhalt rastet weiter am Raster ein. Links nur --luft,
+       rechts der ganze Rand, damit das Band links buendig beginnt und rechts
+       angeschnitten auslaeuft. */
+    --rand:calc((100vw - var(--seite)) / 2);
+    --luft:min(20px, var(--rand));
+    display:flex;
+    gap:var(--gap);
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    /* Keine Rastung. Beim Ziehen mit der Maus soll das Band stehen
+       bleiben, wo man loslaesst, nicht auf die naechste Karte springen.
+       Die Pfeile setzen ohnehin exakte Positionen. Die Kaffee-Reihe auf
+       der Startseite behaelt ihre Rastung: Dort sind die Karten halb so
+       breit, und das Einrasten faellt kaum auf. */
+    scroll-padding-left:var(--luft);
+    margin:0 calc(var(--rand) * -1) 0 calc(var(--luft) * -1);
+    padding:0 var(--rand) 18px var(--luft);
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,243,232,.45) transparent;
+  }
+  .schritte-raster--routine::-webkit-scrollbar{height:6px;}
+  .schritte-raster--routine::-webkit-scrollbar-thumb{background:rgba(255,243,232,.45);border-radius:3px;}
+  .schritte-raster--routine:focus-visible{outline:2px solid var(--redorange);outline-offset:4px;}
+  /* Der Greifzeiger sagt, dass man das Band anfassen kann. basis.js
+     schaltet ihn beim Ziehen auf grabbing. Nur hier, nicht unter 860 px:
+     Dort ist es kein Band, sondern eine Liste. */
+  .schritte-raster--routine{cursor:grab;}
+
+  /* Zwei Karten und ein Anschnitt: Der sagt von selbst, dass es weitergeht.
+     Bei 1440 px sind 41vw rund 590 px, das Raster ist 1280 breit, es bleiben
+     also gut 70 px der dritten sichtbar. Breiter geht schlecht: Bei 640 px
+     waere die zweite nur noch um 28 px angeschnitten und der Hinweis ginge
+     verloren. grid-column faellt weg, die Karte ist hier kein Rasterkind.
+     Die Untergrenze von 560 px ist kein Schoenheitsmass, sondern haelt den
+     Bildbeschnitt im Zaum. Das Bild fuellt die Kartenhoehe, und die bestimmt
+     der Text: Je schmaler die Karte, desto hoeher wird sie und desto mehr
+     wird seitlich abgeschnitten. Gemessen bei 370 px Karte ein Feld von
+     140 auf 520, also 1:3,7, wovon noch ein Drittel der Bildbreite blieb.
+     Bei 560 px bleiben rund drei Viertel stehen. */
+  .schritte-raster--routine > .schritt-karte{
+    grid-column:auto;
+    flex:0 0 clamp(560px,41vw,590px);
+    /* Ohne Deckel: Im Band begrenzt schon die Kartenbreite das Bild. Der
+       Deckel der Grundregel gilt weiter fuer die Fassung zwischen 620 und
+       860 px, wo die Karte ueber die ganze Zeile laeuft. */
+    grid-template-columns:minmax(0,38%) minmax(0,1fr);
+  }
+
+  /* Das Bild fuellt die ganze Kartenhoehe und wird links und rechts
+     beschnitten. Ein festes Seitenverhaeltnis stand hier zwischenzeitlich
+     (2:3) und traf die Kartenhoehe fast genau, aber eben nur zufaellig:
+     Wird ein Text laenger oder kuerzer, klafft wieder eine Luecke.
+     aspect-ratio muss dafuer ausdruecklich weg. Bliebe es stehen, leitete es
+     die Hoehe weiter aus der Breite ab und stretch liefe ins Leere.
+     Und erst dadurch ist stretch ueberhaupt gefahrlos: Zusammen mit
+     aspect-ratio machte die gestreckte Hoehe eine Breitenforderung daraus,
+     und Karten mit langem Text bekamen ein breiteres Bild als ihre Nachbarn,
+     gemessen 323 gegen 237 px in derselben Reihe. Ohne aspect-ratio gibt es
+     diese Rueckkopplung nicht.
+     Der Beschnitt liegt bei rund 19 Prozent der Breite. Welcher Teil des
+     Bildes dabei stehen bleibt, bestimmt spaeter der Fokuspunkt aus Shopify,
+     siehe --fokus weiter unten. */
+  .schritte-raster--routine .schritt-karte-bild{
+    aspect-ratio:auto;
+    align-self:stretch;
+  }
+
+  /* Der Fokuspunkt. Shopify liefert ihn spaeter je Bild; bis dahin steht das
+     Motiv mittig. Einsetzen laesst er sich dann ohne CSS-Aenderung, direkt
+     am Bild: style="--fokus:30% 40%". */
+  .schritte-raster--routine .schritt-karte-bild img{
+    object-position:var(--fokus,center);
+  }
+
+  /* Geklappt wird hier nicht. Der Knopf verschwindet ganz, auch fuer
+     Vorleseprogramme: Im Band gibt es nichts aufzuklappen. */
+  #routine-mehr{display:none;}
+}
+
+/* Die Kopfzeile traegt links Titel und Lead, rechts die Pfeile. Unter
+   860 px gibt es keine Pfeile, dann steht nur der Text da. */
+.raster-kopf{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:clamp(16px,2.4vw,32px);
+}
+.raster-kopf > div:first-child{min-width:0;}
+@media (max-width:859px){
+  .raster-kopf > .reihe-knoepfe{display:none;}
+}
+
+/* .reihe-knopf traegt Dunkelblau auf Dunkelblau, es ist fuer helle Gruende
+   gebaut. Hier braucht es die Umkehrung, sonst steht der Pfeil unsichtbar
+   auf dem Sektionsgrund. Dieselbe Falle wie beim Klappknopf. */
+.reihe-knoepfe--hell .reihe-knopf{
+  border-color:var(--hellorange);
+  color:var(--hellorange);
+}
+.reihe-knoepfe--hell .reihe-knopf:hover:not(:disabled),
+.reihe-knoepfe--hell .reihe-knopf:focus-visible{
+  background:var(--hellorange);
+  color:var(--dunkelblau);
+}
+
+/* Der Klappknopf steht mittig unter den Karten. Ohne justify-self streckt
+   ihn das Grid der Rezeptur auf die volle Breite, gemessen 1280 px. */
+.mehr-knopf#routine-mehr{justify-self:center;}
+
+/* ==========================================================================
+   Filterkaffee-Hub nach dem Muster von espresso.html (26.09.2026)
+   ========================================================================== */
+
+/* Die Zwischenueberschrift der Routine. Die Regel in Z. 2529 zielt auf
+   .rezeptur-fluss--breit > .raster-titel, seit dem Band steckt die h3 aber
+   in .raster-kopf > div. Seither stand sie in 1.05rem da, so gross wie die
+   h4 der Karten. Dieselben Werte, neuer Selektor; gilt auf beiden Hubs. */
+.raster-kopf .raster-titel{
+  font-size:clamp(1.2rem,1.9vw,1.55rem);
+  margin-bottom:clamp(18px,2.2vw,26px);
+}
+
+/* Alle Methoden auf welche-filtermethode.html: fuenf Guides ohne Box, am
+   Desktop zu dritt aus .brewguides (Z. 245), auf dem Handy zwei pro Zeile wie
+   .brewguides--vier (Z. 2833). Der Filter-Hub nutzt seit 26.09.2026 --vier
+   selbst, Box plus fuenf Guides zu viert wie die Maschinen auf espresso.html. */
+@media (max-width:620px){
+  .brewguides--paar{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .brewguides--paar > .seitenbox{grid-column:1 / -1;}
+  .brewguides--paar .brewguide-bild{padding:13px;}
+  .brewguides--paar .brewguide-koerper{padding:14px 14px 16px;gap:7px;}
+  .brewguides--paar .brewguide h3{font-size:.95rem;line-height:1.26;}
+  .brewguides--paar .brewguide p{font-size:.8rem;}
+  .brewguides--paar .brewguide-meta{font-size:.66rem;gap:5px;}
+  .brewguides--paar .brewguide-meta .wert{padding:3px 8px;}
+  .brewguides--paar .brewguide .mehr{font-size:.76rem;gap:5px;}
+}
+
+/* 05 Wissen: geplante Artikel. Keine Links, also auch kein Hover-Rahmen.
+   Vorbild ist .tool-karte.ist-geplant (Z. 533), aber ohne deren opacity,
+   die den Text unter AA druecken wuerde. Das Icon kommt kleiner als die
+   62 % der Illustrationen (Z. 478), es ist ein 24er-Funktionsicon. */
+.beitrag.ist-geplant:hover{border-color:var(--linie);box-shadow:none;}
+.beitrag.ist-geplant .beitrag-bild{position:relative;color:var(--dunkelblau);}
+.beitrag.ist-geplant .beitrag-bild svg{height:34%;}
+.geplant-fahne{
+  position:absolute;top:14px;left:14px;
+  background:var(--dunkelblau);color:var(--hellorange);
+  border-radius:var(--radius-pill);padding:5px 13px;
+  font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;
+}
+
+/* 01 Filter-Grundrezept: neben dem Verhaeltnis der Liter-Wert und der
+   Charakter der Stufe (sieben Stufen, Stand 26.09.2026). Eigene Klassen,
+   damit die Espresso-Karte unberuehrt bleibt. Die Zahl behaelt ihre Werte
+   aus Z. 386, nur ihr Abstand nach unten wandert an den Kopf. */
+.verhaeltnis-kopf{
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:4px clamp(14px,1.8vw,22px);
+  margin-bottom:12px;
+}
+.verhaeltnis-kopf .verhaeltnis-zahl{margin-bottom:0;}
+.verhaeltnis-info{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px;
+  font-size:.9rem;font-weight:600;color:var(--dunkelblau);
+}
+.verhaeltnis-info > span + span{font-weight:500;opacity:.8;}
+/* Stufen und Pole unter dem Verhaeltnis-Regler: die Pole ruecken naeher. */
+.rezeptur-menge .mengen-stufen + .verhaeltnis-skala{margin-top:3px;}
+/* Schmal passen Liter-Wert und Charakter mal in eine, mal in zwei Zeilen,
+   und beim Ziehen am Regler sprang alles darunter. Untereinander bleibt
+   die Hoehe bei jeder Stufe gleich. */
+@media (max-width:860px){
+  .verhaeltnis-info{flex-basis:100%;flex-direction:column;gap:2px;}
+}
+
+/* Ueberschriften, deren laengste Zeile knapp ueber 16ch liegt (Z. 2465).
+   Dort blieb ein einzelnes Wort allein stehen, etwa «Welche / Kaffeebohnen».
+   20ch ist die Grenze aus der README: Darueber rutscht der rechte Block des
+   Sektionskopfs in eine zweite Zeile. Deshalb nur an Ueberschriften, deren
+   laengste Zeile unter 20ch bleibt und neben denen kein breiter Block steht
+   (ein Knopf ja, der Absatz der Rezeptur nicht). Die <br> bleiben massgebend. */
+.sektion-kopf h2.titel-breit{max-width:20ch;}
+
+/* Guide-Karten so hoch wie die Maschinenkarten. Das Bildfeld (Z. 261) soll
+   16 : 11 stehen, die Zeichnung drueckt es aber auf, die Hoehe folgt ihrem
+   Seitenverhaeltnis: Maschinen 190 x 200, Geraete 150 x 190. Das SVG-Feld
+   bekommt hier das Mass der Maschinen, die Zeichnung steht zentriert darin.
+   Klasse aus guideKarte(). Maschinenkarten: seit 30.09.2026 Foto, s. Ende. */
+.brewguide-bild--geraet svg{width:100%;height:auto;aspect-ratio:190 / 200;}
+
+/* 01 Filter-Grundrezept: das Bruehverhaeltnis als eine Zeile (26.09.2026).
+   Links die Anzeige, rechts der Regler, darueber der Charakter ueber beide
+   Spalten. Die Spalten teilen ihre vier Zeilen per Subgrid: Rolle neben
+   Rolle, Zahl neben den Stufenzahlen, Balken neben dem Regler (28 px, Z. 569),
+   Skala neben den Polen. Vorher lagen Anzeige und Regler 193 px (Desktop)
+   bzw. 409 px (Handy) auseinander. Die Regeln in Z. 3011-3033 sind damit
+   teils wirkungslos und bleiben wegen der Zeilenverweise stehen. */
+.verhaeltnis-zeile{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(5,auto);
+  column-gap:var(--gap);
+  margin-top:20px;
+}
+.verhaeltnis-charakter{
+  grid-column:1 / -1;
+  margin:0 0 14px;
+  font-weight:700;font-size:1.05rem;line-height:1.3;
+  color:var(--dunkelblau);
+}
+.verhaeltnis-zeile > .ergebnis-verhaeltnis,
+.verhaeltnis-zeile > .verhaeltnis-wahl{
+  display:grid;
+  grid-row:2 / span 4;
+  grid-template-rows:subgrid;
+  margin:0;
+  min-width:0;
+}
+.verhaeltnis-zeile .verhaeltnis-kopf{margin-bottom:0;}
+.verhaeltnis-wahl > .rolle{margin-bottom:8px;opacity:.72;}
+.verhaeltnis-wahl .mengen-stufen{margin-top:0;align-self:end;}
+.verhaeltnis-zeile .verhaeltnis-balken{align-self:center;}
+.verhaeltnis-wahl input[type="range"]{margin:0;}
+.verhaeltnis-zeile .verhaeltnis-skala{margin-top:4px;}
+/* Schmal steht der Liter-Wert unter der Zahl (Z. 3031) und bleibt
+   einzeilig, damit die Zeile bei allen sieben Stufen gleich hoch ist. */
+@media (max-width:860px){
+  .verhaeltnis-zeile .verhaeltnis-info{white-space:nowrap;}
+}
+@media (max-width:620px){
+  .verhaeltnis-zeile .verhaeltnis-info{font-size:.8rem;}
+}
+
+/* Rezeptkarten beider Hubs: erst die Menge, dann das Verhaeltnis
+   (26.09.2026). Oben das Paar zur Menge, darunter beim Espresso das
+   Verhaeltnis neben dem Roestgrad, beim Filter die Verhaeltnis-Zeile.
+   Steht der Regler ohne eigene Rolle oben im Feld, uebernimmt sein Label
+   die Rolle und beginnt buendig mit der Nachbarspalte, sonst laege er
+   16 px tiefer (Z. 2485). */
+.wahl-feld > .rezeptur-menge:first-child{margin-top:0;}
+.rezeptur-regler-raster > .ergebnis-verhaeltnis{margin-top:0;}
+.rezeptur-regler-raster + .rezeptur-regler-raster,
+.rezeptur-regler-raster + .verhaeltnis-zeile{margin-top:clamp(22px,2.6vw,32px);}
+
+/* ==========================================================================
+   Seitenkopf mit Wasser: der Rettungsarm im Filterkaffee-Kopf
+
+   Neu ans Dateiende, nicht in den Block der Seitenköpfe oben: Der CI-Guide
+   zitiert dort Zeilenbereiche (Element 13 und 18 verweisen auf Z. 34–101),
+   eine Regel mitten hinein verschiebt sie.
+
+   Der Arm liegt zwischen den drei Wellenschichten, so wie Fähre, Ufer und
+   Läufer im Über-uns-Hero. Eine Grösse steuert alles: Bandhöhe, Abstand
+   unten und die Breite des Arms leiten sich aus --szene ab. Mit eigenen
+   clamp-Werten je Teil drifteten die Verhältnisse bei anderen
+   Fensterbreiten auseinander.
+   ========================================================================== */
+.seitenkopf--wasser{
+  --szene:clamp(320px,34vw,490px);
+  padding-bottom:calc(var(--szene) * .49 + 20px);
+}
+.seitenkopf--wasser .kopf-wellen{height:calc(var(--szene) * .46);}
+
+/* .kopf-wellen svg macht jedes SVG im Band absolut und doppelt so breit,
+   gedacht für die Wellen. Für die Szene wieder zurücksetzen, genau wie
+   faehren.css es für die Fähren tut. */
+.kopf-wellen .szene-spur svg{
+  position:relative;
+  display:block;
+  width:100%;height:auto;
+  overflow:visible;
+}
+.szene-spur{position:absolute;pointer-events:none;will-change:transform;}
+
+/* Der Arm steht rechts, zwischen mittlerer und vorderster Welle. Welche
+   Welle ihn verdeckt, entscheidet die Reihenfolge im Markup, darum trägt er
+   bewusst KEIN z-index: Die Wellen-SVG stehen auf z-index auto, ein Wert
+   hier höbe ihn wieder darüber. Genau so macht es .faehre-spur.
+
+   bottom bestimmt, wie viel vom Arm über dem Wasser steht. Er sitzt tief,
+   die Kesselkante liegt ungefähr auf mittlerer Kammhöhe: Ein hoher Kamm
+   wäscht über ihre Unterkante, ein Wellental gibt sie frei. Nachgemessen
+   bei 1440 px wandert der Kamm zwischen 3 und 51 px über dem Bandboden,
+   die Kesselkante steht bei 46 bis 49 px.
+
+   Was nicht passieren darf, ist das runde Ende des Unterarms über dem
+   Wasser. Dafür sorgt der Schalter armEnde an bwRettungsarm(), siehe
+   hubs.js. */
+.arm-spur{
+  --arm:calc(var(--szene) * .616);
+  width:var(--arm);
+  right:11%;
+  bottom:calc(var(--szene) * .08);
+}
+/* Gespiegelt, damit der Ausguss nach links zeigt, also in die Seite hinein.
+   Die Spiegelung sitzt auf dem SVG und nicht auf .arm-spur: Dort animiert
+   hubs.js den Auftritt und würde ein transform überschreiben. Dieselbe
+   Falle wie bei .arm-faust, die ihr transform im Attribut trägt. */
+.arm-spur .rettungsarm{transform:scaleX(-1);}
+
+@media (max-width:699px){
+  .arm-spur{right:2%;}
+}
+
+/* Die Tasse schwimmt links vom Kessel und faehrt beim Scrollen auf ihn zu.
+
+   Dieselbe Breite und dasselbe bottom wie .arm-spur, und zwar absichtlich
+   dieselbe Zahl: bwTasse() zeichnet in derselben viewBox 228 mal 220 wie
+   bwRettungsarm(). Daraus folgt beides, was diese Szene braucht.
+
+   Erstens sind die Linien gleich dick. Beide rendern 0,616 / 228 gleich
+   0,002702 Pixel je Einheit mal --szene, ein stroke-width 3 ist also in
+   beiden Zeichnungen derselbe Strich auf dem Schirm. Die Probe dafuer ist
+   eine Gleichung und keine Rechnung: gleiche offsetWidth.
+
+   Zweitens liegen die Hoehen aufeinander. Die Tuellenmitte steht bei y 142,
+   der Tassenrand bei y 194, also 52 Einheiten darunter, bei jeder
+   Fensterbreite. Wer die Tasse tiefer ins Wasser legen will, dreht an
+   genau einem Regler, diesem bottom.
+
+   left:0 und kein right in Prozent: Die Tasse fuehrt GSAP mit x, genau wie
+   .faehre-spur in faehren.css. Ein right daneben rechnete gegen das x. Sie
+   braucht deshalb auch keine eigene Regel unter 700 px, dass der Arm dort
+   auf right:2% springt, liest das Skript aus dessen offsetLeft mit.
+
+   Kein z-index, aus demselben Grund wie bei .arm-spur. Im Markup steht sie
+   zwischen .welle-mitte und .arm-spur: Der Arm steht vor ihr, falls sie
+   sich beruehren, und die vorderste Welle deckt beide. */
+.tasse-spur{
+  width:calc(var(--szene) * .616);
+  left:0;
+  bottom:calc(var(--szene) * .08);
+}
+
+/* ==========================================================================
+   Seitenkopf mit Wasser: der Pappsticker im Espresso-Kopf
+
+   Seit dem 30.09.2026 statt des Siebträgers. Baut auf .seitenkopf--wasser
+   auf, genau wie der Rettungsarm oben. Eine versteckte Hand hält den
+   Sticker am Steckfuss aus dem Wasser, gezeichnet von bwPappsticker() in
+   illustrationen.js, bewegt von BWHub.espresso(). Die Gedankenblase kommt
+   aus faehren.css, espresso.html lädt es darum mit.
+
+   Die Spur steht rechts wie der Arm, zwischen mittlerer und vorderster
+   Welle, und trägt wie er KEIN z-index. Der Fuss soll im Wasser stecken,
+   darum liegt die Unterkante der Spur unter dem Bandboden, auf −.03 der
+   Szene; overflow:hidden des Kopfs schneidet ab, was darunter ragt.
+   Gemessen im Labor bei 1440 bis 375 px: Die Unterkante des Fusses steht
+   immer im Wasser, der Papierrand in einem Viertel bis der Hälfte der
+   Proben, das Board nie. Bei −.036 streifte ein Kamm schon das Board.
+   ========================================================================== */
+.sticker-spur{
+  width:calc(var(--szene) * .6);
+  right:11%;
+  bottom:calc(var(--szene) * -.03);
+}
+
+/* Zwei Ebenen für die Fahrt beim Scrollen: .sticker-weg trägt x, y und
+   die Blase, .sticker-welle das Neigen. Getrennt, sonst stünde der Text
+   schief. Der Kasten von .sticker-welle ist genau das SVG, sein
+   Drehpunkt kommt als Prozent aus bwPappsticker.hand. */
+.sticker-weg,
+.sticker-welle{position:relative;display:block;}
+
+/* Der Anker der Blase sitzt über dem Kopf des Mannes, in Prozent der
+   Zeichnung. Die Schriftgrösse folgt der Szene, --faehre gibt es hier
+   nicht. Zwei Zeilen, getrennt am Umbruch im Text. */
+.sticker-weg .gedanke{left:57%;bottom:97%;}
+.sticker-weg .gedanke-blase{font-size:clamp(11px,calc(var(--szene) * .032),15px);white-space:pre-line;}
+
+/* Der Sticker ist höher als der Arm. Sobald der Text über die ganze
+   Breite läuft, reserviert der Kopf unten mehr Platz, sonst ragte der
+   Sticker bei 700 px in Lead und Knöpfe. */
+@media (max-width:860px){
+  .seitenkopf--sticker{padding-bottom:calc(var(--szene) * .68 + 20px);}
+}
+/* Am Handy steht der Sticker am rechten Rand, eine nach rechts hängende
+   Blase liefe aus dem Bild. Dort steht sie mittig über dem Kopf, so wie
+   faehren.css es für schmale Fenster mit den linken Blasen macht. Damit
+   sie nicht an die Knöpfe stösst, reserviert der Kopf darüber mehr Platz.
+   Nach dem Block für 860 px, sonst gewönne dessen Abstand. */
+@media (max-width:699px){
+  .sticker-spur{right:2%;}
+  .sticker-weg .gedanke--rechts .gedanke-blase{
+    left:-120px;right:-120px;margin-inline:auto;transform-origin:50% 100%;
+    max-width:none;
+  }
+  .seitenkopf--sticker{padding-bottom:calc(var(--szene) * .68 + 100px);}
+}
+
+/* ==========================================================================
+   Barista Guides: Foto statt Schnittbild (30.09.2026)
+   Karten und Artikelkopf zeigen ein Foto der Bauart. Das Schnittbild aus
+   bwMaschine() steht nur noch im Artikel, in der Sektion #aufbau, und wird
+   dort erklärt. Die Bilder liegen in BARISTA_GUIDES (hubs.js) und in
+   werkzeug/baristaguides-bauen.rb.
+   ========================================================================== */
+
+/* Karte. Das Feld steht jetzt wirklich 16 : 11 (Z. 261), ohne Innenabstand.
+   Zwei Klassen, damit die Abstaende aus .brewguides--vier (Z. 2613, 2833)
+   nicht greifen, die dieselbe Spezifitaet haben, aber frueher stehen.
+   Die Brew-Guide-Karten auf dem Filter-Hub behalten ihr Mass (Z. 3048),
+   gleich hoch wie die Maschinenkarten sind sie damit nicht mehr. */
+.brewguide-bild.brewguide-bild--foto{
+  padding:0;
+  overflow:hidden;
+  background:var(--powderblue);
+}
+.brewguide-bild--foto img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:var(--fokus,center);
+  will-change:transform;
+}
+
+/* Platzhalter, solange eine Bauart noch kein Foto hat (heute der
+   Zweikreiser). Steht in der Karte, im Artikelkopf und auf der
+   Wissensseite, immer auf dem hellblauen Verlauf der leeren Bildfelder.
+   Das Signet kommt als Hintergrund, nicht als img: Der Parallax in
+   feinschliff() (basis.js) greift jedes img in .beitrag-bild. */
+.brewguide-bild--foto.ist-leer,
+.beitragsbild.ist-leer{
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+}
+.foto-folgt{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--dunkelblau);
+  opacity:.72;
+}
+.foto-folgt::before{
+  content:'';
+  width:clamp(34px,22%,64px);
+  aspect-ratio:764 / 923;
+  background:url('logo-cyanblau-signet.svg') center / contain no-repeat;
+}
+
+/* Artikelkopf. .beitragsbild (Z. 684) steht sonst nur in .beitragskopf,
+   hier sitzt es in der rechten Spalte des .seitenkopf-raster anstelle der
+   Buehne. Fuer den einspaltigen Kopf gilt dasselbe wie bei den Beitraegen
+   (Z. 974, 1002): Bild zuerst, flacher, gedeckelt, schmal randlos. */
+.seitenkopf .beitragsbild img{object-position:var(--fokus,center);}
+@media (max-width:860px){
+  .seitenkopf .beitragsbild{
+    order:-1;
+    aspect-ratio:16/9;
+    max-height:min(42vh,340px);
+  }
+}
+@media (max-width:620px){
+  .seitenkopf .beitragsbild{
+    width:100vw;
+    margin-inline:calc(50% - 50vw);
+    border-radius:0;
+  }
+}
+
+/* Sektion #aufbau: das Schnittbild mit Legende. Buehne und Scheibe wie
+   frueher im Kopf, der Text rechts daneben. */
+.aufbau-raster{align-items:center;}
+.aufbau-buehne{min-height:clamp(280px,34vw,420px);}
+.aufbau-buehne .illu-scheibe{
+  width:min(80%,360px);
+  background:radial-gradient(circle at 40% 32%, #FFC9B4, var(--hellorange));
+}
+.aufbau-ziel{position:relative;z-index:2;width:min(88%,340px);}
+.aufbau-ziel .illu{max-width:100%;}
+.aufbau-text > p{margin-top:18px;}
+
+.schnitt-legende{
+  list-style:none;
+  margin:26px 0 0;padding:0;
+  display:grid;gap:16px;
+}
+.schnitt-legende li{
+  display:grid;
+  grid-template-columns:22px 1fr;
+  gap:14px;
+  align-items:start;
+}
+.schnitt-legende strong{display:block;font-weight:700;}
+.schnitt-legende span{display:block;font-size:.92rem;opacity:.82;line-height:1.5;}
+/* Die Farbmarke zeigt, woran man den Teil in der Zeichnung erkennt:
+   dieselben Farben und Strichformen wie in illustrationen.js. */
+.schnitt-farbe{
+  width:22px;height:22px;
+  margin-top:2px;
+  border-radius:50%;
+  border:2px solid var(--dunkelblau);
+  background:#fff;
+}
+.schnitt-farbe--wasser{background:#4FC4E2;}
+.schnitt-farbe--heiss{background:#FF4612;}
+.schnitt-farbe--kaffee{background:#4A2A1C;}
+.schnitt-farbe--gehaeuse{background:#FFF3E8;}
+.schnitt-farbe--dampf{
+  border-style:dashed;
+  background:transparent;
+}
+
+/* ==========================================================================
+   Seitenkopf mit Wasser: der Jetski-Sticker im Wissen-Kopf
+
+   Seit dem 04.10.2026. Baut auf dem Pappsticker des Espresso-Kopfs auf:
+   .seitenkopf--wasser, .seitenkopf--sticker und die Ebenen .sticker-spur,
+   -weg und -welle oben in dieser Datei, die Blase aus faehren.css.
+   Gezeichnet von bwPappsticker({ motiv: 'jetski' }), bewegt von
+   BWHub.wissen(). Entstanden im Wissenkopf-Labor.
+
+   Anders als beim SUP faehrt der Sticker nach rechts, also startet er
+   links. Ganz links stiesse er auf dem Desktop an die Knoepfe: Der Text
+   steht hier einspaltig links, und der Sticker reicht mit der Blase bis
+   auf die Hoehe der Knopfreihe. Breit startet er deshalb bei 28 %, unter
+   dem Ende des Leads. Ab 860 px abwaerts reserviert der Kopf unten mehr
+   Platz, dort beginnt er ganz links.
+
+   Tiefer als der SUP, −.06 statt −.03 der Szene. Joscha: «Füsse dürfen
+   ruhig das Wasser berühren oder darin versinken.» Der Rumpf steigt nach
+   rechts an, das Heck liegt bei 1440 px rund 27 px tiefer als die Mitte,
+   an der der Fuss sitzt. In Ruhe steht das Wasser an der Rumpfmitte, das
+   Heck taucht ein, der Bug bleibt frei. Der Steckfuss steckt immer tief
+   im Wasser, auch auf den Kaemmen.
+
+   Die Blase sitzt ueber dem Kopf der Frau, bei 30 % der Stickerbreite,
+   und haengt nach rechts, in Fahrtrichtung. Am Handy bleibt sie rechts
+   haengend statt mittig wie beim SUP: Der Sticker steht dort am linken
+   Rand, mittig liefe sie links aus dem Bild.
+
+   Zwischen 700 und 860 px laeuft der Text ueber die ganze Breite, und der
+   Sticker startet unter den Knoepfen. Dort stiess die Blase auf den
+   Kaemmen an die Knoepfe, der Kopf bekommt darum unten 24 px mehr. Unter
+   700 px gilt wieder der Abstand des SUP-Kopfs, der Block dafuer steht
+   nach dem fuer 860 px, sonst gewaenne dessen Abstand.
+   ========================================================================== */
+.sticker-spur--links{right:auto;left:28%;bottom:calc(var(--szene) * -.06);}
+.sticker-spur--links .sticker-weg .gedanke{left:30%;}
+@media (max-width:860px){
+  .sticker-spur--links{left:6%;}
+  .seitenkopf--jetski{padding-bottom:calc(var(--szene) * .68 + 44px);}
+}
+@media (max-width:699px){
+  .sticker-spur--links{right:auto;left:2%;}
+  .seitenkopf--jetski{padding-bottom:calc(var(--szene) * .68 + 100px);}
+  .sticker-spur--links .sticker-weg .gedanke--rechts .gedanke-blase{
+    left:12px;right:auto;margin-inline:0;transform-origin:0 100%;
+  }
+}
+
+/* ==========================================================================
+   Start-Modus (05.10.2026)
+   Zum Start der Website auf Shopify sind alle Guides ausgeblendet
+   (assets/js/start.js). Wo dadurch Zellen fehlen, rücken die Raster hier
+   zusammen. Alle Regeln greifen nur bei der passenden Zahl Kinder und
+   werden von selbst wirkungslos, sobald die Guides zurück sind.
+   ========================================================================== */
+/* [hidden] muss gewinnen, sonst zeigt .btn (inline-flex) den Knopf trotzdem.
+   klappRaster() blendet ihn aus, wenn es nichts zu klappen gibt; das betraf
+   schon vorher die gefilterten Getränke auf espresso.html. */
+.mehr-knopf[hidden]{display:none;}
+
+/* Steht nur die Finder-Box im Raster, nimmt sie zwei Spalten statt einer.
+   Schmal ist das ohnehin die ganze Zeile. */
+.brewguides--vier > .seitenbox:only-child{grid-column:span 2;}
+
+/* Wegweiser mit vier Stationen (Filter-Hub, Station 5 ist geplant): zwei
+   mal zwei statt drei und eine allein. */
+@media (min-width:1081px){
+  .wegweiser:has(> li:nth-child(4):last-child){grid-template-columns:repeat(2,1fr);}
+}
+
+/* Drei Einstiegskacheln auf der Wissensseite: drei Spalten statt vier. */
+@media (min-width:1081px){
+  .einstiege:has(> :nth-child(3):last-child){grid-template-columns:repeat(3,1fr);}
+}

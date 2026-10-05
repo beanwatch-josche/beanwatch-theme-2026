@@ -1,0 +1,164 @@
+/* ======================================================================
+   Beanwatch · Beutel und Rohkaffeesack als Mengen-Illustration
+   Portiert aus dem Kennzahlenbericht (Bean Management/Bericht-Bauteile,
+   teil5_beutel.py und teil3_spezial.py), Stand 03.10.2026. Regeln im
+   CI-Guide unter Bauteile und Effekte › Mengen als Illustration, auf der
+   Elemente-Seite als Element 99.
+
+   Der Beutel ist der Rohling aus illustrationen.js, Prozessweg «versand»:
+   fast quadratisch, Cyanblau, oben die Siegelnaht, darauf das Etikett.
+   Links das Logo-Motiv, rechts Linien statt Text. Etikettgrund und Farbe
+   der Zeichnung wie auf dem gedruckten Beutel, siehe ETIKETTEN unten und
+   Packaging › Verpackungen im Sortiment.
+
+   bwBeutel(art)                       ein Beutel, 86 × 90 Einheiten, als <g>-Inhalt
+   bwBeutelStapel(art, n, o)           ein Stapel einer Röstung als <svg>
+                                       bis 10 einzeln (ab 6 in zwei Reihen),
+                                       ab 11 ein Haufen, höchstens 21 gezeichnet,
+                                       n = 0 ein gestrichelter leerer Beutel
+   bwRohkaffeesack(o)                  Jutesack mit Füllstand als <svg>
+
+   Pfade zu den Logos sind relativ zur Seite (assets/logos/...). Liegt die
+   Seite in einem Unterordner ohne <base href="../">, den Präfix '../'
+   mitgeben, auf der Website '/'.
+   ====================================================================== */
+(function (global) {
+  'use strict';
+
+  const F = {
+    kontur:  '#004B5C',   // Dunkelblau
+    eis:     '#4FC4E2',   // Cyanblau, der Beutel selbst
+    papier:  '#FFF3E8',   // Hellorange
+    signal:  '#FF4612',   // Redorange
+    pink:    '#E7455B',   // Dragonfruit Pink
+    offblack:'#211F1D'
+  };
+
+  // Jute: eine Palette für alle Säcke, entschieden am 03.10.2026. Die Fähre nutzt
+  // die beiden dunklen Stufen (FAEHRE.jute #C8A46A, FAEHRE.juteNaht #9C7A45), der
+  // Rohkaffeesack steht eine Stufe heller, damit der farbige Füllstand trägt.
+  // Werte auch in assets/css/diagramme.css (--jute-*).
+  const JUTE = { hell: '#E8D6BC', mittel: '#CDB595', kante: '#B69C79', kopf: '#DCC6A6' };
+
+  const L = (p, motiv) => `${p}assets/logos/${motiv}`;
+
+  // Schlüssel «Kaffee|Sorte». grund = Etikettfarbe, logo = Datei der Zeichnung
+  // (null = altes Etikett ohne Logo), linien = Farbe von Zeichnung und Textlinien.
+  // Abgeglichen mit den Shopify-Produktbildern am 03.10.2026.
+  const ETIKETTEN = {
+    'Jaguara Summer|Espresso': { grund: F.kontur,   logo: 'cyanblau/standard-vertikal.svg',   linien: F.eis },
+    'Fincamigos|Espresso':     { grund: F.kontur,   logo: 'cyanblau/sup-vertikal.svg',        linien: F.eis },
+    'Fincamigos|Filter':       { grund: F.signal,   logo: 'hellorange/fernglas-vertikal.svg', linien: F.papier },
+    'Decaf Guji|Espresso':     { grund: F.kontur,   logo: 'cyanblau/laeuferin-vertikal.svg',  linien: F.eis },
+    'Decaf Guji|Filter':       { grund: F.signal,   logo: null,                               linien: F.papier },
+    'Guji Megadu|Espresso':    { grund: F.kontur,   logo: 'cyanblau/fernglas-vertikal.svg',   linien: F.eis },
+    'Guji Megadu|Filter':      { grund: F.signal,   logo: 'hellorange/fernglas-vertikal.svg', linien: F.papier },
+    'Hoyo Frío|Espresso':      { grund: F.pink,     logo: 'hellorange/jetski-vertikal.svg',   linien: F.papier },
+    'Hoyo Frío|Filter':        { grund: F.papier,   logo: 'pink/jetski-vertikal.svg',         linien: F.pink },
+    'Apas FT Blend|Espresso':  { grund: F.offblack, logo: 'hellorange/standard-vertikal.svg', linien: F.papier }
+  };
+
+  const BW = 86, BH = 90, BREITE = 420, HAUFEN_MAX = 21;
+
+  function bwBeutel(art, praefix = '') {
+    const e = ETIKETTEN[art];
+    if (!e) throw new Error('Unbekanntes Etikett: ' + art);
+    // Auf dem hellen Etikett braucht es eine Kante, sonst verschwimmt es mit dem Cyan.
+    const kante = e.grund === F.papier ? ' stroke="rgba(0,75,92,.35)" stroke-width="1.2"' : '';
+    let s = `<path d="M4 86 L2 14 Q2 4 14 4 H72 Q84 4 84 14 L82 86 Z" fill="${F.eis}" stroke="${F.kontur}" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M9 17 H77" stroke="${F.kontur}" stroke-width="1.6" opacity=".5" stroke-linecap="round"/>
+      <rect x="11" y="30" width="64" height="46" rx="3" fill="${e.grund}"${kante}/>`;
+    if (e.logo) {
+      s += `<image href="${L(praefix, e.logo)}" x="13" y="32.5" width="28" height="41" preserveAspectRatio="xMidYMid meet"/>
+        <path d="M44 41 H70 M44 49 H70 M44 57 H64 M44 65 H57" stroke="${e.linien}" stroke-width="2.4" stroke-linecap="round"/>`;
+    } else {
+      // Altes Etikett ohne Logo: Name und Sorte zentriert, darunter zwei Spalten
+      s += `<path d="M21 41 H65" stroke="${e.linien}" stroke-width="3.8" stroke-linecap="round"/>
+        <path d="M30 49 H56" stroke="${e.linien}" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M17 58 H39 M47 58 H69 M17 65 H35 M47 65 H63" stroke="${e.linien}" stroke-width="1.8" stroke-linecap="round"/>`;
+    }
+    return s;
+  }
+
+  function leererBeutel() {
+    return `<path d="M4 86 L2 14 Q2 4 14 4 H72 Q84 4 84 14 L82 86 Z" fill="none" stroke="${F.kontur}" stroke-width="2.4" stroke-dasharray="6 5" opacity=".35"/>
+      <path d="M9 17 H77" stroke="${F.kontur}" stroke-width="1.6" opacity=".2" stroke-dasharray="6 5"/>`;
+  }
+
+  // (x, y, Drehung) je Beutel; y ist der Abstand der Unterkante vom Boden.
+  function positionen(n) {
+    if (n <= 0) return [];
+    if (n <= 5) {
+      const sp = 82, x0 = (BREITE - (sp * (n - 1) + BW)) / 2;
+      return Array.from({ length: n }, (_, i) => [x0 + i * sp, 0, 0]);
+    }
+    if (n <= 10) {
+      const hinten = Math.floor(n / 2), vorne = n - hinten, sp = 82;
+      const xv = (BREITE - (sp * (vorne - 1) + BW)) / 2, xh = (BREITE - (sp * (hinten - 1) + BW)) / 2;
+      return [...Array.from({ length: hinten }, (_, i) => [xh + i * sp, 44, 0]),
+              ...Array.from({ length: vorne }, (_, i) => [xv + i * sp, 0, 0])];
+    }
+    // Haufen: unten breit, nach oben schmaler, leicht verdreht. Feste Pseudo-Zufallswerte,
+    // damit derselbe Bestand immer gleich aussieht.
+    const m = Math.min(n, HAUFEN_MAX), w = Math.ceil((Math.sqrt(8 * m + 1) - 1) / 2), sp = 56;
+    const pos = []; let rest = m, reihe = 0;
+    while (rest > 0) {
+      const k = Math.min(w - reihe, rest), x0 = (BREITE - (sp * (k - 1) + BW)) / 2;
+      for (let j = 0; j < k; j++) {
+        const i = pos.length;
+        pos.push([x0 + j * sp + ((i * 53 + 5) % 9 - 4) * 1.2, reihe * 36, ((i * 37 + 11) % 15 - 7) * 1.1]);
+      }
+      rest -= k; reihe++;
+    }
+    return pos;
+  }
+
+  function hoehe(n) {
+    const p = positionen(n);
+    return (p.length ? Math.max(...p.map(q => q[1])) : 0) + BH + 14;
+  }
+
+  /* Ein Stapel einer Röstung. Alle Stapel haben dieselbe Breite (420 Einheiten),
+     also stehen sie bei gleicher Darstellungsbreite im selben Massstab.
+     o.titel  Text für aria-label, o.praefix Pfad-Präfix für die Logos */
+  function bwBeutelStapel(art, n, o = {}) {
+    const h = hoehe(n), boden = h - 6;
+    const titel = o.titel || `${art.replace('|', ' ')}: ${n} Beutel`;
+    let s = `<svg class="beutelbild" viewBox="0 0 ${BREITE} ${h}" role="img" aria-label="${titel}">`;
+    if (!n) {
+      s += `<g transform="translate(${(BREITE - BW) / 2} ${boden - BH})">${leererBeutel()}</g>`;
+    } else {
+      const b = bwBeutel(art, o.praefix || '');
+      for (const [x, y, rot] of positionen(n)) {
+        const tr = `translate(${x.toFixed(1)} ${(boden - BH - y).toFixed(1)})` + (rot ? ` rotate(${rot.toFixed(1)} ${BW / 2} ${BH / 2})` : '');
+        s += `<g class="bt"><g transform="${tr}">${b}</g></g>`;
+      }
+    }
+    s += `<path d="M14 ${boden + 2} H${BREITE - 14}" stroke="${F.kontur}" stroke-width="1.4" opacity=".18" stroke-linecap="round"/></svg>`;
+    return s;
+  }
+
+  /* Jutesack mit Füllstand. o.kg, o.eingekauft, o.max (grösster Posten, für die Füllhöhe),
+     o.farbe (Diagrammfarbe der Sorte), o.id (eindeutig je Seite, für clipPath und Verlauf) */
+  function bwRohkaffeesack(o) {
+    const id = o.id || 'sack' + Math.random().toString(36).slice(2, 7);
+    const anteil = o.max ? o.kg / o.max : 0, fuell = 8 + anteil * 122, y = 146 - fuell;
+    const form = 'M14 28 h72 a6 6 0 0 1 6 6 v104 a8 8 0 0 1 -8 8 h-68 a8 8 0 0 1 -8 -8 v-104 a6 6 0 0 1 6 -6 z';
+    return `<svg class="sack" viewBox="0 0 100 190" role="img" aria-label="${o.titel || ''} ${o.kg.toFixed(1)} kg von ${o.eingekauft} kg">
+      <defs><linearGradient id="${id}-j" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${JUTE.hell}"/><stop offset="1" stop-color="${JUTE.mittel}"/></linearGradient>
+      <clipPath id="${id}-c"><path d="${form}"/></clipPath></defs>
+      <path d="${form}" fill="url(#${id}-j)" stroke="${JUTE.kante}" stroke-width="1.5"/>
+      <g clip-path="url(#${id}-c)"><rect class="fuellung" x="14" y="${y.toFixed(1)}" width="72" height="${fuell.toFixed(1)}" fill="${o.farbe}" fill-opacity=".85"/></g>
+      <path d="M12 28 q14 -12 38 -12 q24 0 38 12 q-12 7 -38 7 q-26 0 -38 -7 z" fill="${JUTE.kopf}" stroke="${JUTE.kante}" stroke-width="1.5"/>
+      <path d="M30 20 q20 -9 40 0" fill="none" stroke="${JUTE.kante}" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M22 44 v92 M78 44 v92" stroke="${JUTE.kante}" stroke-width="1" stroke-dasharray="3 4" opacity=".7"/>
+      <text x="50" y="172" text-anchor="middle" font-size="13.5" font-weight="800" fill="${F.kontur}" font-family="Gabarito,'Trebuchet MS',sans-serif">${o.kg.toFixed(1)} kg</text>
+      <text x="50" y="186" text-anchor="middle" font-size="11" fill="${F.kontur}" opacity=".65" font-family="Gabarito,'Trebuchet MS',sans-serif">von ${o.eingekauft} kg</text>
+    </svg>`;
+  }
+
+  global.bwBeutel = bwBeutel;
+  global.bwBeutelStapel = bwBeutelStapel;
+  global.bwRohkaffeesack = bwRohkaffeesack;
+  global.BW_ETIKETTEN = ETIKETTEN;
+})(typeof window !== 'undefined' ? window : globalThis);

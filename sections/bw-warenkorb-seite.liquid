@@ -1,0 +1,51 @@
+{%- comment -%}
+  Die Warenkorbseite /cart. Funktioniert ohne JavaScript: Mengen ändern
+  über das Formular, Entfernen über url_to_remove, Bezahlen über
+  name="checkout". Die Schublade (snippets/bw-warenkorb.liquid) ist der
+  schnelle Weg, diese Seite der sichere.
+{%- endcomment -%}
+{%- assign titel = 'warenkorb.titel' | t -%}
+{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel -%}
+<section class="sektion">
+  <div class="wrap">
+    {%- if cart.item_count == 0 %}
+    <p>{{ 'warenkorb.leer' | t }}</p>
+    <p><a class="btn btn--primaer" href="{{ routes.all_products_collection_url }}" data-pfeil>{{ 'warenkorb.weiter_einkaufen' | t }}</a></p>
+    {%- else %}
+    <form action="{{ routes.cart_url }}" method="post" class="bw-warenkorb-form">
+      <ul class="bw-zeilen">
+        {%- for item in cart.items %}
+        <li class="bw-zeile">
+          {%- if item.image %}
+          <a class="bw-zeile-bild" href="{{ item.url }}">{{ item.image | image_url: width: 160 | image_tag: loading: 'lazy', alt: item.product.title }}</a>
+          {%- endif %}
+          <div class="bw-zeile-text">
+            <a href="{{ item.url }}" class="bw-zeile-titel">{{ item.product.title }}</a>
+            {%- unless item.product.has_only_default_variant %}<span class="bw-zeile-variante">{{ item.variant.title }}</span>{% endunless %}
+            {%- if item.selling_plan_allocation %}<span class="bw-zeile-variante">{{ item.selling_plan_allocation.selling_plan.name }}</span>{% endif %}
+            <a class="bw-zeile-weg" href="{{ item.url_to_remove }}">{{ 'warenkorb.entfernen' | t }}</a>
+          </div>
+          <label class="bw-feld bw-feld--klein">
+            <span>{{ 'warenkorb.anzahl' | t }}</span>
+            <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" inputmode="numeric">
+          </label>
+          <span class="bw-preis">{{ item.final_line_price | money }}</span>
+        </li>
+        {%- endfor %}
+      </ul>
+      <div class="bw-summe">
+        <span>{{ 'warenkorb.zwischensumme' | t }}</span>
+        <strong>{{ cart.total_price | money }}</strong>
+      </div>
+      <p class="bw-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
+      <div class="bw-knoepfe">
+        <button type="submit" name="update" class="btn btn--linie">{{ 'warenkorb.aktualisieren' | t }}</button>
+        <button type="submit" name="checkout" class="btn btn--primaer" data-pfeil>{{ 'warenkorb.zur_kasse' | t }}</button>
+      </div>
+    </form>
+    {%- endif %}
+  </div>
+</section>
+{% schema %}
+{ "name": "Warenkorb", "settings": [] }
+{% endschema %}

@@ -1,0 +1,13 @@
+{
+  "type": "footer",
+  "name": "Fuss",
+  "sections": {
+    "fuss": {
+      "type": "bw-fuss",
+      "settings": {}
+    }
+  },
+  "order": [
+    "fuss"
+  ]
+}

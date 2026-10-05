@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-404",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

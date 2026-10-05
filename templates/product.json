@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-produkt",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

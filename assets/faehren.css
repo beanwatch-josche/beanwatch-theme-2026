@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Beanwatch · Hero mit Fähren
+   Nur Startseite. Zwei Zürichsee-Fähren fahren im Wasser des Heros und
+   denken laut, gezeichnet von bwFaehre() in illustrationen.js, bewegt von
+   faehren.js. Was gemeinsame Hero-Teile ändert, hängt an .hero--faehren,
+   damit ein Hero ohne Fähren aussieht wie bisher (siehe archiv.html).
+   ========================================================================== */
+
+/* Die Aufbauten der Fähren ragen rund 120 px aus dem Wasser; ohne mehr Raum
+   unten liefen sie in die Pillen. Deshalb ein höherer Wellenstreifen und mehr
+   Abstand unter dem Inhalt als beim Hero ohne Fähren. */
+.hero--faehren{padding-bottom:clamp(190px,22vh,250px);}
+.hero--faehren .hero-wellen{height:clamp(170px,22vw,300px);}
+
+/* Die Fähre selbst ist 500 Einheiten lang, das SVG mit Platz fürs
+   Kielwasser 600. Die Spur ist deshalb 1,2-mal so breit wie das Schiff. */
+.faehre-spur{
+  --faehre:clamp(170px,30vw,440px);
+  position:absolute;
+  left:0;
+  width:calc(var(--faehre) * 1.2);
+  pointer-events:none;
+  will-change:transform;
+}
+/* .hero-wellen svg macht jedes SVG im Wellenstreifen absolut und doppelt
+   so breit — gedacht für die Wellen. Für die Fähren wieder zurücksetzen. */
+.hero-wellen .faehre-spur svg{
+  position:relative;
+  display:block;
+  width:100%;height:auto;
+  overflow:visible;
+}
+/* Hinten: kleiner und höher im Bild, also weiter weg. Die mittlere Welle
+   liegt davor und legt ihren Cyan-Schleier über die Wasserlinie. */
+.faehre-spur--hinten{--faehre:clamp(139px,24.6vw,360px);bottom:34%;}
+.faehre-spur--vorne{bottom:17%;}
+
+/* --- Gedankenblasen ------------------------------------------------------
+   Der Ankerpunkt sitzt über den Flaggen in der Schiffsmitte. Von dort
+   steigen zwei kleiner werdende Kreise zur Blase auf, nach hinten
+   versetzt: links nach links, rechts nach rechts. So schieben sich die
+   Blasen beim Kreuzen nicht übereinander. */
+.gedanke{
+  position:absolute;
+  left:50%;bottom:91%;
+  width:0;height:0;
+  pointer-events:none;
+}
+.gedanke-punkt,
+.gedanke-blase{
+  position:absolute;
+  background:#FFFFFF;
+  border:2px solid var(--dunkelblau);
+}
+.gedanke-punkt{border-radius:50%;}
+.gedanke-punkt--1{width:8px;height:8px;bottom:2px;}
+.gedanke-punkt--2{width:13px;height:13px;bottom:13px;}
+.gedanke-blase{
+  bottom:28px;
+  margin:0;
+  box-sizing:content-box;
+  width:max-content;
+  white-space:nowrap;
+  padding:.6em 1.05em;
+  border-radius:1.5em;
+  color:var(--dunkelblau);
+  font-weight:600;
+  font-size:clamp(11px,calc(var(--faehre) * .034),15px);
+  line-height:1.25;
+  text-align:center;
+}
+.gedanke--links .gedanke-punkt--1{right:-4px;}
+.gedanke--links .gedanke-punkt--2{right:6px;}
+.gedanke--links .gedanke-blase{right:12px;transform-origin:100% 100%;}
+.gedanke--rechts .gedanke-punkt--1{left:-4px;}
+.gedanke--rechts .gedanke-punkt--2{left:6px;}
+.gedanke--rechts .gedanke-blase{left:12px;transform-origin:0 100%;}
+
+/* Beim Kreuzen gleiten die Blasen übereinander hinweg: Die hintere Fähre
+   liegt ohnehin höher, ein Zuschlag hebt ihre Blase samt den kleinen
+   Kreisen über die vordere. Nach dem Kreuzen hängt jede Blase zur anderen
+   hin, ohne diese Staffelung zögen die Kreise durch die rechte Blase. */
+.faehre-spur--hinten .gedanke{bottom:calc(91% + 46px);}
+
+/* Der linke Text ist lang. Einzeilig ragte die Blase links aus dem Bild,
+   also steht er auf zwei Zeilen. Getrennt wird am Zeilenumbruch im Text,
+   „Von den besten Kaffeefarmen / aus aller Welt.": Ein ausgewogener
+   Umbruch wählte die schmalere Variante nach „besten". Die Blasen sind
+   am unteren Rand verankert, sie wächst deshalb nach oben. */
+.gedanke--links .gedanke-blase{white-space:pre-line;}
+
+/* Schmal ist für eine Zeile kein Platz, dort brechen sie um. */
+@media (max-width:699px){
+  .gedanke-blase,
+  .gedanke--links .gedanke-blase{white-space:normal;max-width:14ch;text-wrap:balance;}
+  /* Zweizeilig sind die Blasen höher als der Versatz der Spuren, und die
+     Schiffe liegen so nah beieinander, dass sie nach dem Kreuzen bis zum
+     Schluss übereinander stünden. Die hintere steigt deshalb höher. */
+  .faehre-spur--hinten .gedanke{bottom:calc(91% + 74px);}
+}
+
+/* Links neben der Fähre ist erst ab rund 800 px Platz für die Blase,
+   schmaler stünde sie beim Aufgehen zum Teil ausserhalb des Bildes. Bis
+   860 px steht sie deshalb mittig über dem Schiff: gleich weit über den
+   Anker hinaus nach beiden Seiten, mit automatischem Rand zentriert. */
+@media (max-width:860px){
+  .gedanke--links .gedanke-blase{left:-120px;right:-120px;margin-inline:auto;transform-origin:50% 100%;}
+}
+
+/* --- Wasser ---------------------------------------------------------------
+   Die vorderste Welle ist hier Wasser statt Seitengrund, die Farbe steht im
+   Markup: drei Schichten Cyan, 32 %, 55 % und deckend. Sie wiegt sich bis
+   zu 9 px auf und ab; damit dabei unten kein heller Streifen aufblitzt,
+   reicht sie 12 px unter die Hero-Kante, wo der Hero sie abschneidet. */
+.hero--faehren #welle-vorne{bottom:-12px;height:calc(100% + 12px);}
+
+/* Das Laufband legt sich ein Stück über den unteren Rand, das Wasser
+   endet bündig darunter. */
+.hero--faehren + .laufband{margin-top:-6px;}
+
+/* ==========================================================================
+   Über uns: Fähre, Ufer und Läufer
+   Die Szene aus dem bisherigen Foto. Von hinten nach vorne: Wellen, die
+   Fähre RÖSTEREI, die vorderste Welle, Mauer mit Wiese, darauf der Läufer.
+   Alles liegt im Wellenstreifen und stapelt sich in der Reihenfolge des
+   Markups. Bewegt von ueberuns-hero.js.
+   ========================================================================== */
+.hero--ueberuns{padding-bottom:clamp(250px,30vh,340px);}
+.hero--ueberuns .hero-wellen{height:clamp(210px,26vw,360px);}
+.hero-brotkrumen{margin-bottom:22px;}
+
+/* Die Wasserlinie der Fähre liegt knapp über der Mauerkrone. */
+.hero--ueberuns .faehre-spur--vorne{bottom:27%;}
+
+.ufer{
+  position:absolute;
+  left:0;right:0;bottom:-2px;
+  height:calc(30% + 2px);
+  pointer-events:none;
+}
+.hero-wellen .ufer svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+/* Der Läufer ist das Signet, seine viewBox misst 530 × 628. */
+.laeufer-spur{
+  --laeufer:clamp(110px,12vw,180px);
+  position:absolute;
+  left:0;bottom:3%;
+  width:calc(var(--laeufer) * .844);
+  height:var(--laeufer);
+  pointer-events:none;
+  will-change:transform;
+}
+.hero-wellen .laeufer-spur svg{position:relative;display:block;width:100%;height:100%;overflow:visible;}
+
+/* Die Blase des Läufers steigt über dem Kopf auf und hängt nach links; die
+   der Fähre hängt nach rechts und sitzt höher. Nach dem Kreuzen hängen
+   beide zueinander hin, die Staffelung hält sie auseinander. */
+.laeufer-spur .gedanke{bottom:98%;}
+.laeufer-spur .gedanke-blase{font-size:clamp(11px,calc(var(--laeufer) * .095),15px);}
+.hero--ueberuns .faehre-spur .gedanke{bottom:calc(91% + 34px);}
+
+@media (max-width:699px){
+  .hero--ueberuns .faehre-spur .gedanke{bottom:calc(91% + 80px);}
+}
+
+/* ==========================================================================
+   Beutel im Haufen
+   Ladung 'haufen' der RÖSTEREI, Startseite seit dem 03.10.2026. Die Beutel
+   sind bwBeutel() aus beutel.js, für 86 Einheiten Breite gezeichnet und auf
+   der Fähre auf ein Drittel verkleinert. Ihre Striche wären dann nur halb
+   so stark wie der Rest der Ladung. Hier zurück auf das Mass der übrigen
+   Fährenbeutel: Kontur 1,5, Naht 1, Textlinien 1,1, in Beutel-Einheiten
+   also das Dreifache. CSS schlägt die Attribute aus beutel.js, die Datei
+   selbst bleibt so, wie sie im CI-Guide steht. Steht am Dateiende, weil der
+   CI-Guide Zeilen dieser Datei zitiert.
+   ========================================================================== */
+.haufen-beutel > path:first-child{stroke-width:4.5px;}
+.haufen-beutel > path:nth-child(2){stroke-width:3px;}
+.haufen-beutel > rect{stroke-width:2.2px;}
+.haufen-beutel > rect ~ path{stroke-width:3.3px;}
+/* Altes Etikett ohne Logo (Decaf Filter): der Name steht kräftiger. */
+.haufen-beutel > rect + path{stroke-width:4.6px;}

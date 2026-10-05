@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-warenkorb-seite",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

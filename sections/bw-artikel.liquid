@@ -1,0 +1,11 @@
+{%- render 'bw-rohbau-kopf', eyebrow: blog.title, titel: article.title -%}
+<section class="sektion">
+  <div class="wrap bw-rohbau-text">
+    <p class="bw-rohbau-datum">{{ article.published_at | date: format: 'date' }}</p>
+    {%- if article.image %}{{ article.image | image_url: width: 1200 | image_tag: loading: 'eager', alt: article.title }}{% endif %}
+    {{ article.content }}
+  </div>
+</section>
+{% schema %}
+{ "name": "Artikel (Rohbau)", "settings": [] }
+{% endschema %}

@@ -1,0 +1,44 @@
+{%- comment -%}
+  Rohbau der Produktseite: echte Daten und echter Warenkorb, noch ohne das
+  Design aus products/*.html der Werkstatt. bw-theme.js fängt das Formular
+  ab und legt ohne Neuladen in den Warenkorb.
+{%- endcomment -%}
+{%- assign variante = product.selected_or_first_available_variant -%}
+{%- render 'bw-rohbau-kopf', eyebrow: product.vendor, titel: product.title -%}
+<section class="sektion">
+  <div class="wrap bw-rohbau-produkt">
+    {%- if product.featured_image %}
+    <div class="bw-rohbau-bild">
+      {{ product.featured_image | image_url: width: 900 | image_tag: loading: 'eager', sizes: '(min-width: 900px) 45vw, 100vw', widths: '450, 700, 900', alt: product.featured_image.alt | default: product.title }}
+    </div>
+    {%- endif %}
+    <div>
+      <p class="bw-preis">{{ variante.price | money }}</p>
+      {%- form 'product', product, class: 'bw-produkt-form' %}
+        {%- if product.has_only_default_variant %}
+        <input type="hidden" name="id" value="{{ variante.id }}">
+        {%- else %}
+        <label class="bw-feld">
+          <span>{{ product.options.first }}</span>
+          <select name="id">
+            {%- for v in product.variants %}
+            <option value="{{ v.id }}"{% if v.id == variante.id %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>{{ v.title }} · {{ v.price | money }}</option>
+            {%- endfor %}
+          </select>
+        </label>
+        {%- endif %}
+        <label class="bw-feld">
+          <span>{{ 'warenkorb.anzahl' | t }}</span>
+          <input type="number" name="quantity" value="1" min="1" inputmode="numeric">
+        </label>
+        <button type="submit" class="btn btn--primaer"{% unless variante.available %} disabled{% endunless %} data-pfeil>
+          {%- if variante.available -%}{{ 'produkt.in_den_warenkorb' | t }}{%- else -%}{{ 'produkt.ausverkauft' | t }}{%- endif -%}
+        </button>
+      {%- endform %}
+      <div class="bw-rohbau-text">{{ product.description }}</div>
+    </div>
+  </div>
+</section>
+{% schema %}
+{ "name": "Produkt (Rohbau)", "settings": [] }
+{% endschema %}

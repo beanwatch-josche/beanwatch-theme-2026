@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-blog",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

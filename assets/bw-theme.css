@@ -1,0 +1,135 @@
+/* ==========================================================================
+   Beanwatch · Theme
+   Nur was das Shopify-Theme braucht und der Prototyp nicht hat: Sprunglink,
+   Warenkorb (Schublade und Seite), Formularfelder und die Rohbau-Vorlagen.
+   Farben, Radien und Abstände kommen aus den Tokens in beanwatch.css.
+   Flach, ohne Schatten (CI-Guide). Gehört dem Theme, nicht der Werkstatt.
+   ========================================================================== */
+
+/* --- Zum Inhalt springen ---------------------------------------------------- */
+.bw-sprung{
+  position:absolute;left:12px;top:-60px;z-index:200;
+  padding:10px 14px;border-radius:var(--radius-button);
+  background:var(--dunkelblau);color:var(--hellorange);font-weight:600;
+}
+.bw-sprung:focus{top:12px;}
+
+/* Die Logos tragen width und height gegen Layoutsprünge, die Breite setzt
+   weiter beanwatch.css. Ohne height:auto würde die Höhe festkleben. */
+.kopf-logo img,.fuss-logo img{height:auto;}
+
+/* Die Zahl im Warenkorb des Kopfs verschwindet bei 0. */
+.warenkorb .zahl[hidden]{display:none;}
+
+/* --- Formularfelder ------------------------------------------------------- */
+.bw-feld{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-width:320px;}
+.bw-feld span{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.bw-feld input,.bw-feld select{
+  font:inherit;color:var(--dunkelblau);
+  padding:11px 14px;border:1px solid var(--linie-stark);border-radius:var(--radius-button);
+  background:#fff;
+}
+.bw-feld input:focus-visible,.bw-feld select:focus-visible{outline:2px solid var(--redorange);outline-offset:1px;}
+.bw-feld--klein{max-width:90px;margin:0;}
+
+.bw-preis{font-weight:700;font-size:1.1rem;}
+.bw-hinweis{font-size:.85rem;opacity:.75;margin:8px 0 18px;}
+.bw-fehler{padding:10px 14px;border-left:3px solid var(--redorange);background:rgba(255,70,18,.08);margin-bottom:14px;}
+.bw-knoepfe{display:flex;flex-wrap:wrap;gap:12px;}
+
+/* --- Warenkorb-Zeilen (Schublade und Seite) ------------------------------- */
+.bw-zeilen{list-style:none;margin:0;padding:0;}
+.bw-zeile{
+  display:grid;grid-template-columns:72px 1fr auto;grid-template-areas:"bild text preis" "bild menge preis";
+  gap:6px 14px;align-items:start;
+  padding:16px 0;border-bottom:1px solid var(--linie);
+}
+.bw-zeile-bild{grid-area:bild;}
+.bw-zeile-bild img{width:72px;height:72px;object-fit:cover;border-radius:10px;background:var(--hellorange);}
+.bw-zeile-text{grid-area:text;display:flex;flex-direction:column;gap:3px;}
+.bw-zeile-titel{font-weight:700;}
+.bw-zeile-variante{font-size:.85rem;opacity:.75;}
+.bw-zeile-weg{
+  align-self:flex-start;margin-top:4px;padding:0;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:.8rem;color:var(--dunkelblau);text-decoration:underline;opacity:.7;
+}
+.bw-zeile-weg:hover{opacity:1;color:var(--redorange);}
+.bw-zeile .bw-preis{grid-area:preis;font-size:1rem;white-space:nowrap;}
+.bw-zeile .bw-feld--klein,.bw-menge{grid-area:menge;}
+.bw-menge{display:inline-flex;align-items:center;border:1px solid var(--linie-stark);border-radius:var(--radius-pill);width:max-content;}
+.bw-menge button{
+  width:34px;height:32px;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:1.1rem;color:var(--dunkelblau);
+}
+.bw-menge button:hover{color:var(--redorange);}
+.bw-menge button:disabled{opacity:.4;cursor:wait;}
+.bw-menge span{min-width:22px;text-align:center;font-weight:700;}
+
+.bw-summe{display:flex;justify-content:space-between;align-items:baseline;padding-top:16px;font-size:1.05rem;}
+.bw-summe strong{font-size:1.25rem;}
+.bw-warenkorb-form{max-width:760px;}
+
+/* --- Schublade ------------------------------------------------------------ */
+.bw-schublade{position:fixed;inset:0;z-index:300;}
+.bw-schublade[hidden]{display:none;}
+.bw-schublade-schleier{
+  position:absolute;inset:0;background:rgba(0,75,92,.35);
+  opacity:0;transition:opacity .28s ease;
+}
+.bw-schublade-panel{
+  position:absolute;top:0;right:0;bottom:0;
+  width:min(440px,100vw);display:flex;flex-direction:column;
+  background:var(--hellorange);color:var(--dunkelblau);
+  border-left:1px solid var(--linie);
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.65,0,.35,1);
+}
+.bw-schublade-panel:focus{outline:none;}
+.bw-schublade.ist-offen .bw-schublade-schleier{opacity:1;}
+.bw-schublade.ist-offen .bw-schublade-panel{transform:none;}
+.bw-schublade-kopf{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 24px;border-bottom:1px solid var(--linie);
+}
+.bw-schublade-kopf h2{font-size:1.4rem;margin:0;}
+.bw-schublade-zu{
+  width:40px;height:40px;display:grid;place-items:center;
+  border:1px solid var(--linie-stark);border-radius:var(--radius-pill);
+  background:none;color:var(--dunkelblau);cursor:pointer;
+}
+.bw-schublade-zu:hover{background:var(--dunkelblau);color:var(--hellorange);border-color:var(--dunkelblau);}
+.bw-schublade-inhalt{flex:1;overflow:auto;padding:4px 24px 20px;}
+.bw-schublade-inhalt .bw-leer{margin:24px 0 18px;}
+.bw-schublade-fuss{padding:8px 24px 24px;border-top:1px solid var(--linie);}
+.bw-schublade-fuss[hidden]{display:none;}
+.bw-schublade-fuss .btn{width:100%;justify-content:center;}
+.bw-schublade-seite{display:block;text-align:center;margin-top:12px;font-size:.85rem;text-decoration:underline;opacity:.75;}
+@media (prefers-reduced-motion:reduce){
+  .bw-schublade-schleier,.bw-schublade-panel{transition:none;}
+}
+
+/* --- Rohbau-Vorlagen ------------------------------------------------------ */
+.bw-rohbau-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:12px;}
+.bw-rohbau-raster{
+  list-style:none;margin:0;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--gap);
+}
+.bw-rohbau-raster a{
+  display:flex;flex-direction:column;gap:8px;height:100%;
+  padding:14px;border:1px solid var(--linie);border-radius:var(--radius-karte);background:#fff;
+}
+.bw-rohbau-raster a:hover{border-color:var(--linie-stark);}
+.bw-rohbau-raster img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:10px;}
+.bw-rohbau-titel{font-weight:700;}
+.bw-rohbau-datum{font-size:.85rem;opacity:.7;}
+.bw-rohbau-liste{margin:24px 0 0;padding-left:1.2em;}
+.bw-rohbau-liste li{margin:6px 0;}
+.bw-produkt-form{margin-bottom:28px;}
+.bw-rohbau-produkt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:start;}
+.bw-rohbau-bild img{width:100%;height:auto;border-radius:var(--radius-karte);}
+.bw-rohbau-text{max-width:70ch;line-height:1.65;}
+.bw-rohbau-text img{max-width:100%;height:auto;border-radius:var(--radius-karte);}
+.bw-suche-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;}
+.bw-suche-form .bw-feld{margin:0;flex:1;max-width:420px;}
+@media (max-width:860px){
+  .bw-rohbau-produkt{grid-template-columns:1fr;}
+}

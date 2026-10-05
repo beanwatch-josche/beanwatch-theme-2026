@@ -1,0 +1,76 @@
+{
+  "allgemein": {
+    "zum_inhalt": "Aller au contenu",
+    "seite": "Page {{ nummer }}"
+  },
+  "kopf": {
+    "espresso": "Espresso",
+    "filterkaffee": "Café filtre",
+    "decaf": "Déca",
+    "wissen": "Savoir",
+    "shop": "Boutique",
+    "rezepte": "Recettes",
+    "tools": "Outils",
+    "warenkorb": "Panier",
+    "startseite": "Accueil Beanwatch",
+    "hauptnavigation": "Navigation principale",
+    "mobile_navigation": "Navigation mobile",
+    "menue_oeffnen": "Ouvrir le menu"
+  },
+  "fuss": {
+    "made_in_horgen": "Made in Horgen",
+    "shop": "Boutique",
+    "espresso": "Espresso",
+    "filterkaffee": "Café filtre",
+    "decaf": "Déca de spécialité",
+    "alle_produkte": "Tous les produits",
+    "buecher": "Livres",
+    "wissen": "Savoir",
+    "kaffeewissen": "Savoir café",
+    "kaffeerezepte": "Recettes de café",
+    "brew_guides": "Guides d’infusion",
+    "tools": "Outils gratuits",
+    "beanwatch": "Beanwatch",
+    "ueber_uns": "À propos",
+    "kontakt": "Contact",
+    "versand": "Livraison",
+    "credits": "Crédits"
+  },
+  "warenkorb": {
+    "titel": "Panier",
+    "leer": "Ton panier est vide.",
+    "weiter_einkaufen": "Continuer mes achats",
+    "entfernen": "Retirer",
+    "weniger": "Un de moins",
+    "mehr": "Un de plus",
+    "anzahl": "Quantité",
+    "fehler": "Cela n’a pas fonctionné. Merci de réessayer.",
+    "zwischensumme": "Sous-total",
+    "versand_hinweis": "Livraison et réductions calculées lors du paiement.",
+    "aktualisieren": "Mettre à jour les quantités",
+    "zur_kasse": "Passer commande",
+    "zur_seite": "Voir le panier",
+    "schliessen": "Fermer le panier"
+  },
+  "produkt": {
+    "in_den_warenkorb": "Ajouter au panier",
+    "ausverkauft": "Épuisé"
+  },
+  "rohbau": {
+    "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",
+    "start_titel": "Le nouveau site Beanwatch se construit ici.",
+    "start_lead": "Aperçu du nouveau thème avec de vrais produits, articles et recettes.",
+    "leer": "Rien ici pour le moment."
+  },
+  "suche": {
+    "titel": "Recherche",
+    "begriff": "Terme de recherche",
+    "suchen": "Rechercher",
+    "nichts": "Aucun résultat pour « {{ begriff }} »."
+  },
+  "fehler": {
+    "titel": "Cette page n’existe pas.",
+    "text": "Elle a peut-être été déplacée. Tu retrouveras tout sur la page d’accueil.",
+    "zur_startseite": "Vers l’accueil"
+  }
+}

@@ -1,0 +1,45 @@
+{%- comment -%}
+  Gibt den Navigationsschlüssel der Seite aus, wie BW_SEITE im Prototyp:
+  start, espresso, filterkaffee, decaf, wissen, shop oder nichts.
+  Aufruf: {%- capture aktiv -%}{%- render 'bw-navschluessel' -%}{%- endcapture -%}
+  Verglichen wird über IDs und Vorlagen-Suffixe, nicht über Handles: Die
+  sind in Englisch und Französisch übersetzt.
+  Produkte zählen wie im Prototyp zu ihrem Hub (Espresso, Filterkaffee,
+  Decaf), Kollektionen ausser Decaf zum Shop (shop.html#espresso).
+{%- endcomment -%}
+{%- liquid
+  assign id_espresso = collections['espresso'].id
+  assign id_filter = collections['filterkaffee'].id
+  assign id_decaf = collections['decaf-coffee'].id
+  case request.page_type
+    when 'index'
+      echo 'start'
+    when 'page'
+      if page.template_suffix == 'espresso'
+        echo 'espresso'
+      elsif page.template_suffix == 'filterkaffee'
+        echo 'filterkaffee'
+      endif
+    when 'collection'
+      if collection.id == id_decaf
+        echo 'decaf'
+      else
+        echo 'shop'
+      endif
+    when 'product'
+      assign ids = product.collections | map: 'id'
+      if ids contains id_decaf
+        echo 'decaf'
+      elsif ids contains id_filter
+        echo 'filterkaffee'
+      elsif ids contains id_espresso
+        echo 'espresso'
+      else
+        echo 'shop'
+      endif
+    when 'blog' or 'article'
+      echo 'wissen'
+    when 'list-collections' or 'cart' or 'search'
+      echo 'shop'
+  endcase
+-%}

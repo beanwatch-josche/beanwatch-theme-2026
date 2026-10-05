@@ -1,0 +1,43 @@
+{%- comment -%}
+  Was die Skripte aus der Werkstatt über die Seite wissen müssen.
+
+  BW_SEITE   Navigationsschlüssel wie im Prototyp (start, espresso,
+             filterkaffee, decaf, wissen, shop). Verglichen wird über IDs
+             und Vorlagen-Suffixe, nicht über Handles, denn die sind in
+             Englisch und Französisch übersetzt.
+  BW_PLAN    Der Start-Modus (start.js): je Guide-Blog die veröffentlichten
+             Artikel. Shopify liefert in blogs[…].articles nur
+             Veröffentlichtes, ein fehlender Blog ergibt {} und damit
+             «nichts sichtbar».
+  BW_ROUTEN  Adressen für den Warenkorb, mit Sprachpräfix (/en, /fr).
+  BW_TEXTE   Texte für bw-theme.js aus den Sprachdateien.
+{%- endcomment -%}
+{%- capture bw_seite -%}{%- render 'bw-navschluessel' -%}{%- endcapture -%}
+{%- liquid
+  assign guide_blogs = 'brew-guides,barista-guides' | split: ','
+-%}
+<script>
+  window.BW_SEITE = {{ bw_seite | json }};
+  window.BW_PLAN = {
+    {%- for h in guide_blogs -%}
+      {{ h | json }}: { {%- for a in blogs[h].articles -%}{{ a.handle | json }}: "sichtbar"{%- unless forloop.last -%}, {% endunless -%}{%- endfor -%} }{%- unless forloop.last -%}, {% endunless -%}
+    {%- endfor -%}
+  };
+  window.BW_ROUTEN = {
+    start: {{ routes.root_url | json }},
+    alle: {{ routes.all_products_collection_url | json }},
+    warenkorb: {{ routes.cart_url | json }},
+    hinzufuegen: {{ routes.cart_add_url | json }},
+    aendern: {{ routes.cart_change_url | json }}
+  };
+  window.BW_WAEHRUNG = {{ cart.currency.iso_code | json }};
+  window.BW_TEXTE = {
+    leer: {{ 'warenkorb.leer' | t | json }},
+    weiter_einkaufen: {{ 'warenkorb.weiter_einkaufen' | t | json }},
+    entfernen: {{ 'warenkorb.entfernen' | t | json }},
+    weniger: {{ 'warenkorb.weniger' | t | json }},
+    mehr: {{ 'warenkorb.mehr' | t | json }},
+    anzahl: {{ 'warenkorb.anzahl' | t | json }},
+    fehler: {{ 'warenkorb.fehler' | t | json }}
+  };
+</script>

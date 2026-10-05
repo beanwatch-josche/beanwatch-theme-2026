@@ -1,0 +1,109 @@
+{%- comment -%}
+  Fuss, übertragen aus assets/js/shell.js der Werkstatt. Gleiche Klassen
+  wie dort. Links stehen fest im Code und erscheinen nur, wenn ihr Ziel in
+  Shopify existiert, die Brew Guides erst, wenn ein Guide veröffentlicht
+  ist. Die Rechtstexte kommen aus den Shopify-Richtlinien.
+  Noch nicht drin, weil das Ziel fehlt: Newsletter (#newsletter gibt es erst
+  mit der Startseite) und Wholesale.
+{%- endcomment -%}
+<footer class="fuss">
+  <div class="wrap">
+    <div class="fuss-oben">
+      <div>
+        <div class="fuss-logo">
+          <img src="{{ 'logo-hellorange-quer-einzeilig.svg' | asset_url }}" alt="Beanwatch" width="240" height="50" loading="lazy">
+        </div>
+        <p class="fuss-adresse">
+          Kaffeerösterei Gewinner<br>
+          Tödistrasse 21<br>
+          CH-8810 Horgen<br>
+          <a href="mailto:hoi@beanwatch.ch">hoi@beanwatch.ch</a>
+        </p>
+        <span class="fuss-horgen">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF4612"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.4"/>
+          </svg>
+          {{ 'fuss.made_in_horgen' | t }}
+        </span>
+      </div>
+
+      <div>
+        <h4>{{ 'fuss.shop' | t }}</h4>
+        <ul class="fuss-liste">
+          {%- if collections['espresso'] != blank %}
+          <li><a href="{{ collections['espresso'].url }}">{{ 'fuss.espresso' | t }}</a></li>
+          {%- endif %}
+          {%- if collections['filterkaffee'] != blank %}
+          <li><a href="{{ collections['filterkaffee'].url }}">{{ 'fuss.filterkaffee' | t }}</a></li>
+          {%- endif %}
+          {%- if collections['decaf-coffee'] != blank %}
+          <li><a href="{{ collections['decaf-coffee'].url }}">{{ 'fuss.decaf' | t }}</a></li>
+          {%- endif %}
+          <li><a href="{{ routes.all_products_collection_url }}">{{ 'fuss.alle_produkte' | t }}</a></li>
+          {%- if collections['bucher'] != blank %}
+          <li><a href="{{ collections['bucher'].url }}">{{ 'fuss.buecher' | t }}</a></li>
+          {%- endif %}
+        </ul>
+      </div>
+
+      <div>
+        <h4>{{ 'fuss.wissen' | t }}</h4>
+        <ul class="fuss-liste">
+          {%- if blogs['kaffeewissen'] != blank %}
+          <li><a href="{{ blogs['kaffeewissen'].url }}">{{ 'fuss.kaffeewissen' | t }}</a></li>
+          {%- endif %}
+          {%- if blogs['kaffeerezepte'] != blank %}
+          <li><a href="{{ blogs['kaffeerezepte'].url }}">{{ 'fuss.kaffeerezepte' | t }}</a></li>
+          {%- endif %}
+          {%- if blogs['brew-guides'].articles_count > 0 %}
+          <li><a href="{{ blogs['brew-guides'].url }}">{{ 'fuss.brew_guides' | t }}</a></li>
+          {%- endif %}
+          {%- if pages['tools'] != blank %}
+          <li><a href="{{ pages['tools'].url }}">{{ 'fuss.tools' | t }}</a></li>
+          {%- endif %}
+        </ul>
+      </div>
+
+      <div>
+        <h4>{{ 'fuss.beanwatch' | t }}</h4>
+        <ul class="fuss-liste">
+          {%- if pages['ueber-uns'] != blank %}
+          <li><a href="{{ pages['ueber-uns'].url }}">{{ 'fuss.ueber_uns' | t }}</a></li>
+          {%- endif %}
+          {%- if pages['contact'] != blank %}
+          <li><a href="{{ pages['contact'].url }}">{{ 'fuss.kontakt' | t }}</a></li>
+          {%- endif %}
+          {%- if shop.shipping_policy %}
+          <li><a href="{{ shop.shipping_policy.url }}">{{ 'fuss.versand' | t }}</a></li>
+          {%- endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="fuss-unten">
+      <span>© {{ 'now' | date: '%Y' }} Kaffeerösterei Gewinner · Beanwatch</span>
+      <div class="fuss-rechtlich">
+        {%- for richtlinie in shop.policies %}
+        <a href="{{ richtlinie.url }}">{{ richtlinie.title | escape }}</a>
+        {%- endfor %}
+        {%- if pages['credits'] != blank %}
+        <a href="{{ pages['credits'].url }}">{{ 'fuss.credits' | t }}</a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Fuss",
+  "class": "bw-fuss-sektion",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Die Links stehen fest im Code. Ein Link erscheint, sobald sein Ziel in Shopify existiert."
+    }
+  ]
+}
+{% endschema %}

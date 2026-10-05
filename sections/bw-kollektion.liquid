@@ -1,0 +1,24 @@
+{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: collection.title, lead: collection.description -%}
+<section class="sektion">
+  <div class="wrap">
+    {%- paginate collection.products by 24 %}
+    <ul class="bw-rohbau-raster">
+      {%- for p in collection.products %}
+      <li>
+        <a href="{{ p.url }}">
+          {%- if p.featured_image %}{{ p.featured_image | image_url: width: 600 | image_tag: loading: 'lazy', alt: p.title }}{% endif %}
+          <span class="bw-rohbau-titel">{{ p.title }}</span>
+          <span class="bw-preis">{{ p.price | money }}</span>
+        </a>
+      </li>
+      {%- else %}
+      <li>{{ 'rohbau.leer' | t }}</li>
+      {%- endfor %}
+    </ul>
+    {%- if paginate.pages > 1 %}{{ paginate | default_pagination }}{% endif %}
+    {%- endpaginate %}
+  </div>
+</section>
+{% schema %}
+{ "name": "Kollektion (Rohbau)", "settings": [] }
+{% endschema %}

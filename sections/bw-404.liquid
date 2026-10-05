@@ -1,0 +1,11 @@
+{%- assign titel = 'fehler.titel' | t -%}
+{%- assign lead = 'fehler.text' | t -%}
+{%- render 'bw-rohbau-kopf', eyebrow: '404', titel: titel, lead: lead -%}
+<section class="sektion">
+  <div class="wrap">
+    <a class="btn btn--primaer" href="{{ routes.root_url }}" data-pfeil>{{ 'fehler.zur_startseite' | t }}</a>
+  </div>
+</section>
+{% schema %}
+{ "name": "Nicht gefunden (Rohbau)", "settings": [] }
+{% endschema %}

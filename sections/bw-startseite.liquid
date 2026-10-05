@@ -1,0 +1,19 @@
+{%- assign titel = 'rohbau.start_titel' | t -%}
+{%- assign lead = 'rohbau.start_lead' | t -%}
+{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel, lead: lead -%}
+<section class="sektion">
+  <div class="wrap">
+    <ul class="bw-rohbau-links">
+      <li><a class="btn btn--primaer" href="{{ routes.all_products_collection_url }}" data-pfeil>{{ 'kopf.shop' | t }}</a></li>
+      {%- if blogs['kaffeewissen'] != blank %}
+      <li><a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}">{{ 'fuss.kaffeewissen' | t }}</a></li>
+      {%- endif %}
+      {%- if blogs['kaffeerezepte'] != blank %}
+      <li><a class="btn btn--linie" href="{{ blogs['kaffeerezepte'].url }}">{{ 'fuss.kaffeerezepte' | t }}</a></li>
+      {%- endif %}
+    </ul>
+  </div>
+</section>
+{% schema %}
+{ "name": "Startseite (Rohbau)", "settings": [] }
+{% endschema %}

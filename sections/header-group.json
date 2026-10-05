@@ -1,0 +1,13 @@
+{
+  "type": "header",
+  "name": "Kopf",
+  "sections": {
+    "kopf": {
+      "type": "bw-kopf",
+      "settings": {}
+    }
+  },
+  "order": [
+    "kopf"
+  ]
+}

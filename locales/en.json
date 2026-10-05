@@ -1,0 +1,76 @@
+{
+  "allgemein": {
+    "zum_inhalt": "Skip to content",
+    "seite": "Page {{ nummer }}"
+  },
+  "kopf": {
+    "espresso": "Espresso",
+    "filterkaffee": "Filter coffee",
+    "decaf": "Decaf",
+    "wissen": "Knowledge",
+    "shop": "Shop",
+    "rezepte": "Recipes",
+    "tools": "Tools",
+    "warenkorb": "Cart",
+    "startseite": "Beanwatch home",
+    "hauptnavigation": "Main navigation",
+    "mobile_navigation": "Mobile navigation",
+    "menue_oeffnen": "Open menu"
+  },
+  "fuss": {
+    "made_in_horgen": "Made in Horgen",
+    "shop": "Shop",
+    "espresso": "Espresso",
+    "filterkaffee": "Filter coffee",
+    "decaf": "Specialty decaf",
+    "alle_produkte": "All products",
+    "buecher": "Books",
+    "wissen": "Knowledge",
+    "kaffeewissen": "Coffee knowledge",
+    "kaffeerezepte": "Coffee recipes",
+    "brew_guides": "Brew guides",
+    "tools": "Free tools",
+    "beanwatch": "Beanwatch",
+    "ueber_uns": "About us",
+    "kontakt": "Contact",
+    "versand": "Shipping",
+    "credits": "Credits"
+  },
+  "warenkorb": {
+    "titel": "Cart",
+    "leer": "Your cart is empty.",
+    "weiter_einkaufen": "Continue shopping",
+    "entfernen": "Remove",
+    "weniger": "One less",
+    "mehr": "One more",
+    "anzahl": "Quantity",
+    "fehler": "That did not work. Please try again.",
+    "zwischensumme": "Subtotal",
+    "versand_hinweis": "Shipping and discounts are calculated at checkout.",
+    "aktualisieren": "Update quantities",
+    "zur_kasse": "Checkout",
+    "zur_seite": "View cart",
+    "schliessen": "Close cart"
+  },
+  "produkt": {
+    "in_den_warenkorb": "Add to cart",
+    "ausverkauft": "Sold out"
+  },
+  "rohbau": {
+    "hinweis": "Under construction: this page gets its final design before launch. Content, prices and cart are already live data.",
+    "start_titel": "The new Beanwatch website is being built here.",
+    "start_lead": "Preview of the new theme with real products, articles and recipes.",
+    "leer": "Nothing here yet."
+  },
+  "suche": {
+    "titel": "Search",
+    "begriff": "Search term",
+    "suchen": "Search",
+    "nichts": "We found nothing for “{{ begriff }}”."
+  },
+  "fehler": {
+    "titel": "This page does not exist.",
+    "text": "It may have moved. You will find everything on the home page.",
+    "zur_startseite": "Go to home page"
+  }
+}

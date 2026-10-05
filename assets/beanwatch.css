@@ -1,0 +1,1366 @@
+/* ==========================================================================
+   Beanwatch · Startseite · Stylesheet
+   Strikt nach CI-Guide v1.2 (2026)
+   Farben, Typografie, Radien und Hover-Regeln sind dort verbindlich definiert.
+   ========================================================================== */
+
+/* --- Gabarito, lokal eingebettet (SIL OFL 1.1) ---------------------------- */
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:400;font-display:swap;src:url('Gabarito-Regular.woff2') format('woff2');}
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:500;font-display:swap;src:url('Gabarito-Medium.woff2') format('woff2');}
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:600;font-display:swap;src:url('Gabarito-SemiBold.woff2') format('woff2');}
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:700;font-display:swap;src:url('Gabarito-Bold.woff2') format('woff2');}
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:800;font-display:swap;src:url('Gabarito-ExtraBold.woff2') format('woff2');}
+@font-face{font-family:'Gabarito';font-style:normal;font-weight:900;font-display:swap;src:url('Gabarito-Black.woff2') format('woff2');}
+
+/* --- Tokens --------------------------------------------------------------- */
+:root{
+  /* Markenfarben, CI-Guide Kapitel 05 */
+  --redorange:#FF4612;
+  --dunkelblau:#004B5C;
+  --cyanblau:#4FC4E2;
+  --hellorange:#FFF3E8;
+  --offblack:#211F1D;
+  /* Produktlinien-Ergänzungsfarben */
+  --dragonfruit:#E7455B;
+  --gelb:#FFC000;
+  /* Abgeleitetes */
+  --powderblue:#B8DCE8;
+  /* Lesbares Cyanblau für Text auf Weiss. Wert vorläufig, der CI-Guide
+     schlägt unter F04-4 #30788A vor, freigegeben ist das noch nicht. */
+  --cyanblau-dunkel:#0d7f9c;
+  --linie:rgba(0,75,92,.16);
+  --linie-stark:rgba(0,75,92,.28);
+
+  --font:'Gabarito','Trebuchet MS',Arial,sans-serif;
+
+  --radius-karte:16px;
+  --radius-button:8px;
+  --radius-pill:999px;
+
+  --seite:min(1280px,92vw);
+  /* Abstand, den ein Ankersprung über dem Ziel frei lässt. Die feste
+     Kopfleiste ist geklebt 64 px hoch, der Rest ist Luft. basis.js liest
+     denselben Wert, damit CSS und JS nicht auseinanderlaufen. */
+  --ankerabstand:110px;
+  --gap:clamp(16px,2vw,28px);
+  --sektion:clamp(72px,9vw,140px);
+}
+
+/* --- Reset ---------------------------------------------------------------- */
+*,*::before,*::after{box-sizing:border-box;}
+/* Rückt den Scrollbereich ein, damit ein Ziel nicht unter der Kopfleiste
+   landet: beim Laden mit Anker, bei scrollIntoView und beim Tabben.
+   Kein scroll-behavior hier — das würde auch ScrollTrigger animieren,
+   der auf der Startseite eine Sektion pinnt. Das Sanfte macht basis.js. */
+html{-webkit-text-size-adjust:100%;scroll-padding-top:var(--ankerabstand);}
+body{
+  margin:0;
+  font-family:var(--font);
+  font-weight:400;
+  line-height:1.6;
+  color:var(--dunkelblau);
+  background:var(--hellorange);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+[tabindex="-1"]:focus:not(:focus-visible){outline:none;}
+a{color:inherit;text-decoration:none;}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
+ul{margin:0;padding:0;list-style:none;}
+
+/* --- Typografie, CI-Guide Kapitel 06 -------------------------------------- */
+.display,h1{
+  font-weight:900;
+  letter-spacing:-.03em;
+  line-height:.95;
+  margin:0;
+}
+h1{font-size:clamp(2.6rem,5.5vw,5.1rem);}
+h2{
+  font-weight:800;
+  letter-spacing:-.03em;
+  line-height:1.03;
+  font-size:clamp(2rem,4.6vw,3.9rem);
+  margin:0;
+}
+h3{
+  font-weight:700;
+  letter-spacing:-.02em;
+  line-height:1.15;
+  font-size:clamp(1.15rem,1.7vw,1.5rem);
+  margin:0;
+}
+p{margin:0;}
+
+.eyebrow{                       /* Label / Eyebrow: Bold 700, GROSS, 0.14em */
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  font-size:.72rem;
+  line-height:1;
+}
+.kollektionstitel{              /* Tabs & Kollektionstitel: 600, GROSS, 0.06em */
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-size:.86rem;
+}
+.lead{
+  font-size:clamp(1.05rem,1.5vw,1.32rem);
+  line-height:1.6;
+  font-weight:500;
+}
+
+/* --- Layout --------------------------------------------------------------- */
+.wrap{width:var(--seite);margin-inline:auto;}
+.sektion{padding-block:var(--sektion);position:relative;}
+.sektion-kopf{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:clamp(32px,4vw,56px);
+}
+.sektion-kopf .text{max-width:none;}
+.sektion-kopf .eyebrow{color:var(--redorange);margin-bottom:14px;display:block;}
+.sektion-kopf p{margin-top:16px;max-width:52ch;}
+
+/* --- Buttons, CI-Guide Kapitel 11 ----------------------------------------- */
+/* Hover-Regel: Fläche UND Schrift wechseln immer gemeinsam. */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 26px;
+  border-radius:var(--radius-button);
+  font-weight:600;
+  letter-spacing:.02em;
+  font-size:1rem;
+  line-height:1;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  transition:color .35s ease, border-color .35s ease;
+  will-change:transform;
+}
+.btn::before{                   /* Füllfläche, GSAP-unabhängig als CSS-Fallback */
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--redorange);
+  transform:translateY(101%);
+  transition:transform .42s cubic-bezier(.65,0,.35,1);
+  z-index:-1;
+}
+.btn:hover::before,.btn:focus-visible::before{transform:translateY(0);}
+
+.btn--primaer{background:var(--redorange);color:var(--hellorange);}
+.btn--primaer::before{background:var(--dunkelblau);}
+.btn--primaer:hover,.btn--primaer:focus-visible{color:var(--hellorange);}
+
+.btn--linie{
+  border:1.5px solid var(--dunkelblau);
+  color:var(--dunkelblau);
+  background:transparent;
+}
+.btn--linie:hover,.btn--linie:focus-visible{color:var(--hellorange);border-color:var(--redorange);}
+
+.btn--hell{
+  border:1.5px solid var(--hellorange);
+  color:var(--hellorange);
+  background:transparent;
+}
+.btn--hell::before{background:var(--hellorange);}
+.btn--hell:hover,.btn--hell:focus-visible{color:var(--redorange);}
+
+.btn .pfeil{transition:transform .35s cubic-bezier(.65,0,.35,1);}
+.btn:hover .pfeil{transform:translateX(5px);}
+
+/* --- Pills & Tags, vollrund mit 1px-Kontur in der Textfarbe --------------- */
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 15px;
+  border-radius:var(--radius-pill);
+  border:1px solid currentColor;
+  font-weight:600;
+  font-size:.78rem;
+  letter-spacing:.02em;
+  line-height:1.5;
+}
+.pill--gefuellt{background:var(--redorange);border-color:var(--redorange);color:var(--hellorange);}
+.pill--pink{color:var(--dragonfruit);}
+.pill--cyan{color:var(--cyanblau-dunkel);}
+
+/* --- Karten, abgerundet 16px, feine Linie, heller Grund ------------------- */
+.karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.fortschritt{
+  position:fixed;
+  top:0;left:0;
+  height:3px;
+  width:100%;
+  transform:scaleX(0);
+  transform-origin:0 50%;
+  background:var(--redorange);
+  z-index:120;
+}
+.kopf{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:110;
+  padding:18px 0;
+  transition:padding .4s ease, background-color .4s ease, box-shadow .4s ease;
+}
+.kopf.ist-geklebt{
+  padding:10px 0;
+  background:rgba(255,243,232,.86);
+  backdrop-filter:blur(14px) saturate(1.4);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:0 1px 0 var(--linie);
+}
+.kopf .inner{
+  width:var(--seite);
+  margin-inline:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:32px;
+}
+.kopf-logo img{width:clamp(150px,15vw,210px);transition:width .4s ease;}
+.kopf.ist-geklebt .kopf-logo img{width:clamp(132px,12vw,172px);}
+
+.nav{display:flex;gap:30px;align-items:center;}
+.nav a{
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-size:.8rem;
+  position:relative;
+  padding-block:6px;
+}
+.nav a::after{
+  content:'';
+  position:absolute;
+  left:0;bottom:0;
+  width:100%;height:2px;
+  background:var(--redorange);
+  transform:scaleX(0);
+  transform-origin:100% 50%;
+  transition:transform .38s cubic-bezier(.65,0,.35,1);
+}
+.nav a:hover::after,.nav a:focus-visible::after{transform:scaleX(1);transform-origin:0 50%;}
+.kopf-aktionen{display:flex;align-items:center;gap:14px;}
+.warenkorb{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:10px 18px;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--linie-stark);
+  font-weight:600;font-size:.85rem;
+  transition:background-color .3s ease,color .3s ease,border-color .3s ease;
+}
+.warenkorb:hover{background:var(--redorange);color:var(--hellorange);border-color:var(--redorange);}
+.warenkorb .zahl{
+  background:var(--redorange);color:var(--hellorange);
+  border-radius:var(--radius-pill);
+  min-width:20px;height:20px;
+  display:grid;place-items:center;
+  font-size:.72rem;font-weight:700;
+}
+.warenkorb:hover .zahl{background:var(--hellorange);color:var(--redorange);}
+.menue-knopf{display:none;}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.hero{
+  position:relative;
+  min-height:100svh;
+  display:flex;
+  align-items:center;
+  padding-top:clamp(120px,14vh,170px);
+  padding-bottom:clamp(140px,18vh,210px);
+  overflow:hidden;
+}
+.hero-himmel{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(120% 90% at 78% 8%, rgba(79,196,226,.30) 0%, rgba(79,196,226,0) 58%),
+    radial-gradient(80% 60% at 12% 78%, rgba(255,70,18,.10) 0%, rgba(255,70,18,0) 62%),
+    var(--hellorange);
+  z-index:0;
+}
+.hero-sonne{
+  position:absolute;
+  top:8%;right:6%;
+  width:clamp(180px,26vw,380px);
+  aspect-ratio:1;
+  z-index:0;
+  opacity:.9;
+}
+.hero .wrap{position:relative;z-index:3;}
+.hero-raster{
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:clamp(28px,5vw,72px);
+  align-items:center;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  color:var(--redorange);
+  margin-bottom:26px;
+}
+.hero-eyebrow .punkt{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--redorange);
+  display:inline-block;
+}
+.hero h1 .zeile{display:block;overflow:hidden;padding-bottom:.08em;}
+.hero h1 .akzent{color:var(--redorange);}
+.hero-sub{margin-top:28px;max-width:46ch;}
+.hero-aktionen{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px;}
+.hero-belege{
+  display:flex;flex-wrap:wrap;gap:10px;
+  margin-top:36px;
+}
+
+/* Produktbühne rechts */
+.hero-buehne{position:relative;display:grid;place-items:center;min-height:clamp(340px,46vw,540px);}
+.hero-scheibe{
+  position:absolute;
+  width:min(88%,460px);
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle at 42% 34%, var(--cyanblau) 0%, #7fd4e9 45%, var(--powderblue) 100%);
+  z-index:0;
+}
+.hero-ring{
+  position:absolute;
+  width:min(102%,540px);
+  aspect-ratio:1;
+  border-radius:50%;
+  border:1.5px dashed rgba(0,75,92,.24);
+  z-index:0;
+}
+/* Das Produktfoto steht schon auf hell-cyanblauem Seamless-Grund (CI Kap. 10).
+   Rund beschnitten verschmilzt es mit der Scheibe zu einem Medaillon. */
+.hero-beutel{
+  position:relative;
+  z-index:2;
+  width:min(70%,376px);
+  aspect-ratio:1;
+  object-fit:cover;
+  border-radius:50%;
+  box-shadow:0 34px 54px rgba(0,75,92,.24);
+}
+.hero-bohne{
+  position:absolute;
+  z-index:3;
+  width:clamp(26px,3.2vw,46px);
+  opacity:.92;
+}
+.hero-notiz{
+  position:absolute;
+  z-index:4;
+  background:var(--hellorange);
+  border:1px solid var(--linie);
+  border-radius:var(--radius-pill);
+  padding:9px 17px;
+  font-weight:600;
+  font-size:.84rem;
+  white-space:nowrap;
+  box-shadow:0 12px 26px rgba(0,75,92,.13);
+}
+.hero-notiz--1{top:11%;left:-4%;color:var(--redorange);}
+.hero-notiz--2{bottom:22%;right:-5%;color:var(--dunkelblau);}
+.hero-notiz--3{bottom:5%;left:6%;color:var(--dragonfruit);}
+
+/* Wellen unten */
+.hero-wellen{
+  position:absolute;
+  left:0;right:0;bottom:-2px;
+  height:clamp(110px,15vw,210px);
+  z-index:1;
+  pointer-events:none;
+}
+.hero-wellen svg{position:absolute;bottom:0;left:0;width:200%;height:100%;}
+.welle-hinten{opacity:.32;}
+.welle-mitte{opacity:.55;}
+
+.hero-scrollhinweis{
+  position:absolute;
+  bottom:26px;left:50%;
+  transform:translateX(-50%);
+  z-index:5;
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  color:var(--dunkelblau);
+}
+.hero-scrollhinweis .linie{
+  width:1.5px;height:44px;
+  background:linear-gradient(var(--dunkelblau),transparent);
+}
+
+/* ==========================================================================
+   Laufband
+   ========================================================================== */
+.laufband{
+  background:var(--redorange);
+  color:var(--hellorange);
+  padding:20px 0;
+  overflow:hidden;
+  position:relative;
+  z-index:4;
+}
+.laufband-spur{display:flex;width:max-content;will-change:transform;}
+.laufband-gruppe{display:flex;align-items:center;flex-shrink:0;}
+.laufband span{
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-size:clamp(1rem,1.7vw,1.45rem);
+  padding-inline:26px;
+  white-space:nowrap;
+}
+.laufband .trenner{width:11px;height:11px;border-radius:50%;background:var(--hellorange);flex-shrink:0;}
+
+/* ==========================================================================
+   Kollektionen
+   Vier Boxen gleich unter dem Laufband, flach wie die Karten beim
+   Reverse-Prinzip: Schrift und Grund in zwei Markenfarben, die Linie in der
+   Schriftfarbe, kein Schatten. Beim Hover wenden sie sich (kollektionen.js):
+   Hinten tauschen Schrift und Grund, und alle Beutel der Kollektion stehen
+   da. Unten kein Abstand, den bringen die Versprechen mit.
+   Seit dem 13. September 2026 stehen die Boxen nur noch in archiv.html.
+   ========================================================================== */
+.kollektionen{padding-top:clamp(28px,3.4vw,44px);}
+.kollektionen .kollektionen-raster{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:clamp(14px,1.6vw,24px);
+}
+/* Die Farbpaare: vorne --schrift auf --grund, hinten umgekehrt. */
+.kollektionen .kollektion{
+  --bild:clamp(52px,4.4vw,64px);
+  --grund:var(--dunkelblau);
+  --schrift:var(--hellorange);
+  display:block;
+  border-radius:var(--radius-karte);
+  perspective:900px;
+}
+.kollektionen .kollektion--filter{--grund:var(--redorange);}
+.kollektionen .kollektion--decaf{--grund:var(--hellorange);--schrift:var(--dunkelblau);}
+.kollektionen .kollektion--probierset{--grund:var(--cyanblau);--schrift:var(--dunkelblau);}
+
+.kollektionen .kollektion-innen{position:relative;display:block;transform-style:preserve-3d;}
+.kollektionen .kollektion-seite{
+  display:flex;
+  align-items:center;
+  gap:clamp(12px,1.2vw,18px);
+  min-height:calc(var(--bild) + 26px);
+  padding:12px 16px 12px 12px;
+  border-radius:var(--radius-karte);
+  /* Die Linie liegt überall, bleibt aber durchsichtig: Das hält alle vier
+     Boxen gleich hoch, egal welche Seite eine sichtbare Linie hat. */
+  border:1px solid transparent;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+/* Sichtbar wird sie nur auf hellorangem Grund. Dort braucht die Box eine
+   Kante, sonst geht sie im hellorangen Seitenhintergrund unter. Satte und
+   dunkle Flächen stehen für sich. */
+.kollektionen .kollektion--espresso .kollektion-hinten,
+.kollektionen .kollektion--filter .kollektion-hinten,
+.kollektionen .kollektion--decaf .kollektion-vorne{border-color:currentColor;}
+.kollektionen .kollektion-vorne{background:var(--grund);color:var(--schrift);}
+.kollektionen .kollektion-hinten{
+  position:absolute;
+  inset:0;
+  background:var(--schrift);
+  color:var(--grund);
+  transform:rotateY(180deg);
+}
+
+/* Der Sternenhimmel auf der Decaf-Rückseite, gefüllt von atmosphaere.js.
+   Er liegt absolut und stört die Flexbox nicht; runde Ecken schneiden ihn
+   ab, und Schrift, Beutel und Pfeil müssen darüber liegen. In der
+   Decaf-Sektion leistet das die Regel .atmo ~ .wrap in seiten.css. */
+.kollektionen .kollektion-seite > .atmo{
+  border-radius:inherit;
+  /* Auf der kleinen Fläche darf das Feld noch etwas zurücktreten. Die
+     Deckkraft sitzt auf dem Feld, nicht auf den Punkten: So bleibt das
+     Flackern aus atmosphaere.js unangetastet. */
+  opacity:.7;
+}
+.kollektionen .kollektion-seite > .atmo ~ *{position:relative;z-index:1;}
+
+/* Runde Beutelbilder, flach: statt Schatten ein feiner Ring in der
+   Schriftfarbe. */
+.kollektionen .kollektion-rund{display:flex;flex-shrink:0;}
+.kollektionen .kollektion-bild{
+  display:block;
+  width:var(--bild);
+  aspect-ratio:1;
+  object-fit:cover;
+  border-radius:50%;
+  border:1.5px solid currentColor;
+}
+/* Probierset: drei kleine Kreise, leicht übereinander. */
+.kollektionen .kollektion-trio .kollektion-bild{width:calc(var(--bild) * .56);}
+.kollektionen .kollektion-trio .kollektion-bild + .kollektion-bild{margin-left:calc(var(--bild) * -.16);}
+
+.kollektionen .kollektion-text{min-width:0;}
+.kollektionen .kollektion-label{display:block;opacity:.85;}
+/* Gewicht, Versalien und Laufweite kommen von .kollektionstitel. */
+.kollektionen .kollektion-name{
+  display:block;
+  margin-top:7px;
+  line-height:1.15;
+  font-size:clamp(.95rem,1.1vw,1.1rem);
+  white-space:nowrap;
+}
+
+.kollektionen .kollektion-knopf{
+  margin-left:auto;
+  flex-shrink:0;
+  width:34px;height:34px;
+  border-radius:50%;
+  border:1.5px solid currentColor;
+  display:grid;place-items:center;
+}
+.kollektionen .kollektion-knopf .pfeil{width:15px;height:15px;}
+
+/* Rückseite: oben die Anzahl, darunter alle Beutel. */
+.kollektionen .kollektion-inhalt{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.kollektionen .kollektion-beutel{display:flex;gap:6px;}
+.kollektionen .kollektion-beutel .kollektion-bild{width:calc(var(--bild) * .68);}
+
+/* ==========================================================================
+   Versprechen / USP
+   Seit dem 13. September 2026 nur noch in archiv.html.
+   ========================================================================== */
+.versprechen{background:var(--hellorange);}
+.versprechen-raster{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+}
+.versprechen-karte{
+  padding:30px 26px 34px;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+}
+.versprechen-karte .zahl{
+  font-weight:900;
+  letter-spacing:-.03em;
+  font-size:clamp(2.4rem,4vw,3.4rem);
+  line-height:1;
+  color:var(--redorange);
+  display:block;
+}
+.versprechen-karte .zahl .einheit{font-size:.42em;letter-spacing:0;}
+.versprechen-karte h3{margin-top:16px;}
+.versprechen-karte p{margin-top:9px;font-size:.94rem;opacity:.8;}
+
+/* ==========================================================================
+   Prozessweg
+   Fünf Stationen untereinander. Links läuft eine geschwungene Linie durch
+   die Illustrationen, rechts steht der Text auf ihrer Höhe. Keine Karten:
+   Der Abschnitt lebt von Linie, Zeichnung und Schrift.
+   ========================================================================== */
+.pfad{background:var(--dunkelblau);color:var(--hellorange);}
+.pfad .eyebrow{color:var(--cyanblau);}
+
+/* Sternenhimmel wie früher in der Decaf-Sektion. Das Feld liegt in der
+   Bühne, nicht in der Section: Auf dem Desktop wird die Bühne gepinnt, und
+   nur so stehen die Sterne mit ihr still. Kopf und Band liegen darüber. */
+.pfad-buehne{position:relative;}
+.pfad-buehne > .atmo ~ *{position:relative;z-index:1;}
+
+.pfad-weg{
+  position:relative;
+  /* Steht ausserhalb des .wrap, damit das Band auf dem Desktop über die
+     Inhaltsbreite hinauslaufen kann. Senkrecht hält es sich selbst daran. */
+  width:var(--seite);
+  margin-inline:auto;
+  /* Breite der Schiene, in der Illustrationen und Linie liegen. Alles
+     andere im Abschnitt rechnet damit. */
+  --schiene:clamp(112px,22vw,200px);
+  --versatz:calc(var(--schiene) * .17);
+}
+
+/* Die Linie liegt über der ganzen Fläche und wird von prozess.js gefüllt.
+   Ohne viewBox ist eine Einheit ein Pixel, dadurch bleibt der Strich bei
+   jeder Breite gleich dick. */
+.pfad-linie{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  pointer-events:none;
+}
+.pfad-spur{fill:none;stroke:rgba(255,243,232,.18);stroke-width:2.5;stroke-linecap:round;}
+.pfad-strich{fill:none;stroke:var(--cyanblau);stroke-width:2.5;stroke-linecap:round;}
+
+.pfad-phasen{
+  list-style:none;
+  /* Ohne das rückt die Liste 40 px ein, und die Schiene stünde neben
+     den Zeichnungen statt hinter ihnen. */
+  margin:0;
+  padding:0;
+  display:grid;
+  /* Grosszügig, damit zwischen zwei Zeichnungen genug Linie steht. */
+  gap:clamp(44px,7vw,104px);
+  /* Die Linie ist absolut gesetzt und läge sonst über der Schrift. */
+  position:relative;
+  z-index:1;
+}
+.pfad-phase{
+  display:grid;
+  grid-template-columns:var(--schiene) 1fr;
+  align-items:center;
+  gap:clamp(16px,2.4vw,40px);
+}
+/* Der Versatz zeichnet den Schwung der Linie vor. Er sitzt auf dem
+   Aussenrand, damit transform für GSAP frei bleibt. */
+.pfad-phase:nth-child(2) .pfad-illu{margin-left:var(--versatz);}
+.pfad-phase:nth-child(3) .pfad-illu{margin-left:calc(var(--versatz) * -.5);}
+.pfad-phase:nth-child(4) .pfad-illu{margin-left:var(--versatz);}
+.pfad-phase:nth-child(5) .pfad-illu{margin-left:calc(var(--versatz) * -.35);}
+
+/* Die äussere Zelle wird gemessen und nie bewegt, innen sitzt die
+   Zeichnung, die auftritt. */
+.pfad-illu{
+  width:calc(var(--schiene) - var(--versatz));
+  display:grid;
+  place-items:center;
+}
+.pfad-illu-innen{display:block;width:100%;}
+.pfad-text h3{
+  font-size:clamp(1.15rem,1.9vw,1.7rem);
+  font-weight:800;
+  max-width:22ch;
+}
+.pfad-text p{margin-top:10px;opacity:.86;max-width:46ch;}
+.pfad-text a{text-decoration:underline;text-underline-offset:3px;}
+
+/* ==========================================================================
+   Welcher Kaffee passt zu mir?
+   Vier flache Boxen, jede ein Link. Farbpaare und Linienregel der früheren
+   Kollektionsboxen: vorne --schrift auf --grund, eine Linie nur auf
+   hellorangem Grund. Beim Hover tauschen Fläche und Schrift gemeinsam, wie
+   es die CI-Regel will; dann bekommt die Box die Linie, sobald ihr neuer
+   Grund hellorange ist.
+   Fruchtig trägt Dragonfruit Pink, laut CI die Farbe von Profil 1
+   «fruchtig, tropisch, intensiv». Filterkaffee Redorange wie die bisherigen
+   Filterkaffee-Etiketten. «Nicht sicher» wird beim Hover cyanblau.
+   ========================================================================== */
+.passt .sektion-kopf .text{max-width:none;}
+.passt-raster{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+}
+.passt-box{
+  --grund:var(--dunkelblau);
+  --schrift:var(--hellorange);
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:16px;
+  min-height:clamp(230px,19vw,280px);
+  padding:clamp(22px,2.2vw,30px);
+  border-radius:var(--radius-karte);
+  border:1px solid transparent;
+  background:var(--grund);
+  color:var(--schrift);
+  transition:background-color .35s ease,color .35s ease,border-color .35s ease;
+}
+.passt-box--fruchtig{--grund:var(--dragonfruit);}
+.passt-box--filter{--grund:var(--redorange);}
+.passt-box--unsicher{--grund:var(--hellorange);--schrift:var(--dunkelblau);border-color:currentColor;}
+.passt-box:hover,
+.passt-box:focus-visible{background:var(--schrift);color:var(--grund);border-color:currentColor;}
+.passt-box--unsicher:hover,.passt-box--unsicher:focus-visible{background:var(--cyanblau);color:var(--dunkelblau);border-color:transparent;}
+.passt-box h3{font-size:clamp(1.2rem,1.6vw,1.5rem);font-weight:800;line-height:1.15;max-width:16ch;}
+.passt-noten{display:flex;flex-wrap:wrap;gap:6px;}
+.passt-box .pill{color:inherit;border-color:currentColor;background:transparent;}
+.passt-box p{opacity:.88;max-width:28ch;}
+.passt-mehr{
+  margin-top:auto;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  width:100%;
+  font-weight:600;
+  font-size:.92rem;
+  line-height:1.35;
+}
+.passt-knopf{
+  flex-shrink:0;
+  width:34px;height:34px;
+  border-radius:50%;
+  border:1.5px solid currentColor;
+  display:grid;place-items:center;
+}
+.passt-knopf svg{width:16px;height:16px;}
+
+/* Unsere Kaffees: Der Filter blendet Karten über das hidden-Attribut aus.
+   .produkt und .filterleiste setzen selbst display, das überstimmt hidden,
+   deshalb hier ausdrücklich. */
+.produkt-raster > .produkt[hidden],
+.kaffee-spur > .produkt[hidden],
+.filterleiste[hidden]{display:none;}
+
+/* ==========================================================================
+   Unsere Kaffees: wischbare Reihe
+   Links beginnt die Reihe am Seitenraster, rechts läuft sie bis an den
+   Fensterrand, damit man sieht, dass es weitergeht. Die Seite selbst
+   scrollt dabei nie seitlich. Oben, unten und links etwas Luft, sonst
+   schnitte die Reihe Anheben und Schatten der Karten beim Hover ab; der
+   negative Aussenabstand gleicht sie aus, scroll-padding lässt die Karten
+   trotzdem am Raster einrasten. Filter und Pfeile: kaffees.js.
+   ========================================================================== */
+.kaffee-aktionen{display:flex;align-items:center;gap:14px;}
+.reihe-knoepfe{display:flex;gap:10px;}
+.reihe-knoepfe[hidden]{display:none;}
+.reihe-knopf{
+  width:48px;height:48px;
+  border-radius:50%;
+  border:1.5px solid var(--dunkelblau);
+  color:var(--dunkelblau);
+  display:grid;place-items:center;
+  transition:background-color .3s ease,color .3s ease,opacity .3s ease;
+}
+.reihe-knopf svg{width:18px;height:18px;}
+.reihe-knopf:hover:not(:disabled),
+.reihe-knopf:focus-visible{background:var(--dunkelblau);color:var(--hellorange);}
+.reihe-knopf:disabled{opacity:.28;cursor:default;}
+
+.kaffee-spur{
+  --rand:calc((100vw - var(--seite)) / 2);
+  --luft:min(24px, var(--rand));
+  display:flex;
+  gap:var(--gap);
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;
+  scroll-padding-left:var(--luft);
+  margin:-14px calc(var(--rand) * -1) -34px calc(var(--luft) * -1);
+  padding:14px var(--rand) 50px var(--luft);
+  scrollbar-width:thin;
+  scrollbar-color:var(--linie-stark) transparent;
+}
+.kaffee-spur::-webkit-scrollbar{height:6px;}
+.kaffee-spur::-webkit-scrollbar-thumb{background:var(--linie-stark);border-radius:3px;}
+.kaffee-spur:focus-visible{outline:2px solid var(--redorange);outline-offset:-2px;}
+.kaffee-spur > .produkt{flex:0 0 clamp(250px,22vw,300px);scroll-snap-align:start;}
+
+/* ==========================================================================
+   Produktkarten
+   ========================================================================== */
+.produkt-raster{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:var(--gap);
+}
+.produkt{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  /* Eigene Textfarbe, nicht die geerbte: Im Decaf-Abschnitt steht die
+     Karte auf dunklem Grund, dort erbte sie sonst Hellorange und der
+     Titel verschwand auf dem weissen Kartengrund. */
+  color:var(--dunkelblau);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  transition:border-color .4s ease, box-shadow .4s ease;
+}
+.produkt:hover{border-color:var(--linie-stark);box-shadow:0 22px 44px rgba(0,75,92,.12);}
+.produkt-bild{
+  position:relative;
+  aspect-ratio:1;
+  background:linear-gradient(160deg,var(--powderblue),#d3ebf3);
+  overflow:hidden;
+}
+.produkt-bild img{
+  width:100%;height:100%;
+  object-fit:cover;
+  will-change:transform;
+}
+.produkt-fahne{
+  position:absolute;top:14px;left:14px;
+  z-index:2;
+  background:var(--hellorange);
+  color:var(--redorange);
+  border-radius:var(--radius-pill);
+  padding:5px 13px;
+  font-weight:700;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.produkt-fahne--pink{background:var(--dragonfruit);color:var(--hellorange);}
+.produkt-koerper{padding:22px 22px 24px;display:flex;flex-direction:column;gap:11px;flex:1;}
+.produkt-herkunft{
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-size:.72rem;
+  color:var(--redorange);
+}
+.produkt h3{font-size:1.18rem;}
+.produkt-noten{display:flex;flex-wrap:wrap;gap:7px;}
+.produkt-noten .pill{font-size:.72rem;padding:4px 12px;}
+.produkt-fuss{
+  margin-top:auto;
+  padding-top:16px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+}
+.produkt-preis{font-weight:800;font-size:1.22rem;letter-spacing:-.02em;line-height:1.2;}
+.produkt-preis .grund{display:block;font-weight:500;font-size:.76rem;opacity:.62;letter-spacing:0;}
+.produkt-kaufen{
+  width:44px;height:44px;
+  border-radius:50%;
+  background:var(--hellorange);
+  color:var(--redorange);
+  display:grid;place-items:center;
+  flex-shrink:0;
+  transition:background-color .32s ease,color .32s ease,transform .32s ease;
+}
+.produkt:hover .produkt-kaufen{background:var(--redorange);color:var(--hellorange);}
+.produkt-kaufen:hover{transform:scale(1.11);}
+
+/* ==========================================================================
+   Reverse-Prinzip
+   Seit dem 13. September 2026 auf der Startseite entfernt, nur noch in archiv.html.
+   ========================================================================== */
+.reverse{background:var(--hellorange);overflow:hidden;}
+.reverse-buehne{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:var(--gap);
+  margin-top:clamp(30px,4vw,48px);
+}
+.reverse-karte{
+  border-radius:var(--radius-karte);
+  /* Feine Linie in der jeweiligen Textfarbe, damit die helle Karte sich
+     auch auf Hellorange vom Seitengrund abhebt. */
+  border:1px solid currentColor;
+  padding:clamp(30px,3.4vw,48px);
+  min-height:clamp(330px,36vw,440px);
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  position:relative;
+  overflow:hidden;
+  transition:background-color .7s cubic-bezier(.65,0,.35,1), color .7s cubic-bezier(.65,0,.35,1);
+}
+.reverse-karte .rolle{font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;opacity:.85;}
+.reverse-karte h3{font-size:clamp(1.6rem,2.6vw,2.3rem);font-weight:800;}
+.reverse-karte p{font-size:.98rem;opacity:.9;max-width:34ch;}
+.reverse-karte .hex{
+  margin-top:auto;
+  display:flex;gap:9px;flex-wrap:wrap;
+  font-weight:600;font-size:.76rem;letter-spacing:.04em;
+}
+.reverse-karte .hex span{
+  border:1px solid currentColor;
+  border-radius:var(--radius-pill);
+  padding:5px 13px;
+}
+/* Rund beschnitten wie im Hero, damit keine Bildkante auf der Farbfläche steht. */
+.reverse-karte .beutel{
+  position:absolute;
+  right:18px;bottom:18px;
+  width:clamp(120px,14vw,190px);
+  aspect-ratio:1;
+  object-fit:cover;
+  border-radius:50%;
+  box-shadow:0 18px 34px rgba(0,75,92,.22);
+}
+.reverse-schalter{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  margin-top:26px;
+  padding:13px 24px;
+  border-radius:var(--radius-pill);
+  border:1.5px solid var(--dunkelblau);
+  font-weight:600;
+  letter-spacing:.02em;
+  transition:background-color .34s ease,color .34s ease,border-color .34s ease;
+}
+.reverse-schalter:hover{background:var(--redorange);color:var(--hellorange);border-color:var(--redorange);}
+.reverse-schalter .kreise{display:inline-flex;}
+.reverse-schalter .kreise i{
+  width:15px;height:15px;border-radius:50%;display:block;border:1.5px solid currentColor;
+}
+.reverse-schalter .kreise i:last-child{margin-left:-6px;}
+
+/* ==========================================================================
+   Decaf
+   Seit dem 13. September 2026 auf der Startseite entfernt, nur noch in archiv.html.
+   ========================================================================== */
+.decaf{
+  background:var(--dunkelblau);
+  color:var(--hellorange);
+  position:relative;
+  overflow:hidden;
+}
+.decaf-sterne{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.decaf-stern{
+  position:absolute;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:var(--hellorange);
+  opacity:.5;
+}
+.decaf .wrap{position:relative;z-index:2;}
+.decaf-raster{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(32px,5vw,80px);
+  align-items:center;
+}
+.decaf .eyebrow{color:var(--cyanblau);}
+.decaf h2{margin-top:16px;}
+.decaf p{margin-top:20px;opacity:.88;max-width:44ch;}
+.decaf-liste{margin-top:28px;display:flex;flex-direction:column;gap:13px;}
+.decaf-liste li{display:flex;gap:12px;align-items:flex-start;opacity:.9;}
+.decaf-liste .haken{
+  flex-shrink:0;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--redorange);color:var(--hellorange);
+  display:grid;place-items:center;font-size:.7rem;font-weight:800;
+  margin-top:3px;
+}
+.decaf-bilder{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);}
+.decaf-bild{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  border:1px solid rgba(255,243,232,.2);
+  background:rgba(255,243,232,.06);
+  aspect-ratio:3/4;
+}
+.decaf-bild img{width:100%;height:100%;object-fit:cover;}
+.decaf-bild:nth-child(2){margin-top:clamp(24px,4vw,56px);}
+
+/* ==========================================================================
+   Rezepte
+   Seit dem 13. September 2026 nicht mehr auf der Startseite. Weiter genutzt
+   von espresso.html, filterkaffee.html und archiv.html.
+   ========================================================================== */
+.rezepte-raster{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);}
+.rezept{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  border:1px solid var(--linie);
+  background:#fff;
+  position:relative;
+  display:block;
+}
+.rezept-bild{aspect-ratio:4/3;overflow:hidden;background:var(--powderblue);}
+.rezept-bild img{width:100%;height:100%;object-fit:cover;will-change:transform;}
+.rezept-koerper{padding:22px 24px 26px;display:flex;flex-direction:column;gap:10px;}
+.rezept-meta{display:flex;align-items:center;gap:12px;font-size:.78rem;font-weight:600;}
+.rezept-meta .sterne{color:var(--redorange);letter-spacing:.06em;}
+.rezept-meta .dauer{opacity:.62;}
+.rezept h3{font-size:1.16rem;}
+.rezept .mehr{
+  margin-top:6px;
+  font-weight:600;
+  font-size:.86rem;
+  color:var(--redorange);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.rezept .mehr .pfeil{transition:transform .34s cubic-bezier(.65,0,.35,1);}
+.rezept:hover .mehr .pfeil{transform:translateX(5px);}
+
+/* ==========================================================================
+   Über uns
+   ========================================================================== */
+.ueber{background:var(--hellorange);position:relative;}
+.ueber-raster{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
+  gap:clamp(32px,5vw,80px);
+  align-items:center;
+}
+.ueber-text .gross{
+  font-weight:800;
+  letter-spacing:-.025em;
+  line-height:1.22;
+  font-size:clamp(1.35rem,2.5vw,2.05rem);
+  margin-top:22px;
+}
+.ueber-text .gross .wort{display:inline-block;}
+.ueber-text p{margin-top:24px;max-width:52ch;opacity:.86;}
+.ueber-bild{
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  border:1px solid var(--linie);
+  /* Das Kaffeevelo-Foto ist quer, hochkant fiele Jenna am Rand weg. */
+  aspect-ratio:4/3;
+  background:var(--powderblue);
+}
+.ueber-bild img{width:100%;height:100%;object-fit:cover;}
+.ueber-marke{
+  display:inline-flex;align-items:center;gap:12px;
+  margin-top:30px;
+  padding:11px 20px 11px 12px;
+  border-radius:var(--radius-pill);
+  background:var(--redorange);
+  color:var(--hellorange);
+  font-weight:600;font-size:.86rem;
+}
+.ueber-marke img{width:30px;height:30px;}
+.ueber-aktionen{margin-top:28px;}
+.ueber-aktionen + .ueber-marke{margin-top:22px;}
+
+/* ==========================================================================
+   Kaffee besser machen
+   Pro Rubrik der neueste Beitrag als Karte, als Bento aus vier Spalten und
+   drei Zeilen. Breite Karten (--breit) nehmen zwei Spalten ein, quer mit
+   Bild links und Text rechts. Hohe Karten (--hoch) sind eine Spalte breit
+   und reichen über zwei Zeilen, mit Bild oben. Die Anordnung steht im
+   Kommentar in index.html. Im Fuss der rote CTA zum Beitrag und
+   daneben ein Textlink in Rotorange zur ganzen Rubrik. Bild und Titel führen
+   ebenfalls zum Beitrag. Die Karte selbst ist kein Link, sonst lägen Links
+   in Links.
+   ========================================================================== */
+.besser{border-top:1px solid var(--linie);}
+.besser-raster{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:var(--gap);
+}
+.besser-karte{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto 1fr;
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.besser-karte:hover{border-color:var(--linie-stark);box-shadow:0 20px 40px rgba(0,75,92,.11);}
+/* Die Bildspalte der breiten Karten ist schmaler als die Textspalte, damit
+   CTA und Rubriklink nebeneinander passen. */
+.besser-karte--breit{grid-column:span 2;grid-template-columns:minmax(0,.7fr) minmax(0,1fr);grid-template-rows:none;}
+.besser-karte--hoch{grid-row:span 2;}
+.besser-bild{
+  display:block;
+  position:relative;
+  height:clamp(220px,20vw,300px);
+  overflow:hidden;
+  background:var(--powderblue);
+}
+.besser-karte--breit .besser-bild{height:auto;min-height:240px;}
+/* Hohe Karten sind nur eine Spalte breit, dort steht der Link unter dem
+   Knopf. Ab 1080 px abwärts sind alle Karten gleich breit, dann wieder
+   nebeneinander. */
+@media (min-width:1081px){
+  .besser-karte--hoch .besser-fuss{flex-direction:column;align-items:flex-start;gap:14px;}
+}
+.besser-bild img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.65,0,.35,1);}
+.besser-karte:hover .besser-bild img{transform:scale(1.04);}
+/* Guides und Tools haben kein Foto: Illustration auf hellblauem Verlauf,
+   wie auf der Wissensseite. */
+.besser-bild.ist-leer{display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--powderblue),#dcf0f6);}
+.besser-bild.ist-leer svg{height:62%;width:auto;max-width:80%;overflow:visible;}
+.besser-bild.ist-leer .besser-icon{height:34%;}
+.besser-koerper{display:flex;flex-direction:column;gap:10px;padding:clamp(20px,2vw,28px);}
+.besser-zeile{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;}
+.besser-marke{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.6;}
+.besser-karte h3{font-size:clamp(1.1rem,1.4vw,1.3rem);line-height:1.2;}
+.besser-karte--breit h3{font-size:clamp(1.15rem,1.5vw,1.4rem);line-height:1.18;}
+.besser-karte h3 a{color:inherit;}
+.besser-karte p{opacity:.8;max-width:52ch;font-size:.94rem;}
+.besser-meta{font-size:.84rem;font-weight:500;opacity:.65;}
+.besser-fuss{
+  display:flex;flex-wrap:wrap;align-items:center;
+  gap:12px 24px;margin-top:auto;padding-top:8px;
+}
+.besser-fuss .btn{padding:13px 18px;}
+/* Zur ganzen Rubrik: kein Knopf, nur Text in Rotorange mit Pfeil. */
+.besser-alle{
+  display:inline-flex;align-items:center;gap:8px;
+  font-weight:600;letter-spacing:.02em;
+  color:var(--redorange);
+}
+.besser-alle .pfeil{transition:transform .35s cubic-bezier(.65,0,.35,1);}
+.besser-alle:hover{text-decoration:underline;text-underline-offset:4px;}
+.besser-alle:hover .pfeil,.besser-alle:focus-visible .pfeil{transform:translateX(5px);}
+/* Auf dem Handy reicht die Breite nicht für jeden CTA samt Rubriklink.
+   Damit nicht nur einzelne Karten umbrechen, steht der Link dort immer
+   unter dem Knopf. */
+@media (max-width:420px){
+  .besser-fuss{flex-direction:column;align-items:flex-start;gap:14px;}
+}
+
+/* ==========================================================================
+   Wissen
+   ========================================================================== */
+.wissen{background:#fff;border-block:1px solid var(--linie);}
+.wissen-raster{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);}
+.wissen-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  overflow:hidden;
+  background:var(--hellorange);
+  display:flex;flex-direction:column;
+}
+.wissen-bild{aspect-ratio:16/10;overflow:hidden;}
+.wissen-bild img{width:100%;height:100%;object-fit:cover;will-change:transform;}
+.wissen-koerper{padding:22px 24px 26px;display:flex;flex-direction:column;gap:11px;flex:1;}
+.wissen-karte .kat{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.68rem;color:var(--redorange);
+}
+.wissen-karte h3{font-size:1.1rem;line-height:1.3;}
+.wissen-karte .datum{margin-top:auto;padding-top:14px;font-size:.8rem;opacity:.6;font-weight:500;}
+
+/* ==========================================================================
+   Newsletter
+   ========================================================================== */
+.newsletter{background:var(--hellorange);}
+.newsletter-box{
+  border-radius:var(--radius-karte);
+  background:var(--redorange);
+  color:var(--hellorange);
+  padding:clamp(38px,5.2vw,80px);
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(28px,4vw,60px);
+  align-items:center;
+}
+.newsletter-box h2{font-size:clamp(1.9rem,3.6vw,3.1rem);}
+.newsletter-box .eyebrow{opacity:.85;}
+.newsletter-box p{margin-top:18px;opacity:.92;max-width:40ch;}
+.newsletter-form{display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:2;}
+.newsletter-form input{
+  flex:1;min-width:220px;
+  padding:16px 22px;
+  border-radius:var(--radius-button);
+  border:1.5px solid rgba(255,243,232,.55);
+  background:rgba(255,243,232,.12);
+  color:var(--hellorange);
+  font:inherit;font-weight:500;
+  outline:none;
+  transition:border-color .3s ease,background-color .3s ease;
+}
+.newsletter-form input::placeholder{color:rgba(255,243,232,.65);}
+.newsletter-form input:focus{border-color:var(--hellorange);background:rgba(255,243,232,.2);}
+.newsletter-hinweis{margin-top:16px;font-size:.8rem;opacity:.78;}
+.newsletter-signet{
+  position:absolute;
+  right:-40px;bottom:-50px;
+  width:clamp(180px,22vw,300px);
+  opacity:.15;
+  z-index:0;
+  pointer-events:none;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.fuss{background:var(--offblack);color:var(--hellorange);padding-top:clamp(56px,7vw,96px);}
+.fuss-oben{
+  display:grid;
+  grid-template-columns:1.5fr 1fr 1fr 1fr;
+  gap:clamp(28px,4vw,56px);
+  padding-bottom:clamp(40px,5vw,64px);
+}
+.fuss-logo img{width:clamp(180px,17vw,240px);margin-bottom:22px;}
+.fuss-adresse{opacity:.72;font-size:.92rem;line-height:1.75;}
+.fuss-adresse a{color:var(--cyanblau);}
+.fuss h4{
+  font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  font-size:.72rem;margin:0 0 18px;color:var(--cyanblau);
+}
+.fuss-liste li{margin-bottom:11px;}
+.fuss-liste a{opacity:.76;font-size:.93rem;transition:opacity .25s ease,color .25s ease;}
+.fuss-liste a:hover{opacity:1;color:var(--redorange);}
+.fuss-horgen{
+  display:inline-flex;align-items:center;gap:11px;
+  margin-top:22px;
+  padding:9px 17px;
+  border-radius:var(--radius-pill);
+  border:1px solid rgba(255,243,232,.28);
+  font-size:.8rem;font-weight:600;
+}
+.fuss-unten{
+  border-top:1px solid rgba(255,243,232,.14);
+  padding-block:26px 34px;
+  display:flex;flex-wrap:wrap;gap:16px;
+  align-items:center;justify-content:space-between;
+  font-size:.82rem;
+  opacity:.66;
+}
+.fuss-rechtlich{display:flex;flex-wrap:wrap;gap:6px 18px;}
+.fuss-rechtlich a:hover{color:var(--redorange);opacity:1;}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+/* Ab 1200 px wird der Prozessweg gepinnt und läuft waagerecht durch: Der
+   Kopf bleibt stehen, die fünf Stationen fahren darunter vorbei. Das Band
+   ist breiter als das Fenster, deshalb verschiebt prozess.js .pfad-weg
+   samt Linie. Beides muss zusammen fahren, sonst läuft die Linie weg. */
+@media (min-width:1200px) and (prefers-reduced-motion:no-preference){
+  .pfad{overflow:hidden;padding-block:0;}
+  .pfad-buehne{
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:clamp(30px,4vw,60px);
+    padding-block:clamp(40px,5vw,80px);
+  }
+  .pfad-weg{--versatz:0px;width:max-content;margin-inline:0;}
+  .pfad-phasen{
+    display:flex;
+    width:max-content;
+    gap:clamp(80px,7vw,140px);
+    /* Die erste Station beginnt am Raster, die letzte läuft sauber aus. */
+    padding-inline:calc((100vw - var(--seite)) / 2);
+    /* Platz für die Welle, die unter den Textblöcken durchtaucht. */
+    padding-bottom:clamp(70px,8vw,120px);
+  }
+  .pfad-phase{
+    width:clamp(500px,40vw,600px);
+    flex-shrink:0;
+    grid-template-columns:var(--schiene) 1fr;
+    align-items:center;
+  }
+  .pfad-text h3{max-width:26ch;}
+  .pfad-text p{max-width:34ch;}
+}
+
+/* Auf niedrigen Fenstern muss die gepinnte Bühne enger sitzen, sonst
+   reicht die Welle unter den Rand. Kopf, Band und Welle zusammen brauchen
+   sonst rund 725 px Höhe. */
+@media (min-width:1200px) and (prefers-reduced-motion:no-preference) and (max-height:820px){
+  .pfad-buehne{gap:24px;padding-block:28px;}
+  .pfad-phasen{padding-bottom:60px;}
+}
+
+/* Wer keine Bewegung will, bekommt auf dem Desktop keinen Pin, sondern die
+   senkrechte Fassung mit abwechselnd links und rechts stehenden Stationen.
+   Sonst bliebe dort rechts eine sehr leere Spalte. */
+@media (min-width:1200px) and (prefers-reduced-motion:reduce){
+  .pfad-weg{--versatz:0px;}
+  .pfad-phasen{gap:clamp(150px,16vw,260px);}
+  .pfad-phase{grid-template-columns:var(--schiene) minmax(0,46ch) 1fr;}
+  /* Ohne feste Zeile schiebt die Autoplatzierung den Text nach unten,
+     sobald die Zeichnung auf Spalte 3 steht. */
+  .pfad-phase > *{grid-row:1;}
+  .pfad-illu{grid-column:1;}
+  .pfad-text{grid-column:2;}
+  .pfad-phase:nth-child(even){grid-template-columns:1fr minmax(0,46ch) var(--schiene);}
+  .pfad-phase:nth-child(even) .pfad-illu{grid-column:3;}
+  /* Auf den gespiegelten Zeilen liegt der Text bündig an der Zeichnung.
+     text-align allein genügt nicht, die schmaleren Blöcke müssen auch
+     nach rechts rücken. */
+  .pfad-phase:nth-child(even) .pfad-text{text-align:right;}
+  .pfad-phase:nth-child(even) .pfad-text h3,
+  .pfad-phase:nth-child(even) .pfad-text p{margin-left:auto;}
+  .pfad-text h3{max-width:32ch;}
+}
+
+/* Vier Kollektionsboxen nebeneinander brauchen je knapp 300 px, darunter
+   stehen sie zwei mal zwei. */
+@media (max-width:1359px){
+  .kollektionen .kollektionen-raster{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:1080px){
+  .versprechen-raster{grid-template-columns:repeat(2,1fr);}
+  .passt-raster{grid-template-columns:repeat(2,1fr);}
+  /* Vier Spalten werden zu schmal: zwei Spalten, jede Karte eine Zelle mit
+     Bild oben. Sechs Karten ergeben drei Zeilen ohne Lücke. */
+  .besser-raster{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .besser-karte--breit,.besser-karte--hoch{grid-column:auto;grid-row:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;}
+  .besser-karte--breit .besser-bild,.besser-karte--hoch .besser-bild{height:clamp(180px,17vw,220px);min-height:0;}
+  .produkt-raster{grid-template-columns:repeat(2,1fr);}
+  .rezepte-raster,.wissen-raster{grid-template-columns:repeat(2,1fr);}
+  .fuss-oben{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:860px){
+  .nav{display:none;}
+  .menue-knopf{
+    display:inline-grid;place-items:center;
+    width:44px;height:44px;border-radius:var(--radius-pill);
+    border:1px solid var(--linie-stark);
+  }
+  .hero-raster{grid-template-columns:1fr;}
+  .hero-buehne{order:-1;min-height:clamp(280px,60vw,400px);}
+  .hero{min-height:auto;padding-top:120px;}
+  .reverse-buehne{grid-template-columns:1fr;}
+  .decaf-raster,.ueber-raster,.newsletter-box{grid-template-columns:1fr;}
+  .newsletter-box{text-align:left;}
+  /* Schmale Kartenspalten: kleinerer Abstand, damit «Alle Barista Guides»
+     noch neben den CTA passt. */
+  .besser-fuss{gap:12px 18px;}
+}
+@media (max-width:620px){
+  /* Die Schiene bleibt links, der Schwung wird flacher, damit der
+     Zeichnung genug Breite bleibt. */
+  .pfad-weg{--versatz:calc(var(--schiene) * .12);}
+  .pfad-phase{gap:14px;}
+  .produkt-raster,.rezepte-raster,.wissen-raster,.versprechen-raster,.passt-raster,.besser-raster{grid-template-columns:1fr;}
+  .besser-karte .besser-bild,
+  .besser-karte--breit .besser-bild,
+  .besser-karte--hoch .besser-bild{height:auto;aspect-ratio:16/10;min-height:0;}
+  .kaffee-spur > .produkt{flex-basis:78%;}
+  .kollektionen .kollektionen-raster{grid-template-columns:1fr;}
+  .fuss-oben{grid-template-columns:1fr;}
+  .warenkorb span.wort{display:none;}
+  .decaf-bild:nth-child(2){margin-top:0;}
+  /* Notizen nach innen holen, sonst schneidet das overflow:hidden sie an. */
+  .hero-notiz{font-size:.76rem;padding:7px 13px;}
+  .hero-notiz--1{left:2%;}
+  .hero-notiz--2{right:2%;}
+  .hero-notiz--3{left:4%;bottom:2%;}
+}
+
+/* --- Bewegungsreduktion --------------------------------------------------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+/* ==========================================================================
+   Greifzeiger auf den Wischbaendern
+   Beide Baender lassen sich seit dem 26.09.2026 auch mit gedrueckter
+   Maustaste ziehen, siehe BW.spurPfeile() in basis.js. Trackpad und Touch
+   wischen laengst von selbst, eine Maus mit nur vertikalem Rad kam aber nur
+   ueber die Pfeile weiter. Der Zeiger sagt, dass hier etwas anzufassen ist;
+   auf grabbing schaltet ihn das Skript waehrend des Ziehens.
+   Steht am Dateiende, damit keine der 27 Zeilenangaben im Marken-Guide
+   wandert.
+   ========================================================================== */
+.kaffee-spur{cursor:grab;}

@@ -1,0 +1,2020 @@
+/* ==========================================================================
+   Beanwatch · SVG-Illustrationen
+   Selbst gezeichnet, in Markenfarben, ohne externe Bibliothek.
+
+   Zwei Familien:
+     bwGlas()   Getränke im Schnitt, Schichten wachsen von unten hoch
+     bwGeraet() Brühgeräte als Linienzeichnung, Pfade lassen sich zeichnen
+
+   Alle Schichten tragen die Klasse .schicht mit transform-origin unten,
+   alle Konturen die Klasse .strich. Darauf setzen die GSAP-Timelines auf.
+   ========================================================================== */
+
+(function (global) {
+  'use strict';
+
+  /* --- Farben, streng nach CI ---------------------------------------------
+     Milch übernimmt Hellorange, Konturen stehen in Dunkelblau. Für Kaffee
+     selbst gibt es keine Markenfarbe, deshalb zwei warme Brauntöne, die
+     zwischen Redorange und Dunkelblau nicht fremd wirken. */
+  const F = {
+    kontur:   '#004B5C',
+    espresso: '#4A2A1C',
+    crema:    '#C98A4B',
+    milch:    '#FFF3E8',
+    schaum:   '#FFFFFF',
+    filter:   '#8B4A26',
+    eis:      '#4FC4E2',
+    signal:   '#FF4612',
+    papier:   '#FFF3E8'
+  };
+
+  /* ======================================================================
+     Getränke
+     ====================================================================== */
+
+  /* Gefässformen. Innenraum als Pfad für den Clip, Aussenlinie als Kontur.
+     Koordinatensystem einheitlich 0 0 100 132, Standlinie bei y = 122. */
+  const GEFAESSE = {
+    // Kleine, dickwandige Espressotasse
+    espressotasse: {
+      innen: 'M30 62 L70 62 L66 104 Q65 110 58 110 L42 110 Q35 110 34 104 Z',
+      aussen: 'M28 58 L72 58 L67.5 105 Q66 114 58 114 L42 114 Q34 114 32.5 105 Z',
+      henkel: 'M72 68 Q86 68 86 80 Q86 92 71.5 93',
+      untertasse: 'M18 118 L82 118 Q80 124 72 124 L28 124 Q20 124 18 118 Z',
+      boden: 122
+    },
+    // Cappuccino-Tasse, breiter und bauchiger
+    tasse: {
+      innen: 'M24 52 L76 52 L71 102 Q70 109 61 109 L39 109 Q30 109 29 102 Z',
+      aussen: 'M22 48 L78 48 L72.5 103 Q71 113 61 113 L39 113 Q29 113 27.5 103 Z',
+      henkel: 'M78 60 Q94 60 94 74 Q94 88 77.5 89',
+      untertasse: 'M14 117 L86 117 Q84 124 75 124 L25 124 Q16 124 14 117 Z',
+      boden: 122
+    },
+    // Hohes Glas für Latte Macchiato und Eiskaffee
+    glas: {
+      innen: 'M33 26 L67 26 L65 108 Q65 112 61 112 L39 112 Q35 112 35 108 Z',
+      aussen: 'M31 22 L69 22 L66.5 109 Q66 116 61 116 L39 116 Q34 116 33.5 109 Z',
+      henkel: null,
+      untertasse: null,
+      boden: 122
+    },
+    // Tumbler für Cortado und Espresso Tonic
+    tumbler: {
+      innen: 'M31 48 L69 48 L67 106 Q67 110 63 110 L37 110 Q33 110 33 106 Z',
+      aussen: 'M29 44 L71 44 L68.5 107 Q68 115 62 115 L38 115 Q32 115 31.5 107 Z',
+      henkel: null,
+      untertasse: null,
+      boden: 122
+    }
+  };
+
+  /**
+   * Zeichnet ein Getränk im Schnitt.
+   * @param {object} o
+   * @param {string} o.gefaess   Schlüssel aus GEFAESSE
+   * @param {Array}  o.schichten Von unten nach oben: {anteil, farbe, name}
+   *                             anteil ist der Anteil der Innenhöhe (Summe ≤ 1)
+   * @param {boolean} o.eis      Eiswürfel einzeichnen
+   * @param {string} o.id        Präfix für die IDs, muss je Seite eindeutig sein
+   */
+  function bwGlas(o) {
+    const g = GEFAESSE[o.gefaess] || GEFAESSE.tasse;
+    const id = o.id || ('glas' + Math.random().toString(36).slice(2, 8));
+
+    // Innenraum ausmessen, damit die Schichten passgenau stapeln.
+    // Die Werte stammen aus den Pfaden oben: oben ist die erste y-Angabe,
+    // unten die Standfläche des Innenraums.
+    const grenzen = {
+      espressotasse: { oben: 62, unten: 110 },
+      tasse:         { oben: 52, unten: 109 },
+      glas:          { oben: 26, unten: 112 },
+      tumbler:       { oben: 48, unten: 110 }
+    }[o.gefaess] || { oben: 52, unten: 109 };
+
+    const hoehe = grenzen.unten - grenzen.oben;
+
+    // Schichten von unten stapeln. Jede bekommt oben eine feine Kante,
+    // sonst verschwimmen Milch und Schaum auf hellem Grund ineinander.
+    let y = grenzen.unten;
+    const schichten = (o.schichten || []).map((s, i) => {
+      const h = hoehe * s.anteil;
+      y -= h;
+      const oben = y;
+      return `<g class="schicht-gruppe">
+        <rect class="schicht" data-schicht="${i}" data-name="${s.name || ''}"
+          x="18" y="${oben.toFixed(2)}" width="64" height="${(h + 0.6).toFixed(2)}"
+          fill="${s.farbe}" style="transform-origin:50% ${(oben + h).toFixed(2)}px"/>
+        <line class="schichtkante" x1="18" y1="${oben.toFixed(2)}" x2="82" y2="${oben.toFixed(2)}"
+          stroke="${F.kontur}" stroke-width="1.1" opacity=".28"/>
+      </g>`;
+    }).join('');
+
+    const eis = o.eis ? `
+      <g class="eis" opacity=".72">
+        <rect x="40" y="${grenzen.oben + 8}" width="13" height="13" rx="3" fill="${F.eis}"
+              transform="rotate(-14 46 ${grenzen.oben + 14})"/>
+        <rect x="52" y="${grenzen.oben + 20}" width="12" height="12" rx="3" fill="${F.eis}"
+              transform="rotate(9 58 ${grenzen.oben + 26})"/>
+        <rect x="38" y="${grenzen.oben + 30}" width="11" height="11" rx="3" fill="${F.eis}"
+              transform="rotate(22 43 ${grenzen.oben + 35})"/>
+      </g>` : '';
+
+    return `
+<svg class="illu getraenk-svg" viewBox="0 0 100 132" fill="none" role="img"
+     aria-label="${o.alt || 'Kaffeegetränk im Schnitt'}">
+  <defs>
+    <clipPath id="${id}-innen"><path d="${g.innen}"/></clipPath>
+  </defs>
+
+  ${g.untertasse ? `<path class="strich unterteller" d="${g.untertasse}" fill="${F.papier}" stroke="${F.kontur}" stroke-width="2.6"/>` : ''}
+  ${g.henkel ? `<path class="strich henkel" d="${g.henkel}" stroke="${F.kontur}" stroke-width="2.6"/>` : ''}
+
+  <g clip-path="url(#${id}-innen)">
+    ${schichten}
+    ${eis}
+  </g>
+
+  <path class="strich gefaess" d="${g.aussen}" stroke="${F.kontur}" stroke-width="2.8"/>
+</svg>`;
+  }
+
+  /* ======================================================================
+     Brühgeräte
+     ====================================================================== */
+
+  const GERAETE = {
+
+    /* Hario V60 auf Karaffe, mit Papierfilter und Kaffeebett */
+    v60: `
+<svg class="illu" viewBox="0 0 150 190" fill="none" role="img" aria-label="Hario V60 Handfilter auf Karaffe">
+  <!-- Karaffe -->
+  <path class="strich" d="M42 116 L42 168 Q42 178 53 178 L97 178 Q108 178 108 168 L108 116"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M38 116 L112 116" stroke="#004B5C" stroke-width="3"/>
+  <!-- Kaffee in der Karaffe -->
+  <path class="kaffeestand" d="M45 168 Q45 175 53 175 L97 175 Q105 175 105 168 L105 146 L45 146 Z"
+        fill="#4A2A1C" style="transform-origin:50% 175px"/>
+  <!-- Trichter -->
+  <path class="strich" d="M30 44 L120 44 L83 106 Q75 116 67 106 Z"
+        stroke="#004B5C" stroke-width="3"/>
+  <!-- Rippen im Trichter -->
+  <g class="rippen" stroke="#004B5C" stroke-width="1.5" opacity=".42">
+    <path d="M48 52 L69 100"/><path d="M62 50 L72 102"/>
+    <path d="M88 50 L78 102"/><path d="M102 52 L81 100"/>
+  </g>
+  <!-- Papierfilter -->
+  <path class="filterpapier" d="M36 50 L114 50 L81 103 Q75 111 69 103 Z" fill="#FFF3E8" opacity=".9"/>
+  <!-- Kaffeebett -->
+  <path class="kaffeebett" d="M52 74 L98 74 L81 100 Q75 108 69 100 Z" fill="#4A2A1C"
+        style="transform-origin:50% 100px"/>
+  <!-- Griff -->
+  <path class="strich" d="M120 52 Q136 56 133 72 Q131 86 116 88" stroke="#004B5C" stroke-width="3"/>
+  <!-- Wasserstrahl, wird von GSAP gezeichnet -->
+  <path class="fluss wasserstrahl" d="M75 4 L75 70" stroke="#4FC4E2" stroke-width="3.4"/>
+  <!-- Tropfen unter dem Trichter -->
+  <circle class="tropfen" cx="75" cy="112" r="3" fill="#4A2A1C"/>
+</svg>`,
+
+    /* Chemex, die Sanduhrform */
+    chemex: `
+<svg class="illu" viewBox="0 0 150 190" fill="none" role="img" aria-label="Chemex Karaffe">
+  <path class="strich" d="M40 30 L110 30 L84 92 L84 100 L112 158 Q116 172 100 172 L50 172 Q34 172 38 158 L66 100 L66 92 Z"
+        stroke="#004B5C" stroke-width="3"/>
+  <!-- Holzmanschette -->
+  <path class="strich manschette" d="M62 88 L88 88 L91 104 L59 104 Z"
+        fill="#C98A4B" stroke="#004B5C" stroke-width="2.4"/>
+  <path class="strich" d="M66 96 L84 96" stroke="#004B5C" stroke-width="1.6" opacity=".5"/>
+  <!-- Kaffee unten -->
+  <path class="kaffeestand" d="M44 148 L106 148 L112 158 Q116 169 100 169 L50 169 Q34 169 38 158 Z"
+        fill="#4A2A1C" style="transform-origin:50% 169px"/>
+  <!-- Filter oben -->
+  <path class="filterpapier" d="M46 38 L104 38 L82 86 L68 86 Z" fill="#FFF3E8" opacity=".92"/>
+  <path class="kaffeebett" d="M55 58 L95 58 L82 84 L68 84 Z" fill="#4A2A1C"
+        style="transform-origin:50% 84px"/>
+  <path class="fluss wasserstrahl" d="M75 2 L75 52" stroke="#4FC4E2" stroke-width="3.4"/>
+</svg>`,
+
+    /* French Press mit Stempel */
+    frenchpress: `
+<svg class="illu" viewBox="0 0 150 190" fill="none" role="img" aria-label="French Press">
+  <path class="strich" d="M44 46 L44 164 Q44 174 55 174 L95 174 Q106 174 106 164 L106 46"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M40 46 L110 46" stroke="#004B5C" stroke-width="3"/>
+  <!-- Kaffee -->
+  <path class="kaffeestand" d="M47 164 Q47 171 55 171 L95 171 Q103 171 103 164 L103 74 L47 74 Z"
+        fill="#4A2A1C" style="transform-origin:50% 171px"/>
+  <!-- Stempelstange und Sieb -->
+  <path class="strich stempelstange" d="M75 8 L75 62" stroke="#004B5C" stroke-width="3.4"/>
+  <circle class="strich" cx="75" cy="8" r="7" stroke="#004B5C" stroke-width="3" fill="#FFF3E8"/>
+  <rect class="sieb" x="48" y="60" width="54" height="7" rx="3" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Deckel -->
+  <path class="strich" d="M38 40 L112 40 L108 48 L42 48 Z" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="2.6"/>
+  <!-- Griff -->
+  <path class="strich" d="M106 70 Q126 76 124 104 Q122 128 106 132" stroke="#004B5C" stroke-width="3"/>
+</svg>`,
+
+    /* AeroPress, invertiert gezeichnet */
+    aeropress: `
+<svg class="illu" viewBox="0 0 150 190" fill="none" role="img" aria-label="AeroPress">
+  <!-- Tasse -->
+  <path class="strich" d="M46 138 L104 138 L98 172 Q97 178 88 178 L62 178 Q53 178 52 172 Z"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="kaffeestand" d="M50 148 L100 148 L95 170 Q94 175 87 175 L63 175 Q56 175 55 170 Z"
+        fill="#4A2A1C" style="transform-origin:50% 175px"/>
+  <!-- Zylinder -->
+  <path class="strich" d="M54 46 L54 134 L96 134 L96 46" stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M50 134 L100 134" stroke="#004B5C" stroke-width="3"/>
+  <!-- Skala -->
+  <g stroke="#004B5C" stroke-width="1.6" opacity=".45">
+    <path d="M58 62 L70 62"/><path d="M58 78 L70 78"/>
+    <path d="M58 94 L70 94"/><path d="M58 110 L70 110"/>
+  </g>
+  <!-- Kaffee im Zylinder -->
+  <rect class="kaffeestand" x="57" y="70" width="36" height="62" fill="#4A2A1C"
+        style="transform-origin:50% 132px"/>
+  <!-- Kolben -->
+  <path class="strich stempelstange" d="M62 18 L88 18 L88 44 L62 44 Z" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M75 4 L75 18" stroke="#004B5C" stroke-width="3.4"/>
+  <!-- Filterkappe -->
+  <path class="strich" d="M52 134 L98 134 L94 142 L56 142 Z" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="2.4"/>
+</svg>`,
+
+    /* Cold Brew Karaffe mit Siebeinsatz */
+    coldbrew: `
+<svg class="illu" viewBox="0 0 150 190" fill="none" role="img" aria-label="Cold Brew Karaffe">
+  <path class="strich" d="M40 40 L40 164 Q40 176 53 176 L97 176 Q110 176 110 164 L110 40"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M36 40 L114 40" stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M46 28 L104 28 L110 40 L40 40 Z" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="2.6"/>
+  <!-- Wasser -->
+  <path class="kaffeestand" d="M43 164 Q43 173 53 173 L97 173 Q107 173 107 164 L107 58 L43 58 Z"
+        fill="#4A2A1C" opacity=".85" style="transform-origin:50% 173px"/>
+  <!-- Siebeinsatz -->
+  <path class="strich sieb" d="M60 52 L90 52 L88 140 L62 140 Z" fill="#FFF3E8" opacity=".55"
+        stroke="#004B5C" stroke-width="2.4"/>
+  <g stroke="#004B5C" stroke-width="1.4" opacity=".4">
+    <path d="M64 70 L86 70"/><path d="M64 86 L86 86"/>
+    <path d="M64 102 L86 102"/><path d="M64 118 L86 118"/>
+  </g>
+  <!-- Eiswürfel -->
+  <g class="eis" opacity=".8">
+    <rect x="48" y="62" width="12" height="12" rx="3" fill="#4FC4E2" transform="rotate(-12 54 68)"/>
+    <rect x="92" y="76" width="11" height="11" rx="3" fill="#4FC4E2" transform="rotate(16 97 81)"/>
+  </g>
+</svg>`,
+
+    /* Schwanenhalskessel. Der Auslauf steigt aus dem Korpus auf, geht über
+       den Scheitel und zeigt am Ende senkrecht nach unten, so wie bei einem
+       echten Kessel für den Handaufguss. */
+    kessel: `
+<svg class="illu" viewBox="0 0 210 160" fill="none" role="img" aria-label="Wasserkessel mit Schwanenhals">
+  <!-- Korpus -->
+  <path class="strich" d="M48 68 L48 122 Q48 138 66 138 L110 138 Q128 138 128 122 L128 68 Z"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M44 68 L132 68" stroke="#004B5C" stroke-width="3"/>
+  <!-- Wasserstand -->
+  <path class="kaffeestand" d="M52 122 Q52 134 66 134 L110 134 Q124 134 124 122 L124 88 L52 88 Z"
+        fill="#4FC4E2" opacity=".5" style="transform-origin:50% 134px"/>
+  <!-- Deckel und Knauf -->
+  <path class="strich" d="M60 56 L116 56 L122 68 L54 68 Z" fill="#FFF3E8"
+        stroke="#004B5C" stroke-width="2.6"/>
+  <circle class="strich" cx="88" cy="49" r="5.5" stroke="#004B5C" stroke-width="2.6" fill="#FF4612"/>
+  <!-- Schwanenhals: Aufstieg, Scheitel, senkrechte Tülle -->
+  <path class="strich schwanenhals"
+        d="M128 84 C152 84 168 72 172 48 C174 36 186 38 186 52 L186 84"
+        stroke="#004B5C" stroke-width="3.4"/>
+  <!-- Tüllenöffnung -->
+  <path class="strich" d="M181 84 L191 84" stroke="#004B5C" stroke-width="3"/>
+  <!-- Griff -->
+  <path class="strich" d="M48 80 Q20 84 18 106 Q16 128 44 132" stroke="#004B5C" stroke-width="3.4"/>
+  <!-- Wasserstrahl aus der Tülle -->
+  <path class="fluss wasserstrahl" d="M186 88 L186 156" stroke="#4FC4E2" stroke-width="3.4"/>
+</svg>`
+  };
+
+  function bwGeraet(name) {
+    return GERAETE[name] || '';
+  }
+
+  /* ======================================================================
+     Espressomaschinen im Schnitt
+
+     Von aussen sehen Einkreiser, Zweikreiser und Thermoblock gleich aus.
+     Der Unterschied steckt im Innenleben und entscheidet, ob Du brühen und
+     aufschäumen gleichzeitig kannst. Deshalb sind das Schnittbilder und
+     keine Silhouetten.
+
+     Klassen für die Animation:
+       .wasserweg   der Weg des Wassers, mit DrawSVG nachzeichenbar
+       .kessel      Wasserstand, wächst von unten (transform-origin gesetzt)
+       .kaffeestand der Kaffee in Sieb oder Tasse
+     ====================================================================== */
+  const MASCHINEN = {
+
+    kapsel: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Kapselmaschine im Schnitt: Wassertank, kleiner Durchlauferhitzer, Kapsel, Tasse">
+  <!-- Gehäuse -->
+  <path class="strich" d="M44 22 Q44 14 54 14 L126 14 Q136 14 136 22 L136 120 L44 120 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Hebel oben -->
+  <path class="strich" d="M60 14 L60 6 Q60 2 66 2 L114 2 Q120 2 120 6 L120 14"
+        stroke="#004B5C" stroke-width="3"/>
+  <!-- Kapsel, das einzige Verbrauchsteil -->
+  <path class="strich kapselkoerper" d="M74 30 L106 30 L100 54 L80 54 Z"
+        fill="#FF4612" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="strich" d="M70 30 L110 30" stroke="#004B5C" stroke-width="2.6"/>
+  <!-- Wassertank, hinten links -->
+  <rect class="strich" x="50" y="80" width="16" height="34" rx="3"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.4"/>
+  <path class="kessel" d="M53 90 L63 90 L63 111 L53 111 Z"
+        fill="#4FC4E2" opacity=".55" style="transform-origin:50% 111px"/>
+  <!-- Durchlauferhitzer: klein, schnell, ohne Kessel -->
+  <rect class="strich" x="50" y="36" width="16" height="36" rx="4"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.4"/>
+  <path class="wasserweg" d="M58 68 Q53 63 58 58 Q63 53 58 48 Q53 43 58 40"
+        stroke="#FF4612" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- Der Weg des Wassers: Tank, Erhitzer, von oben in die Kapsel.
+       Unten tritt der Kaffee aus und läuft über den Auslauf in die Tasse.
+       Bis 30.09.2026 stand der Erhitzer zwischen Kapsel und Tasse, das
+       Wasser lief im Bild also verkehrt herum. -->
+  <path class="wasserweg" d="M58 80 L58 72" stroke="#4FC4E2" stroke-width="3"/>
+  <path class="wasserweg" d="M58 36 L58 24 L90 24 L90 30" stroke="#FF4612" stroke-width="3"
+        stroke-linejoin="round"/>
+  <path class="wasserweg" d="M90 54 L90 120" stroke="#4A2A1C" stroke-width="3"/>
+  <!-- Auslauf -->
+  <path class="strich" d="M78 120 L102 120 L98 132 L82 132 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="2.6"/>
+  <!-- Tasse -->
+  <path class="strich" d="M62 150 L118 150 L112 182 Q111 188 102 188 L78 188 Q69 188 68 182 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="3"/>
+  <path class="kaffeestand" d="M66 160 L114 160 L109 180 Q108 185 101 185 L79 185 Q72 185 71 180 Z"
+        fill="#4A2A1C" style="transform-origin:50% 185px"/>
+  <path class="strich" d="M118 156 Q134 158 134 168 Q134 178 118 178"
+        stroke="#004B5C" stroke-width="3"/>
+</svg>`,
+
+    vollautomat: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Kaffeevollautomat im Schnitt: Bohnenbehälter, Mahlwerk, Brühgruppe">
+  <!-- Gehäuse -->
+  <path class="strich" d="M28 30 Q28 22 38 22 L152 22 Q162 22 162 30 L162 132 L28 132 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Bohnenbehälter -->
+  <path class="strich" d="M46 22 L46 8 L94 8 L94 22" stroke="#004B5C" stroke-width="3"/>
+  <g class="bohnen">
+    <ellipse cx="58" cy="16" rx="5" ry="3.4" fill="#4A2A1C"/>
+    <ellipse cx="70" cy="14" rx="5" ry="3.4" fill="#4A2A1C"/>
+    <ellipse cx="82" cy="16" rx="5" ry="3.4" fill="#4A2A1C"/>
+    <ellipse cx="64" cy="20" rx="5" ry="3.4" fill="#4A2A1C"/>
+    <ellipse cx="77" cy="21" rx="5" ry="3.4" fill="#4A2A1C"/>
+  </g>
+  <!-- Mahlwerk: zwei Scheiben -->
+  <circle class="strich mahlscheibe" cx="70" cy="44" r="15"
+          fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <g stroke="#004B5C" stroke-width="1.6" opacity=".55">
+    <path d="M70 32 L70 56"/><path d="M58 44 L82 44"/>
+    <path d="M62 36 L78 52"/><path d="M78 36 L62 52"/>
+  </g>
+  <!-- Brühgruppe -->
+  <rect class="strich" x="52" y="70" width="38" height="34" rx="6"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <rect class="kaffeestand" x="57" y="76" width="28" height="12" rx="2"
+        fill="#4A2A1C" style="transform-origin:50% 88px"/>
+  <path class="wasserweg" d="M71 59 L71 70" stroke="#4A2A1C" stroke-width="3"/>
+  <path class="wasserweg" d="M71 104 L71 132" stroke="#4FC4E2" stroke-width="3"/>
+  <!-- Milchschlauch, die zweite Leitung -->
+  <path class="wasserweg" d="M132 40 Q148 56 140 80 Q134 100 112 118 L92 146"
+        stroke="#FFF3E8" stroke-width="4.4" stroke-linecap="round"/>
+  <path class="wasserweg" d="M132 40 Q148 56 140 80 Q134 100 112 118 L92 146"
+        stroke="#004B5C" stroke-width="1.8" stroke-dasharray="4 5" stroke-linecap="round"/>
+  <circle class="strich" cx="132" cy="36" r="7" fill="#FFFFFF" stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Tasse -->
+  <path class="strich" d="M60 150 L118 150 L112 182 Q111 188 102 188 L78 188 Q69 188 68 182 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="3"/>
+  <path class="kaffeestand" d="M64 158 L114 158 L109 180 Q108 185 101 185 L79 185 Q72 185 71 180 Z"
+        fill="#4A2A1C" style="transform-origin:50% 185px"/>
+  <path class="kaffeestand" d="M64 158 L114 158 L111 168 L66 168 Z"
+        fill="#FFF3E8" style="transform-origin:50% 168px"/>
+</svg>`,
+
+    einkreiser: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Einkreiser im Schnitt: ein Kessel für Brühwasser und Dampf, mit Umschalter">
+  <!-- Gehäuse -->
+  <path class="strich" d="M30 34 Q30 26 40 26 L150 26 Q160 26 160 34 L160 124 L30 124 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Der eine Kessel -->
+  <rect class="strich" x="52" y="44" width="86" height="52" rx="12"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="3"/>
+  <path class="kessel" d="M55 70 L135 70 L135 90 Q135 96 128 96 L62 96 Q55 96 55 90 Z"
+        fill="#4FC4E2" opacity=".55" style="transform-origin:50% 96px"/>
+  <text x="95" y="62" text-anchor="middle" font-size="11" font-weight="700"
+        fill="#004B5C" font-family="Gabarito, sans-serif">Ein Kessel</text>
+  <!-- Umschalter: entweder brühen oder dampfen -->
+  <circle class="strich schalter" cx="95" cy="110" r="9"
+          fill="#FF4612" stroke="#004B5C" stroke-width="2.6"/>
+  <path d="M95 104 L95 110 L99 113" stroke="#FFF3E8" stroke-width="2" stroke-linecap="round"/>
+  <path class="wasserweg" d="M95 96 L95 101" stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Weg zur Brühgruppe -->
+  <path class="wasserweg" d="M86 116 L70 116 L70 132" stroke="#4FC4E2" stroke-width="3"/>
+  <!-- Weg zur Dampflanze, gestrichelt: nicht gleichzeitig -->
+  <path class="wasserweg" d="M104 116 L128 116 L128 140" stroke="#004B5C" stroke-width="2.4"
+        stroke-dasharray="5 5"/>
+  <path class="strich" d="M124 140 L132 140 L130 158 L126 158 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Siebträger -->
+  <path class="strich" d="M56 132 L84 132 L80 146 L60 146 Z"
+        fill="#FF4612" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="strich" d="M84 136 L108 136" stroke="#004B5C" stroke-width="3"/>
+  <!-- Tasse -->
+  <path class="strich" d="M52 162 L88 162 L84 186 Q83 191 76 191 L64 191 Q57 191 56 186 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="kaffeestand" d="M55 170 L85 170 L82 184 Q81 188 76 188 L64 188 Q59 188 58 184 Z"
+        fill="#4A2A1C" style="transform-origin:50% 188px"/>
+</svg>`,
+
+    zweikreiser: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Zweikreiser im Schnitt: Wärmetauscher im Dampfkessel, brühen und schäumen gleichzeitig">
+  <!-- Gehäuse -->
+  <path class="strich" d="M24 34 Q24 26 34 26 L156 26 Q166 26 166 34 L166 124 L24 124 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Dampfkessel, gross -->
+  <rect class="strich" x="42" y="42" width="106" height="58" rx="14"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="3"/>
+  <path class="kessel" d="M45 66 L145 66 L145 94 Q145 100 138 100 L52 100 Q45 100 45 94 Z"
+        fill="#4FC4E2" opacity=".55" style="transform-origin:50% 100px"/>
+  <text x="95" y="58" text-anchor="middle" font-size="10.5" font-weight="700"
+        fill="#004B5C" font-family="Gabarito, sans-serif">Dampfkessel</text>
+  <!-- Wärmetauscher: das Rohr mitten durch den Kessel -->
+  <path class="waermetauscher wasserweg" d="M60 100 L60 78 Q60 72 66 72 L112 72 Q118 72 118 78 L118 100"
+        stroke="#FF4612" stroke-width="3.4" stroke-linecap="round"/>
+  <circle cx="89" cy="72" r="3.4" fill="#FF4612"/>
+  <!-- Beide Wege offen, gleichzeitig -->
+  <path class="wasserweg" d="M60 100 L60 132" stroke="#FF4612" stroke-width="3"/>
+  <path class="wasserweg" d="M132 100 L132 140" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="strich" d="M128 140 L136 140 L134 158 L130 158 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Dampf -->
+  <g class="dampf" stroke="#004B5C" stroke-width="2" opacity=".45" stroke-linecap="round">
+    <path d="M127 178 Q123 170 127 162 Q131 154 127 148"/>
+    <path d="M136 176 Q132 169 136 162 Q140 156 136 151"/>
+  </g>
+  <!-- Siebträger -->
+  <path class="strich" d="M46 132 L74 132 L70 146 L50 146 Z"
+        fill="#FF4612" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="strich" d="M74 136 L98 136" stroke="#004B5C" stroke-width="3"/>
+  <!-- Tasse -->
+  <path class="strich" d="M42 162 L78 162 L74 186 Q73 191 66 191 L54 191 Q47 191 46 186 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="kaffeestand" d="M45 170 L75 170 L72 184 Q71 188 66 188 L54 188 Q49 188 48 184 Z"
+        fill="#4A2A1C" style="transform-origin:50% 188px"/>
+</svg>`,
+
+    thermoblock: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Thermoblock im Schnitt: Durchlauferhitzer statt Kessel, schnell aufgeheizt">
+  <!-- Gehäuse -->
+  <path class="strich" d="M32 34 Q32 26 42 26 L148 26 Q158 26 158 34 L158 124 L32 124 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Der Block: kein Wasservorrat, nur eine beheizte Leitung -->
+  <rect class="strich" x="56" y="48" width="78" height="48" rx="8"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="3"/>
+  <text x="95" y="44" text-anchor="middle" font-size="10.5" font-weight="700"
+        fill="#004B5C" font-family="Gabarito, sans-serif">Durchlauferhitzer</text>
+  <!-- Die Wendel im Block -->
+  <path class="wasserweg wendel"
+        d="M64 88 L64 60 Q64 56 70 56 Q76 56 76 60 L76 84 Q76 88 82 88 Q88 88 88 84 L88 60
+           Q88 56 94 56 Q100 56 100 60 L100 84 Q100 88 106 88 Q112 88 112 84 L112 60
+           Q112 56 118 56 Q124 56 124 60 L124 88"
+        stroke="#FF4612" stroke-width="3" stroke-linecap="round"/>
+  <!-- Zulauf aus dem Tank -->
+  <path class="wasserweg" d="M64 96 L64 108 L74 108" stroke="#4FC4E2" stroke-width="2.6"/>
+  <path class="strich" d="M36 96 L52 96 L52 120 L36 120 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.4"/>
+  <path class="kessel" d="M38 104 L50 104 L50 118 L38 118 Z"
+        fill="#4FC4E2" opacity=".55" style="transform-origin:50% 118px"/>
+  <path class="wasserweg" d="M52 108 L64 108" stroke="#4FC4E2" stroke-width="2.6"/>
+  <!-- Ausgang zur Brühgruppe -->
+  <path class="wasserweg" d="M124 96 L124 112 L86 112 L86 132" stroke="#FF4612" stroke-width="3"/>
+  <!-- Siebträger -->
+  <path class="strich" d="M72 132 L100 132 L96 146 L76 146 Z"
+        fill="#FF4612" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="strich" d="M100 136 L124 136" stroke="#004B5C" stroke-width="3"/>
+  <!-- Tasse -->
+  <path class="strich" d="M68 162 L104 162 L100 186 Q99 191 92 191 L80 191 Q73 191 72 186 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="kaffeestand" d="M71 170 L101 170 L98 184 Q97 188 92 188 L80 188 Q75 188 74 184 Z"
+        fill="#4A2A1C" style="transform-origin:50% 188px"/>
+</svg>`,
+
+    bialetti: `
+<svg class="illu illu-maschine" viewBox="0 0 190 200" fill="none" role="img"
+     aria-label="Moka-Kanne im Schnitt auf der Gasflamme: Wasser im Kessel, Kaffeemehl im Trichter, Steigrohr ins Oberteil">
+
+  <!-- Oberteil: verjüngt sich nach oben, hier sammelt sich der Kaffee -->
+  <path class="strich" d="M66 42 L124 42 L118 92 L72 92 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Der fertige Kaffee -->
+  <path class="kaffeestand" d="M70 66 L120 66 L117 89 L73 89 Z"
+        fill="#4A2A1C" style="transform-origin:50% 89px"/>
+  <!-- Deckel mit Knauf -->
+  <path class="strich" d="M62 42 L128 42" stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M78 42 L78 32 L112 32 L112 42"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="2.6"/>
+  <circle class="strich" cx="95" cy="28" r="4.5" fill="#FFF3E8" stroke="#004B5C" stroke-width="2.4"/>
+  <!-- Ausguss -->
+  <path class="strich" d="M66 46 L50 40 L52 58 L66 60"
+        stroke="#004B5C" stroke-width="2.6"/>
+
+  <!-- Die Taille: hier sind Ober- und Unterteil verschraubt -->
+  <path class="strich" d="M72 92 L118 92 L118 100 L72 100 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="2.6"/>
+  <g stroke="#004B5C" stroke-width="1.4" opacity=".45">
+    <path d="M76 94 L76 98"/><path d="M84 94 L84 98"/><path d="M92 94 L92 98"/>
+    <path d="M98 94 L98 98"/><path d="M106 94 L106 98"/><path d="M114 94 L114 98"/>
+  </g>
+
+  <!-- Trichtersieb mit dem Kaffeemehl, sitzt in der Taille -->
+  <path class="strich" d="M74 100 L116 100 L110 118 L80 118 Z"
+        fill="#FFFFFF" stroke="#004B5C" stroke-width="2.6"/>
+  <path class="kaffeestand" d="M77 103 L113 103 L108 115 L82 115 Z"
+        fill="#4A2A1C" style="transform-origin:50% 115px"/>
+
+  <!-- Unterteil: der Kessel, nach unten breiter -->
+  <path class="strich" d="M72 100 L118 100 L130 168 L60 168 Z"
+        fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+  <!-- Das Wasser -->
+  <path class="kessel" d="M79 132 L111 132 L117 165 L73 165 Z"
+        fill="#4FC4E2" opacity=".55" style="transform-origin:50% 165px"/>
+  <!-- Sicherheitsventil -->
+  <circle class="strich" cx="110" cy="152" r="5" fill="#FFFFFF" stroke="#004B5C" stroke-width="2.2"/>
+  <!-- Standfläche -->
+  <path class="strich" d="M58 168 L132 168" stroke="#004B5C" stroke-width="3"/>
+
+  <!-- Steigrohr: vom Trichter durch die Taille ins Oberteil -->
+  <path class="wasserweg steigrohr" d="M95 118 L95 60" stroke="#FF4612" stroke-width="3.4"
+        stroke-linecap="round"/>
+  <path class="strich" d="M88 60 L102 60" stroke="#004B5C" stroke-width="2.2"/>
+
+  <!-- Henkel, im selben Strich wie die Tassenhenkel -->
+  <path class="strich" d="M119 112 Q152 117 152 131 Q152 146 123 148"
+        stroke="#004B5C" stroke-width="3.2"/>
+
+  <!-- Gasflamme auf dem Rost -->
+  <g class="hitze">
+    <path d="M78 190 Q78 178 88 172 Q86 182 92 184 Q98 178 95 168 Q112 178 110 190 Z"
+          fill="#FF4612" opacity=".85"/>
+    <path d="M86 190 Q86 183 95 178 Q100 184 101 190 Z" fill="#4FC4E2" opacity=".7"/>
+  </g>
+  <path class="strich" d="M52 190 L138 190" stroke="#004B5C" stroke-width="3" stroke-linecap="round"/>
+  <g stroke="#004B5C" stroke-width="2.2" opacity=".55" stroke-linecap="round">
+    <path d="M64 190 L64 196"/><path d="M126 190 L126 196"/>
+  </g>
+</svg>`
+  };
+
+  function bwMaschine(name) {
+    return MASCHINEN[name] || '';
+  }
+
+  /* ======================================================================
+     Der Aufguss, grosse Illustration für den Filterkaffee-Hub.
+     Kessel und V60 in einer Szene, damit beide zueinander im Massstab
+     stehen und der Wasserstrahl wirklich im Filter landet.
+     ====================================================================== */
+  function bwAufguss() {
+    return `
+<svg class="illu illu-aufguss" viewBox="0 0 340 330" fill="none" role="img"
+     aria-label="Schwanenhalskessel giesst Wasser in einen V60 Handfilter auf einer Karaffe">
+
+  <!-- ---------- Kessel ---------- -->
+  <g class="kessel-gruppe" style="transform-origin:80px 110px">
+    <path class="strich" d="M24 62 L24 116 Q24 132 42 132 L104 132 Q122 132 122 116 L122 62 Z"
+          stroke="#004B5C" stroke-width="3"/>
+    <path class="strich" d="M20 62 L126 62" stroke="#004B5C" stroke-width="3"/>
+    <path class="kesselwasser" d="M28 116 Q28 128 42 128 L104 128 Q118 128 118 116 L118 78 L28 78 Z"
+          fill="#4FC4E2" opacity=".5" style="transform-origin:50% 128px"/>
+    <path class="strich" d="M36 50 L110 50 L116 62 L30 62 Z" fill="#FFF3E8"
+          stroke="#004B5C" stroke-width="2.6"/>
+    <circle class="strich" cx="73" cy="43" r="5.5" stroke="#004B5C" stroke-width="2.6" fill="#FF4612"/>
+    <!-- Griff -->
+    <path class="strich" d="M24 74 Q-2 78 -2 100 Q-2 122 22 126" stroke="#004B5C" stroke-width="3.4"/>
+    <!-- Schwanenhals bis über die Filtermitte -->
+    <path class="strich schwanenhals"
+          d="M122 76 C158 76 182 60 194 40 C202 27 218 30 218 46 L218 92"
+          stroke="#004B5C" stroke-width="3.4"/>
+    <path class="strich" d="M213 92 L223 92" stroke="#004B5C" stroke-width="3"/>
+  </g>
+
+  <!-- ---------- Wasserstrahl ---------- -->
+  <path class="fluss wasserstrahl" d="M218 96 L218 168" stroke="#4FC4E2" stroke-width="3.8"/>
+
+  <!-- ---------- Karaffe ---------- -->
+  <path class="strich" d="M162 232 L162 300 Q162 314 178 314 L258 314 Q274 314 274 300 L274 232"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M158 232 L278 232" stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M274 246 Q300 250 300 270 Q300 290 274 294" stroke="#004B5C" stroke-width="3"/>
+  <path class="kaffeestand" d="M166 300 Q166 310 178 310 L258 310 Q270 310 270 300 L270 262 L166 262 Z"
+        fill="#4A2A1C" style="transform-origin:50% 310px"/>
+
+  <!-- ---------- V60 ---------- -->
+  <path class="strich" d="M138 168 L298 168 L232 226 Q218 238 204 226 Z"
+        stroke="#004B5C" stroke-width="3"/>
+  <path class="filterpapier" d="M146 174 L290 174 L230 224 Q218 234 206 224 Z" fill="#FFF3E8" opacity=".92"/>
+  <g class="rippen" stroke="#004B5C" stroke-width="1.6" opacity=".4">
+    <path d="M170 178 L206 222"/><path d="M196 176 L212 224"/>
+    <path d="M240 176 L224 224"/><path d="M266 178 L230 222"/>
+  </g>
+  <path class="kaffeebett" d="M166 190 L270 190 L230 222 Q218 232 206 222 Z" fill="#4A2A1C"
+        style="transform-origin:50% 222px"/>
+  <path class="strich" d="M298 176 Q322 180 320 198 Q318 214 296 216" stroke="#004B5C" stroke-width="3"/>
+
+  <!-- Tropfen aus dem Filter in die Karaffe -->
+  <circle class="tropfen" cx="218" cy="238" r="3.4" fill="#4A2A1C"/>
+</svg>`;
+  }
+
+  /* ======================================================================
+     Rettungsarm mit Hario-Buono-Kessel
+
+     Im Seitenkopf der Filterkaffee-Seite ragt ein Arm aus dem Wasser und
+     haelt den Kessel hoch. Der Markenwitz zu Ende gedacht: Wenn Beanwatch
+     die Rettung ist, muss jemand zu retten sein.
+
+     Die Zeichnung entstand in zwoelf Runden in einem eigenen Chat, die
+     Fassung v12 hat Joscha am 29.09.2026 freigegeben. Sie steht hier Wort
+     fuer Wort so, wie sie freigegeben wurde. Zwei Schalter stellen ein,
+     was der Einsatzort braucht, ohne die Zeichnung selbst anzutasten:
+
+       schaum   Die Gruppe arm-schaum mit den weissen Halbkreisen und den
+                zwei Kringeln. Im Seitenkopf abgeschaltet: Der Arm steht
+                dort hinter der vordersten Welle, das Wasser deckt ihn
+                selbst ab.
+
+       armEnde  Der Endpunkt der beiden Unterarm-Striche, in der Zeichnung
+                y 206.
+
+     Warum armEnde noetig ist: Der Unterarm endet bei y 206, die tiefste
+     Kesselkante liegt bei y 196. Das sind 10 von 220 Einheiten. Steht der
+     Arm tief genug, dass die Welle sein Ende deckt, verschwindet auch der
+     Kessel. Steht er hoch genug fuer den Kessel, schwimmt das runde Ende
+     sichtbar ueber dem Wasser. Beides zugleich geht nur, wenn der Unterarm
+     nach unten laenger wird. Das SVG traegt im Seitenkopf overflow:visible,
+     gezeichnet wird also auch unter der viewBox. Am sichtbaren Teil aendert
+     sich nichts, die Verlaengerung liegt immer unter Wasser.
+
+     Eckdaten: viewBox 228 x 220, Wasserlinie y 198, tiefste Kesselkante
+     y 196, Drehpunkt 31,8 Prozent waagrecht und 90 Prozent senkrecht.
+     Kontur #004B5C, Flaechen #FFFFFF, Griff und Knauf #211F1D.
+
+     ACHTUNG: .arm-faust traegt ein eigenes transform-Attribut. Setzt CSS
+     oder GSAP ein transform auf diese Klasse, springt die Faust nach
+     links. Bewegt wird nur .arm-dreh. Aus demselben Grund gehoert eine
+     Spiegelung auf das SVG und nicht auf seinen Behaelter: Dort animiert
+     hubs.js den Auftritt.
+     ====================================================================== */
+  const ARM_KOPF = `<svg class="rettungsarm" viewBox="0 0 228 220" fill="none" aria-hidden="true">
+`;
+
+  const ARM_SCHAUM = `  <g class="arm-schaum" stroke="#FFFFFF" stroke-linecap="round" fill="none">
+    <path d="M46.5 197 Q73.5 187 100.5 197" stroke-width="3.4"/>
+    <path class="arm-kringel arm-kringel--1" d="M36.5 208 Q74.5 195 112.5 208" stroke-width="2.6" opacity=".75"/>
+    <path class="arm-kringel arm-kringel--2" d="M50.5 188 Q73.5 182 96.5 188" stroke-width="2.2" opacity=".5"/>
+  </g>
+`;
+
+  const ARM_DREH_AUF = `  <g class="arm-dreh" stroke="#004B5C" stroke-linecap="round" stroke-linejoin="round">
+`;
+
+  const ARM_REST = `    <path d="M89.6 78.7 L105.5 76.8 A9.1 9.1 0 0 1 115.6 84.7 L115.8 86.7 L108.7 87.6 L108.5 85.6 A1.9 1.9 0 0 0 106.3 83.9 L90.5 85.8 Z" fill="#211F1D" stroke-width="3.2"/>
+    <g transform="translate(31.4 -4.6) rotate(33.2 74.5 84.9)">
+    <path d="M99.5 70.2 H116.5 Q118.5 70.2 118.5 72.2 C118.5 75.2 112.5 76.4 110.5 77.4 V82.2 H105.5 V77.4 C103.5 76.4 97.5 75.2 97.5 72.2 Q97.5 70.2 99.5 70.2 Z" fill="#211F1D" stroke-width="2.6"/>
+    <path d="M90.4 86 Q90.4 82.4 94.4 81.8 Q108 79.8 121.6 81.8 Q125.6 82.4 125.6 86 Z" fill="#FFFFFF" stroke-width="3"/>
+    <path d="M66.4 166 H149.6 Q153.1 166 153.1 168.1 Q153.1 170.2 149.6 170.2 H66.4 Q62.9 170.2 62.9 168.1 Q62.9 166 66.4 166 Z" fill="#FFFFFF" stroke-width="3"/>
+    <path d="M88.7 86.2 C85.7 91.5 82 94.5 82 98 C82 102.4 82.2 105.5 82.8 105.9 C78.2 109.3 74.4 112.2 74.4 117.3 C74.4 121.4 74.8 124.4 75.7 124.8 C71.5 128.6 68.1 131.8 68.1 137.4 C68.1 142.1 68.5 145.4 69.4 145.8 C66.4 149.5 63.9 152.5 63.9 157.9 C63.9 162.4 64.2 165.6 64.7 166 H151.3 C151.8 165.6 152.1 162.4 152.1 157.9 C152.1 152.5 149.6 149.5 146.6 145.8 C147.5 145.4 147.9 142.1 147.9 137.4 C147.9 131.8 144.5 128.6 140.3 124.8 C141.2 124.4 141.6 121.4 141.6 117.3 C141.6 112.2 137.8 109.3 133.2 105.9 C133.8 105.5 134 102.4 134 98 C134 94.5 130.3 91.5 127.3 86.2 Z" fill="#FFFFFF" stroke-width="3"/>
+    <path d="M82.8 105.9 Q108 108.5 133.2 105.9 M75.7 124.8 Q108 127.4 140.3 124.8 M69.4 145.8 Q108 148.4 146.6 145.8" stroke-width="2.4"/>
+    <path d="M82.6 86 L85.3 89.3 Q86.1 90.2 85.4 91.4 L82 97.5" stroke-width="5.6"/>
+    <path d="M82.6 86 L85.3 89.3 Q86.1 90.2 85.4 91.4 L82 97.5" stroke="#FFFFFF" stroke-width="2.2"/>
+    <path d="M147.9 149.6 C149 149.4 152.2 149.3 154.5 148.3 C156.9 147.2 159.9 145.6 162.1 143.4 C164.3 141.1 166.2 138.1 167.7 134.8 C169.1 131.5 170 127.5 170.9 123.4 C171.8 119.4 172.4 114.6 173.1 110.4 C173.8 106.3 174.3 101.9 174.9 98.7 C175.5 95.5 176 92.8 176.5 91.1 C177.1 89.5 177.5 89.4 178.1 88.8 C178.7 88.3 179.4 88 180.1 87.8 C180.8 87.6 181.4 87.6 182.3 87.7 C183.2 87.8 185.1 88.3 185.6 88.4 L184.9 83.9 C184.6 83.9 184.3 83.6 183.3 83.4 C182.4 83.3 180.5 83 179.1 83.3 C177.7 83.6 176 84.3 174.8 85.2 C173.6 86.2 172.7 87 171.8 89.1 C171 91.2 170.3 94.4 169.6 97.8 C168.9 101.2 168.3 105.5 167.6 109.6 C166.8 113.6 166.2 118.2 165.2 122.1 C164.3 125.9 163.3 129.7 162 132.5 C160.8 135.3 159.3 137.3 157.7 138.8 C156.2 140.4 154.5 141.3 152.7 142 C150.8 142.7 147.6 142.8 146.5 142.9 Z" fill="#FFFFFF" stroke="none"/>
+    <path d="M147.9 149.6 C149 149.4 152.2 149.3 154.5 148.3 C156.9 147.2 159.9 145.6 162.1 143.4 C164.3 141.1 166.2 138.1 167.7 134.8 C169.1 131.5 170 127.5 170.9 123.4 C171.8 119.4 172.4 114.6 173.1 110.4 C173.8 106.3 174.3 101.9 174.9 98.7 C175.5 95.5 176 92.8 176.5 91.1 C177.1 89.5 177.5 89.4 178.1 88.8 C178.7 88.3 179.4 88 180.1 87.8 C180.8 87.6 181.4 87.6 182.3 87.7 C183.2 87.8 185.1 88.3 185.6 88.4 L184.9 83.9 C184.6 83.9 184.3 83.6 183.3 83.4 C182.4 83.3 180.5 83 179.1 83.3 C177.7 83.6 176 84.3 174.8 85.2 C173.6 86.2 172.7 87 171.8 89.1 C171 91.2 170.3 94.4 169.6 97.8 C168.9 101.2 168.3 105.5 167.6 109.6 C166.8 113.6 166.2 118.2 165.2 122.1 C164.3 125.9 163.3 129.7 162 132.5 C160.8 135.3 159.3 137.3 157.7 138.8 C156.2 140.4 154.5 141.3 152.7 142 C150.8 142.7 147.6 142.8 146.5 142.9" stroke-width="3.2"/>
+    </g>
+    <g class="arm-faust" transform="translate(34.5 0)">
+      <path d="M26 107.8 V99.8 C23 96.8 21 93.8 21 87.8 V69.3 Q21 65.6 25 65.6 Q29 65.6 29 69.3 Q29 62.3 33 62.3 Q37 62.3 37 66 Q37 60.4 41.5 60.4 Q46 60.4 46 65 Q46 61 50.5 61 Q55 61 55.2 65.8 C57.5 69.8 60 74.8 59.6 81.8 C59.2 89.8 55 95.8 50 99.8 V107.8 Z" fill="#FFFFFF" stroke="none"/>
+      <path d="M26 107.8 V99.8 C23 96.8 21 93.8 21 87.8 V69.3 Q21 65.6 25 65.6 Q29 65.6 29 69.3 Q29 62.3 33 62.3 Q37 62.3 37 66 Q37 60.4 41.5 60.4 Q46 60.4 46 65 Q46 61 50.5 61 Q55 61 55.2 65.8 C57.5 69.8 60 74.8 59.6 81.8 C59.2 89.8 55 95.8 50 99.8 V107.8" stroke-width="3"/>
+      <g transform="translate(-34.5 0)">
+        <path d="M94.1 78.1 C93.7 78.2 92.7 78.3 92.1 78.4 C91.4 78.4 90.7 78.5 90.1 78.6 C89.4 78.7 88.7 78.8 88.1 78.8 C87.4 78.9 86.7 79 86.1 79.1 C85.4 79.2 84.7 79.2 84.1 79.3 C83.4 79.4 82.7 79.5 82.1 79.6 C81.4 79.6 80.8 79.7 80.1 79.8 C79.4 79.9 78.8 80 78.1 80 C77.4 80.1 76.8 80.2 76.1 80.3 C75.4 80.4 74.8 80.4 74.1 80.5 C73.4 80.6 72.8 80.7 72.1 80.8 C71.4 80.8 70.8 80.9 70.1 81 C69.4 81.1 68.8 81.2 68.1 81.2 C67.4 81.3 66.8 81.4 66.1 81.5 C65.4 81.5 64.8 81.6 64.1 81.7 C63.4 81.8 62.8 81.9 62.1 81.9 C61.4 82 60.8 82.1 60.1 82.2 C59.4 82.3 58.8 82.3 58.1 82.4 C57.4 82.5 56.8 82.6 56.1 82.7 C55.4 82.7 54.8 82.8 54.1 82.9 C53.4 83 52.8 83.1 52.1 83.1 C51.4 83.2 50.7 83.3 50.1 83.4 C49.5 83.4 48.9 83.5 48.6 83.6 A3.6 3.6 0 0 0 49.6 91.4 L49.6 91.4 C49.8 91.5 50.5 91.9 51.1 91.9 C51.7 92 52.5 91.9 53.1 91.7 C53.8 91.5 54.4 90.8 55 90.5 C55.7 90.2 56.3 89.9 57 89.8 C57.6 89.8 58.4 90.1 59.1 90.3 C59.7 90.5 60.5 90.9 61.1 90.9 C61.8 90.9 62.5 90.6 63.1 90.3 C63.7 90 64.3 89.3 65 89.1 C65.6 88.8 66.3 88.7 67 88.7 C67.6 88.8 68.4 89.3 69.1 89.4 C69.8 89.6 70.5 89.8 71.1 89.7 C71.8 89.6 72.4 89.2 73.1 88.8 C73.7 88.5 74.3 87.9 75 87.7 C75.6 87.5 76.3 87.6 77 87.7 C77.7 87.9 78.4 88.4 79.1 88.5 C79.8 88.6 80.5 88.6 81.1 88.5 C81.8 88.3 82.4 87.7 83 87.3 C83.6 87 84.3 86.6 84.9 86.5 C85.6 86.4 86.3 86.6 87 86.8 C87.7 87 88.4 87.4 89.1 87.5 C89.8 87.5 90.4 87.4 91.1 87.1 C91.7 86.8 92.3 86.2 93 85.9 C93.6 85.6 94.6 85.4 94.9 85.3 Z" fill="#211F1D" stroke="none"/>
+        <path d="M94.1 78.1 C93.7 78.2 92.7 78.3 92.1 78.4 C91.4 78.4 90.7 78.5 90.1 78.6 C89.4 78.7 88.7 78.8 88.1 78.8 C87.4 78.9 86.7 79 86.1 79.1 C85.4 79.2 84.7 79.2 84.1 79.3 C83.4 79.4 82.7 79.5 82.1 79.6 C81.4 79.6 80.8 79.7 80.1 79.8 C79.4 79.9 78.8 80 78.1 80 C77.4 80.1 76.8 80.2 76.1 80.3 C75.4 80.4 74.8 80.4 74.1 80.5 C73.4 80.6 72.8 80.7 72.1 80.8 C71.4 80.8 70.8 80.9 70.1 81 C69.4 81.1 68.8 81.2 68.1 81.2 C67.4 81.3 66.8 81.4 66.1 81.5 C65.4 81.5 64.8 81.6 64.1 81.7 C63.4 81.8 62.8 81.9 62.1 81.9 C61.4 82 60.8 82.1 60.1 82.2 C59.4 82.3 58.8 82.3 58.1 82.4 C57.4 82.5 56.8 82.6 56.1 82.7 C55.4 82.7 54.8 82.8 54.1 82.9 C53.4 83 52.8 83.1 52.1 83.1 C51.4 83.2 50.7 83.3 50.1 83.4 C49.5 83.4 48.9 83.5 48.6 83.6 A3.6 3.6 0 0 0 49.6 91.4 L49.6 91.4 C49.8 91.5 50.5 91.9 51.1 91.9 C51.7 92 52.5 91.9 53.1 91.7 C53.8 91.5 54.4 90.8 55 90.5 C55.7 90.2 56.3 89.9 57 89.8 C57.6 89.8 58.4 90.1 59.1 90.3 C59.7 90.5 60.5 90.9 61.1 90.9 C61.8 90.9 62.5 90.6 63.1 90.3 C63.7 90 64.3 89.3 65 89.1 C65.6 88.8 66.3 88.7 67 88.7 C67.6 88.8 68.4 89.3 69.1 89.4 C69.8 89.6 70.5 89.8 71.1 89.7 C71.8 89.6 72.4 89.2 73.1 88.8 C73.7 88.5 74.3 87.9 75 87.7 C75.6 87.5 76.3 87.6 77 87.7 C77.7 87.9 78.4 88.4 79.1 88.5 C79.8 88.6 80.5 88.6 81.1 88.5 C81.8 88.3 82.4 87.7 83 87.3 C83.6 87 84.3 86.6 84.9 86.5 C85.6 86.4 86.3 86.6 87 86.8 C87.7 87 88.4 87.4 89.1 87.5 C89.8 87.5 90.4 87.4 91.1 87.1 C91.7 86.8 92.3 86.2 93 85.9 C93.6 85.6 94.6 85.4 94.9 85.3" stroke-width="3.2"/>
+      </g>
+      <path d="M21 78 V69.3 Q21 65.6 25 65.6 Q29 65.6 29 69.3 Q29 62.3 33 62.3 Q37 62.3 37 66 Q37 60.4 41.5 60.4 Q46 60.4 46 65 Q46 61 50.5 61 Q55 61 55.2 65.8 C57.5 69.8 58.8 73.8 59.1 78.2 L55.6 78.2 Q50.5 82.6 46 78.2 Q41.5 82.6 37 78.2 Q33 82.6 29 78.2 Q25 82.6 21 78 Z" fill="#FFFFFF" stroke="none"/>
+      <path d="M21 78 V69.3 Q21 65.6 25 65.6 Q29 65.6 29 69.3 Q29 62.3 33 62.3 Q37 62.3 37 66 Q37 60.4 41.5 60.4 Q46 60.4 46 65 Q46 61 50.5 61 Q55 61 55.2 65.8" stroke-width="3"/>
+      <path d="M55.2 65.8 C57.5 69.8 58.8 73.8 59.1 78.2" stroke-width="3"/>
+      <path d="M29 69.3 V78.2 M37 66 V78.2 M46 65 V78.2" stroke-width="2.4"/>
+      <path d="M21 78 Q25 82.6 29 78.2 Q33 82.6 37 78.2 Q41.5 82.6 46 78.2 Q50.5 82.6 55.6 78.2" stroke-width="2.4"/>
+      <path d="M59.6 83.4 C53 82.4 45.5 80.6 40 79.6 Q33.8 78.6 33.6 82.2 Q33.6 85.8 38.2 86.2 C45 87.4 51 90.2 56 93.8" fill="#FFFFFF" stroke-width="3"/>
+      <path d="M36.6 80.6 Q39.8 79.7 40.6 83" stroke-width="2.4"/>
+    </g>
+  </g>
+</svg>`;
+
+  function bwRettungsarm(o) {
+    o = o || {};
+    const mitSchaum = o.schaum !== false;
+    const ende = o.armEnde || 206;
+    const strich = (farbe, breite) =>
+      `    <path d="M72.5 ${ende} V101.8"` +
+      (farbe ? ` stroke="${farbe}"` : '') + ` stroke-width="${breite}"/>\n`;
+    return ARM_KOPF + (mitSchaum ? ARM_SCHAUM : '') + ARM_DREH_AUF +
+           strich(null, 27) + strich('#FFFFFF', 21) + ARM_REST;
+  }
+
+  /* ======================================================================
+     Kaffeetasse im Profil, fuer die Szene neben dem Rettungsarm
+     ======================================================================
+
+     ACHTUNG, es gibt zwei Tassen im Haus. Das hier ist die Tasse als
+     Silhouette, fuer eine Szene. Die Tasse im SCHNITT, mit gestapelten
+     Schichten Milch und Kaffee darin, ist bwGlas({gefaess:'tasse'}).
+
+     DIESELBE viewBox WIE DER ARM, 228 mal 220. Das ist der ganze Trick
+     dieser Zeichnung, und er spart drei Rechnungen:
+
+     1. Gleich dicke Linien. Steht die Tasse im CSS auf derselben Breite wie
+        der Arm, rendern beide 0,616 / 228 Pixel je Einheit mal --szene. Ein
+        stroke-width="3" ist dann beweisbar gleich dick, und die Probe ist
+        eine Gleichung statt einer Rechnung: gleiche offsetWidth.
+     2. Gleiche Hoehen. Bei gleichem bottom liegen die y-Werte beider
+        Zeichnungen aufeinander. Die Tuellenmitte steht bei y 142, der
+        Tassenrand bei y 194, also 52 Einheiten darunter, bei jeder
+        Fensterbreite und ohne eine Zeile Code.
+     3. Die Fahrt. Die Tasse sitzt mittig auf x 114, also ist die Mitte des
+        Kastens die Mitte der Tasse. Genau so macht es bwFaehre() mit
+        viewBox="-50 0 600 140" und dem Schiff auf 250.
+
+     Der Kasten ist dabei zu drei Vierteln leer. Das kostet nichts,
+     .szene-spur steht auf pointer-events:none.
+
+     Gezeichnet im Strich des Wasserkessels: Kontur #004B5C, Flaeche
+     #FFFFFF, Strichstaerke 3 an Koerper und Henkel, 2.4 an der Randlinie
+     wie an den Rippen des Kessels. Gerader Rand als erste Linie des
+     Pfades, Trapez mit Q-Ecken unten, Henkel als doppelter Q-Bogen. So ist
+     im Haus jede Tasse gezeichnet, siehe bwSiebtraeger(). Keine Ellipse,
+     die gehoert zur Prozessfamilie.
+
+     Masse: Rand 50 Einheiten breit, Koerper 48 hoch. Am Kesselkorpus
+     gemessen (88 mal 84) sind das in beiden Richtungen 57 Prozent. Im
+     Massstab der Szene rund 9 cm neben einem Kessel mit 1,2 Litern.
+
+     Der Henkel zeigt nach LINKS, weg vom Kessel, damit der Rand offen zur
+     Tuelle steht. Dieses SVG bekommt deshalb KEIN scaleX(-1), anders als
+     der Arm. Eine Spiegelung kehrte auch die Drehrichtung des Wippens um.
+
+     Die Wand laeuft weiter, als man sieht, per Schalter ende. Ein
+     Tassenboden ueber dem Wasser sieht nicht aus wie schwimmen, sondern wie
+     ein Fehler. Dieselbe Loesung wie armEnde beim Unterarm. Voreinstellung
+     242, der wirkliche Boden. In der Wasserszene steht 280, dann liegt der
+     Boden auch im tiefsten Wellental noch mindestens 36 px unter Wasser.
+
+     Der Henkel kommt VOR den Koerper, damit dessen weisse Fuellung die
+     Ansatzstellen abdeckt. Genauso macht es bwGlas(). */
+  function bwTasse(o) {
+    o = o || {};
+    const ende = o.ende || 242;
+
+    /* Wandneigung: Rand 50 breit, Boden 40, ueber 48 Einheiten Hoehe. Aus
+       dieser einen Zahl folgen alle Wandpunkte, auch die Henkelansaetze. */
+    const NEIGUNG = 0.10417;
+    const ECKE = 8;
+    const rechts = (y) => (139 - (y - 194) * NEIGUNG).toFixed(1);
+    const links = (y) => (89 + (y - 194) * NEIGUNG).toFixed(1);
+
+    const koerper =
+      `M89 194 L139 194 L${rechts(ende - ECKE)} ${ende - ECKE} ` +
+      `Q${rechts(ende)} ${ende} ${(+rechts(ende) - ECKE).toFixed(1)} ${ende} ` +
+      `L${(+links(ende) + ECKE).toFixed(1)} ${ende} ` +
+      `Q${links(ende)} ${ende} ${links(ende - ECKE)} ${ende - ECKE} Z`;
+
+    /* Kaffee darin, als Schalter und standardmaessig aus. Eine Tasse voll
+       Kaffee schwimmt nicht, und erzaehlerisch ist sie leer: Der Kessel
+       kommt ja, um sie zu fuellen. Der transform-origin liegt unten, damit
+       ein Einguss spaeter von unten wachsen kann. */
+    const kaffee = o.kaffee
+      ? `    <path class="tasse-kaffee" d="M93.2 201 L134.8 201 ` +
+        `L${rechts(ende - 4)} ${ende - 4} L${links(ende - 4)} ${ende - 4} Z" ` +
+        `fill="#4A2A1C" stroke="none" style="transform-origin:50% ${ende - 4}px"/>\n`
+      : '';
+
+    return `<svg class="tasse" viewBox="0 0 228 220" fill="none" aria-hidden="true">
+  <g class="tasse-wippe" stroke="#004B5C" stroke-linecap="round" stroke-linejoin="round">
+    <path class="tasse-henkel" d="M89.6 200 Q72 200 72 213 Q72 226 92.3 226" stroke-width="3"/>
+    <path class="tasse-koerper" d="${koerper}" fill="#FFFFFF" stroke-width="3"/>
+${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" stroke-width="2.4"/>
+  </g>
+</svg>`;
+  }
+
+  /* ======================================================================
+     V60-Filterkopf aus Keramik, im Profil, fuer die Szene neben dem Arm
+     ======================================================================
+
+     Entwurf vom 04.10.2026 im Filterkopf-Labor: Statt der Tasse schwimmt
+     der Hario V60 02 aus Keramik auf dem Wasser. Nachgezeichnet nach einem
+     Produktfoto von Joscha: Die Umrisse sind Zeile fuer Zeile aus dem Foto
+     vermessen, Randbreite 1364 px gleich 64 Einheiten.
+
+     Gebaut wie bwTasse(): DIESELBE viewBox WIE DER ARM, 228 mal 220, mittig
+     auf x 114, gleiche Farben und Strichstaerken. Die Tassenspur kann ihn
+     deshalb ohne eine Zeile CSS tragen, und seine Linien sind so dick wie
+     die des Kessels.
+
+     Von oben nach unten, wie auf dem Foto:
+       Rand        y 174, 64 Einheiten breit, mit schmaler Lippe
+       Konus       Flanken bis y 211, dann eingezogen zum Hals. Die Flanken
+                   sind nicht gerade: Wie der Kessel hat der Koerper Stufen,
+                   nur sehr viel zarter. Im Foto vermessen wechseln sich vier
+                   flache Woelbungen mit drei Einschnuerungen ab, bei y 185,
+                   195,8 und 206,1. Die Woelbungen stehen 0,45 Einheiten vor
+                   der Geraden, die unterste am Hals 0,3. An jeder
+                   Einschnuerung eine feine Linie (.v60-stufen, Strich 1,2),
+                   so wie die Rippen des Kessels, nur halb so stark.
+       Hals        am schmalsten bei y 215, 23 Einheiten breit
+       Scheibe     y 216 bis 224, 57 Einheiten breit, oben trompetenfoermig
+       Aufsatz     y 224 bis 228, 34 Einheiten breit, sitzt im Wasser
+       Griff       rechts, fast dreieckig: oben gerade, aussen eine runde
+                   Ecke, schraeg zurueck zum Konus
+
+     Der Griff ist ein Band und gezeichnet wie der Schwanenhals des
+     Kessels: derselbe Pfad zweimal, breit in Dunkelblau, schmal in Weiss.
+     Ein Umriss aus zwei Konturen ging nicht, das Band ist nur 3 Einheiten
+     breit, und zwei Striche von 3 fuellten es ganz.
+
+     Schalter:
+       griff   'rechts' wie auf dem Foto (Voreinstellung) oder 'links'. In
+               der Szene zeigt er nach links, weg vom Kessel, wie der
+               Henkel der Tasse. Gespiegelt wird in einer inneren Gruppe,
+               damit die Drehrichtung des Wippens gleich bleibt.
+       tiefe   verschiebt die Zeichnung nach unten, in Einheiten. 0 heisst:
+               Unterkante der Scheibe auf y 224, der mittleren
+               Wasseroberflaeche der Szene.
+       strahl  legt den Wasserstrahl aus dem Kessel an, seit 04.10.2026.
+               Die Gruppe .v60-strahl liegt zuunterst in .v60-wippe und
+               ausserhalb der Spiegelung. So deckt der weisse Koerper das
+               Ende des Strahls ab, und er verschwindet oben in der Oeffnung.
+               Die drei Pfade sind leer, ihr d setzt hubs.js in jedem Bild
+               aus der Lage der Tuelle. Kontur und Cyanblau wie beim
+               Schwanenhals doppelt gezogen: Cyanblau allein kaeme auf dem
+               Hellorange nur auf 1,86:1. Darauf eine feine weisse
+               Strichelung, die nach unten wandert, damit man das Wasser
+               fliessen sieht. Duenner als die Tuellenoeffnung, wie bei einem
+               Schwanenhals, der langsam giesst.
+
+     Gewippt wird .v60-wippe, sie traegt kein transform-Attribut (die Falle
+     mit .arm-faust). Die Praegung «HARIO 02» bleibt weg, weiss auf weiss
+     waere sie in dieser Groesse nicht zu sehen. */
+  function bwV60(o) {
+    o = o || {};
+    const K = F.kontur;
+    const W = '#FFFFFF';
+    const tiefe = o.tiefe || 0;
+    const spiegel = o.griff === 'links' ? ' transform="matrix(-1 0 0 1 228 0)"' : '';
+    const strahl = o.strahl ? `
+    <g class="v60-strahl" fill="none">
+      <path class="v60-strahl-kontur" stroke-width="4.2"/>
+      <path class="v60-strahl-wasser" stroke="${F.eis}" stroke-width="2.2"/>
+      <path class="v60-strahl-licht" stroke="${W}" stroke-width="0.8" stroke-dasharray="2.4 6.6" opacity=".9"/>
+    </g>` : '';
+
+    const koerper =
+      'M82.6 174 H145.4 Q146.3 174 146.1 175 L145.3 177.3 ' +
+      'Q144.06 181.57 141.23 185 Q139.18 190.82 135.53 195.8 ' +
+      'Q133.61 201.37 130.09 206.1 Q129.33 208.83 127.5 211 ' +
+      'Q125.4 214.6 126 216.3 C129.5 217.6 138 218.4 142.2 220.2 ' +
+      'C143.5 220.7 143.5 222.4 141.8 222.8 Q137 223.9 131 224.2 ' +
+      'L130.9 227 Q130.7 228.3 129.2 228.3 H98.8 Q97.3 228.3 97.1 227 L97 224.2 ' +
+      'Q91 223.9 86.2 222.8 C84.5 222.4 84.5 220.7 85.8 220.2 ' +
+      'C90 218.4 98.5 217.6 102 216.3 Q102.6 214.6 100.5 211 ' +
+      'Q98.67 208.83 97.91 206.1 Q94.39 201.37 92.47 195.8 ' +
+      'Q88.82 190.82 86.77 185 Q83.94 181.57 82.7 177.3 ' +
+      'L81.9 175 Q81.7 174 82.6 174 Z';
+
+    // Die Enden des Griffs stecken im Konus, dessen Fuellung sie abdeckt.
+    const griff = 'M142.6 179.1 L151.6 179.5 Q156.3 179.9 156.2 184.4 ' +
+                  'Q156 187.4 153.2 189.5 L131 201.8';
+
+    return `<svg class="v60" viewBox="0 0 228 220" fill="none" aria-hidden="true">
+  <g class="v60-wippe" stroke="${K}" stroke-linecap="round" stroke-linejoin="round">${strahl}
+    <g${spiegel}>
+      <g transform="translate(0 ${tiefe})">
+        <path class="v60-griff" d="${griff}" fill="none" stroke-width="7"/>
+        <path class="v60-griff-innen" d="${griff}" fill="none" stroke="${W}" stroke-width="2.6"/>
+        <path class="v60-koerper" d="${koerper}" fill="${W}" stroke-width="3"/>
+        <path class="v60-randlinie" d="M83.3 177.4 Q114 180.4 144.7 177.4" fill="none" stroke-width="2.4"/>
+        <path class="v60-stufen" d="M86.77 185 Q114 187.6 141.23 185 M92.47 195.8 Q114 198 135.53 195.8 M97.91 206.1 Q114 207.9 130.09 206.1" fill="none" stroke-width="1.2"/>
+        <path class="v60-scheibenlinie" d="M87 221.4 Q114 223.6 141 221.4" fill="none" stroke-width="2.4"/>
+      </g>
+    </g>
+  </g>
+</svg>`;
+  }
+
+  /* ======================================================================
+     Pappsticker mit dem SUP-Signet, seit 04.10.2026 auch mit dem Jetski
+
+     Im Seitenkopf der Espresso-Seite haelt eine versteckte Hand einen
+     gestanzten Pappsticker aus dem Wasser: das Signet mit dem Mann auf dem
+     SUP-Board, ohne Schriftzug, Rotorange auf hellem Karton, mit Papierrand,
+     sichtbarer Kartonkante und dem eckigen Steckfuss der Wappen aus der
+     kicker-Stecktabelle. Entstanden im Espressokopf-Labor, von Joscha am
+     30.09.2026 freigegeben. Die Laborfassung in espressokopf-sticker.js
+     bleibt zum Ausprobieren stehen.
+
+     Die Stanzkontur rechnet werkzeug/sticker-kontur.py aus sup-signet.svg:
+     alle Formen vereinigt und mit dem clipPath des Signets geschnitten,
+     Luecken geschlossen, 24 Einheiten Papierrand mit runden Ecken, unten in
+     der Mitte der Steckfuss (190 breit, 95 hoch). fuss.y ist die Unterkante
+     der Kontur ueber dem Fuss. Koordinaten der Originaldatei
+     sup-vertikal.svg. Bei einer anderen Logodatei das Werkzeug neu laufen
+     lassen und die Werte hier ersetzen.
+
+     sup-signet.svg ist aus sup-vertikal.svg abgeleitet (werkzeug/
+     sup-signet.py): gleiche Pfade, gleiche Farbe, zugeschnitten. Ihre
+     viewBox liegt in Koordinaten der Originaldatei, darum sitzt das Bild
+     genau auf der Kontur.
+
+     Von hinten nach vorn: die Kartonkante als um PAPP_DICKE nach unten
+     versetzte Kontur, die Vorderseite, das Signet. Die Kante traegt ihr
+     transform im Attribut und wird deshalb nie animiert (die Falle mit
+     .arm-faust). Bewegt wird nur .sticker-dreh. Konturen mit
+     non-scaling-stroke, gleich stark wie beim Arm.
+
+     bwPappsticker.hand ist der Drehpunkt der versteckten Hand, die Mitte
+     der Fuss-Unterkante: als punkt in Koordinaten der Zeichnung (fuer
+     svgOrigin auf .sticker-dreh) und als anteil in Prozent ihrer viewBox
+     (fuer transformOrigin auf einem Behaelter, der genau so gross ist wie
+     das SVG). Beides aus der Kontur gerechnet, damit es nach einem neuen
+     Lauf des Werkzeugs noch stimmt.
+     ====================================================================== */
+  const PAPP_KONTUR = {
+    x: -14.6, y: -14.2, breite: 639.3, hoehe: 641.8,
+    fuss: { x: 210.1, y: 532.7, breite: 190, hoehe: 95 },
+    d: 'M-14.6 476.0 L-13.5 485.8 L-9.8 496.0 L-3.9 505.4 L4.2 513.9 L11.7 519.4 L20.6 524.1 L53.3 535.1 ' +
+      'L83.5 540.1 L110.6 542.7 L171.5 544.7 L204.3 543.6 L207.6 544.7 L209.5 546.8 L210.1 549.6 L210.1 ' +
+      '624.0 L210.9 626.1 L212.7 627.5 L397.2 627.6 L399.3 626.2 L400.1 623.8 L400.1 523.4 L402.3 518.7 ' +
+      'L405.0 517.5 L466.5 504.4 L485.6 503.3 L535.5 488.0 L567.4 475.9 L596.8 462.6 L609.2 453.8 ' +
+      'L618.3 443.5 L623.8 431.3 L624.7 419.2 L621.4 407.3 L611.4 388.6 L613.1 360.2 L612.0 348.3 ' +
+      'L609.5 337.3 L611.5 323.5 L608.9 309.1 L604.9 300.3 L597.6 291.6 L582.2 277.8 L574.6 269.5 ' +
+      'L569.1 265.7 L563.8 263.7 L558.5 262.9 L550.3 263.7 L535.3 269.9 L521.3 268.2 L509.0 268.0 ' +
+      'L495.5 269.1 L478.8 271.8 L474.9 270.8 L472.0 268.7 L465.5 259.3 L451.5 243.2 L449.7 237.3 ' +
+      'L450.6 233.2 L457.7 216.6 L475.4 178.2 L481.1 161.0 L482.5 152.0 L482.3 144.1 L480.5 136.3 ' +
+      'L476.2 127.0 L469.4 116.5 L458.8 103.0 L443.0 85.3 L431.3 73.8 L413.9 61.0 L405.0 56.8 L394.5 ' +
+      '53.6 L390.7 50.8 L388.5 45.5 L389.2 30.5 L387.8 18.7 L384.0 9.2 L377.7 1.8 L365.5 -7.3 L352.8 ' +
+      '-11.7 L331.7 -14.2 L322.5 -13.9 L314.1 -12.4 L306.2 -9.3 L300.9 -5.8 L295.0 0.6 L291.7 6.8 ' +
+      'L289.8 14.3 L289.6 22.6 L294.0 42.4 L292.9 46.5 L290.0 50.0 L286.5 51.7 L282.6 51.9 L271.3 47.9 ' +
+      'L262.0 47.1 L250.9 43.6 L240.4 42.5 L233.8 43.5 L223.2 47.7 L209.4 50.7 L200.8 56.7 L191.3 69.3 ' +
+      'L184.7 82.0 L181.8 93.6 L181.9 103.7 L184.4 112.4 L190.4 122.2 L194.8 131.6 L211.8 153.2 L217.8 ' +
+      '169.3 L224.6 195.0 L229.6 206.5 L238.4 216.9 L245.0 221.5 L255.4 225.6 L257.9 227.9 L259.6 231.4 ' +
+      'L259.6 250.5 L254.2 318.2 L256.0 327.0 L261.7 336.4 L263.1 341.9 L267.6 396.0 L266.1 402.7 ' +
+      'L262.9 405.9 L258.8 407.4 L198.2 417.2 L122.4 426.4 L39.4 434.0 L24.6 436.8 L8.0 442.8 L-3.5 ' +
+      '451.2 L-8.6 457.5 L-11.7 463.2 L-13.7 468.8 Z'
+  };
+
+  const PAPP_LOGO = { datei: '{{ 'logo-redorange-sup-signet.svg' | asset_url }}', x: 7.3, y: 7.7, breite: 595.6, hoehe: 514.9 };
+
+  // Kartondicke: 20 von 639 Einheiten, bei einem Sticker von 6 cm knapp
+  // 2 mm. Die Kante einen Ton dunkler als das Papier, wie Pappe im Schnitt.
+  const PAPP_DICKE = 20;
+  const PAPP_RAND = 6;
+  const PAPP_KANTE = '#E0C3A3';
+
+  /* Zweites Motiv seit dem 04.10.2026, im Wissenkopf-Labor: die Frau auf dem
+     Jetski, in den Farben des Etiketts vom Finca Hoyo Frío Espresso.
+     Hellorange auf Dragonfruit Pink. Das Signet ist jetski-signet.svg, aus
+     jetski-vertikal.svg abgeleitet mit werkzeug/jetski-signet.py, die
+     Kontur kommt aus werkzeug/sticker-kontur.py mit --massstab 4.596. Die
+     Datei ist 4,596-mal so gross wie die des SUP, darum sind Dicke und Rand
+     im selben Verhaeltnis groesser: Auf dem Schirm sind beide Sticker gleich
+     dick. Die Kante eine Stufe dunkler als das Pink, so wie #E0C3A3 zum
+     Hellorange. */
+  const PAPP_JETSKI_KONTUR = {
+    x: 684.6, y: 1244.4, breite: 2933.7, hoehe: 2615.1,
+    fuss: { x: 1714.7, y: 3423.2, breite: 873.2, hoehe: 436.6 },
+    d: 'M818.6 3064.3 L767.6 3086.8 L740.2 3104.6 L717.8 3126.9 L700.4 3154.3 L689.4 3184.3 L684.6 3216.8 ' +
+      'L686.1 3252.0 L694.0 3291.6 L718.8 3359.7 L750.5 3407.2 L786.3 3436.4 L843.2 3458.6 L859.7 3472.8 ' +
+      'L916.8 3639.2 L940.9 3671.5 L967.8 3689.7 L1011.9 3701.6 L1045.6 3699.4 L1688.9 3544.8 L1706.3 ' +
+      '3552.4 L1714.6 3569.5 L1714.7 3841.7 L1718.2 3852.2 L1727.1 3858.8 L2572.5 3859.5 L2583.3 3853.6 ' +
+      'L2587.9 3841.7 L2587.9 3300.0 L2593.7 3284.5 L2775.2 3194.0 L2943.2 3090.1 L3176.5 2924.3 L3252.5 ' +
+      '2865.0 L3327.2 2798.0 L3512.8 2748.1 L3564.7 2726.0 L3596.3 2695.3 L3612.9 2661.0 L3618.3 2621.4 ' +
+      'L3612.5 2568.9 L3594.4 2485.3 L3577.9 2442.3 L3543.7 2403.8 L3502.0 2382.8 L3466.7 2375.0 L3436.1 ' +
+      '2375.0 L3303.1 2399.9 L3178.7 2361.9 L3077.1 2336.1 L2975.4 2316.2 L2859.5 2300.1 L2785.8 2256.7 ' +
+      'L2685.4 2217.1 L2585.5 2191.2 L2444.7 2167.9 L2350.1 2085.7 L2322.0 2044.9 L2297.2 2019.1 L2264.4 ' +
+      '1997.7 L2226.4 1984.0 L2176.9 1977.9 L2123.2 1980.6 L2055.6 1995.7 L1986.0 2025.2 L1968.0 2026.0 ' +
+      'L1949.2 2019.0 L1930.5 1997.0 L1928.1 1970.8 L1935.8 1953.0 L1971.2 1912.5 L1987.4 1879.4 L1995.8 ' +
+      '1835.5 L1991.6 1788.7 L1978.3 1748.4 L1955.8 1706.7 L1854.7 1573.8 L1828.6 1531.4 L1823.3 1510.4 ' +
+      'L1828.3 1468.7 L1826.3 1439.0 L1806.6 1392.1 L1785.4 1369.4 L1759.0 1353.6 L1662.9 1327.8 L1613.3 ' +
+      '1304.8 L1564.0 1294.9 L1524.0 1266.8 L1496.0 1253.9 L1446.8 1244.4 L1393.4 1248.1 L1318.1 1272.2 ' +
+      'L1250.8 1315.7 L1198.4 1369.0 L1112.6 1480.8 L1080.5 1510.3 L1035.9 1531.9 L887.3 1585.0 L813.0 ' +
+      '1627.8 L784.3 1653.5 L759.9 1683.5 L738.0 1721.5 L721.6 1762.0 L711.3 1803.4 L707.0 1844.9 L708.7 ' +
+      '1886.5 L716.3 1926.1 L729.6 1963.6 L748.5 1998.3 L772.2 2029.2 L801.2 2056.7 L862.4 2093.7 L929.6 ' +
+      '2112.9 L966.5 2114.5 L1003.6 2109.5 L1094.5 2075.5 L1120.1 2081.3 L1138.3 2100.2 L1142.9 2114.5 ' +
+      'L1142.0 2132.2 L1108.5 2209.7 L1091.7 2270.6 L1086.3 2320.1 L1088.4 2369.4 L1106.3 2433.2 L1152.8 ' +
+      '2508.2 L1190.2 2633.2 L1212.9 2728.2 L1206.4 2754.3 L1186.4 2772.2 L938.3 2851.0 L899.2 2872.8 ' +
+      'L877.7 2897.2 L862.8 2928.1 L831.7 3047.8 Z'
+  };
+
+  // Je Motiv eine Garnitur. sup ist die Voreinstellung, bwPappsticker()
+  // ohne Angabe zeichnet also wie bisher.
+  const PAPP_MOTIVE = {
+    sup: { kontur: PAPP_KONTUR, logo: PAPP_LOGO, dicke: PAPP_DICKE, rand: PAPP_RAND,
+           flaeche: F.papier, kante: PAPP_KANTE },
+    jetski: { kontur: PAPP_JETSKI_KONTUR,
+              logo: { datei: '{{ 'logo-hellorange-jetski-signet.svg' | asset_url }}', x: 782.7, y: 1342.5, breite: 2737.3, hoehe: 2262.7 },
+              dicke: 91.9, rand: 27.6, flaeche: '#E7455B', kante: '#C53A4C' }
+  };
+
+  function bwPappsticker(o) {
+    const m = PAPP_MOTIVE[(o && o.motiv) || 'sup'];
+    const k = m.kontur, logo = m.logo;
+    const vb = [k.x - m.rand, k.y - m.rand, k.breite + 2 * m.rand,
+                k.hoehe + m.dicke + 2 * m.rand].map((n) => n.toFixed(1)).join(' ');
+    const linie = ' stroke="' + F.kontur + '" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"';
+    return `<svg class="pappsticker" viewBox="${vb}" fill="none" aria-hidden="true">
+    <g class="sticker-dreh">
+      <path class="sticker-kante" d="${k.d}" transform="translate(0 ${m.dicke})" fill="${m.kante}"${linie}/>
+      <path class="sticker-flaeche" d="${k.d}" fill="${m.flaeche}"${linie}/>
+      <image href="${logo.datei}" x="${logo.x}" y="${logo.y}" width="${logo.breite}" height="${logo.hoehe}"/>
+    </g>
+  </svg>`;
+  }
+
+  // Der Drehpunkt der Hand je Motiv. bwPappsticker.hand bleibt der des SUP,
+  // so liest ihn hubs.js.
+  function pappHand(m) {
+    const k = m.kontur;
+    const x = k.fuss.x + k.fuss.breite / 2;
+    const y = k.fuss.y + k.fuss.hoehe;
+    const links = k.x - m.rand, oben = k.y - m.rand;
+    const breite = k.breite + 2 * m.rand, hoehe = k.hoehe + m.dicke + 2 * m.rand;
+    return {
+      punkt: x.toFixed(1) + ' ' + y.toFixed(1),
+      anteil: ((x - links) / breite * 100).toFixed(1) + '% ' + ((y - oben) / hoehe * 100).toFixed(1) + '%'
+    };
+  }
+  bwPappsticker.haende = { sup: pappHand(PAPP_MOTIVE.sup), jetski: pappHand(PAPP_MOTIVE.jetski) };
+  bwPappsticker.hand = bwPappsticker.haende.sup;
+
+  /* ======================================================================
+     Siebträger, die grosse Illustration für den Espresso-Hub
+     Eigene Funktion, weil sie mehr bewegliche Teile hat.
+     ====================================================================== */
+  function bwSiebtraeger() {
+    return `
+<svg class="illu illu-siebtraeger" viewBox="0 0 320 260" fill="none" role="img"
+     aria-label="Siebträger mit zwei Ausläufen über einer Espressotasse">
+
+  <!-- Brühgruppe der Maschine -->
+  <path class="strich" d="M92 18 L228 18 L228 62 L92 62 Z" fill="#FF4612" stroke="#004B5C" stroke-width="3"/>
+  <path class="strich" d="M104 62 L216 62 L210 82 L110 82 Z" fill="#FF4612" stroke="#004B5C" stroke-width="3"/>
+  <g stroke="#004B5C" stroke-width="2" opacity=".55">
+    <path d="M116 30 L204 30"/><path d="M116 42 L204 42"/>
+  </g>
+
+  <!-- Siebträger, dreht beim Einsetzen um diesen Punkt -->
+  <g class="traeger" style="transform-origin:160px 92px">
+    <!-- Sieb -->
+    <path class="strich" d="M108 84 L212 84 L206 104 L114 104 Z"
+          fill="#D8DEE0" stroke="#004B5C" stroke-width="3"/>
+    <!-- Korb -->
+    <path class="strich" d="M118 104 L202 104 L196 132 L124 132 Z"
+          fill="#C4CCCF" stroke="#004B5C" stroke-width="3"/>
+    <!-- Kaffeepuck -->
+    <path class="puck" d="M124 108 L196 108 L193 122 L127 122 Z" fill="#4A2A1C"/>
+    <!-- Zwei Ausläufe -->
+    <path class="strich" d="M138 132 L152 132 L150 148 L140 148 Z"
+          fill="#C4CCCF" stroke="#004B5C" stroke-width="2.6"/>
+    <path class="strich" d="M168 132 L182 132 L180 148 L170 148 Z"
+          fill="#C4CCCF" stroke="#004B5C" stroke-width="2.6"/>
+    <!-- Griff -->
+    <path class="strich" d="M202 112 L268 112 Q282 112 282 122 Q282 132 268 132 L196 132"
+          fill="#211F1D" stroke="#004B5C" stroke-width="3"/>
+    <path class="strich" d="M286 116 L296 116 L296 128 L286 128 Z"
+          fill="#FF4612" stroke="#004B5C" stroke-width="2.4"/>
+  </g>
+
+  <!-- Die zwei Espressostrahlen, laufen zusammen -->
+  <path class="fluss strahl-links"  d="M145 150 Q147 168 152 186" stroke="#4A2A1C" stroke-width="3.2"/>
+  <path class="fluss strahl-rechts" d="M175 150 Q173 168 168 186" stroke="#4A2A1C" stroke-width="3.2"/>
+
+  <!-- Tasse -->
+  <g class="tasse-gruppe">
+    <path class="strich" d="M126 186 L194 186 L186 232 Q184 240 172 240 L148 240 Q136 240 134 232 Z"
+          fill="#FFF3E8" stroke="#004B5C" stroke-width="3"/>
+    <path class="strich" d="M194 196 Q216 196 216 212 Q216 228 192 228" stroke="#004B5C" stroke-width="3"/>
+    <path class="strich" d="M112 246 L208 246 Q205 254 194 254 L126 254 Q115 254 112 246 Z"
+          fill="#FFF3E8" stroke="#004B5C" stroke-width="2.6"/>
+    <!-- Füllung -->
+    <defs>
+      <clipPath id="tasse-innen">
+        <path d="M130 190 L190 190 L183 230 Q181 237 171 237 L149 237 Q139 237 137 230 Z"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#tasse-innen)">
+      <rect class="espresso-fuellung" x="126" y="196" width="70" height="44"
+            fill="#4A2A1C" style="transform-origin:50% 240px"/>
+      <rect class="crema-fuellung" x="126" y="192" width="70" height="9"
+            fill="#C98A4B" style="transform-origin:50% 201px"/>
+    </g>
+  </g>
+
+  <!-- Dampf -->
+  <g class="dampf" stroke="#004B5C" stroke-width="2.4" opacity="0" stroke-linecap="round">
+    <path class="dampf-faden" d="M148 176 Q142 164 148 152 Q154 140 148 130"/>
+    <path class="dampf-faden" d="M162 178 Q156 166 162 154 Q168 142 162 132"/>
+    <path class="dampf-faden" d="M176 176 Q170 164 176 152 Q182 140 176 130"/>
+  </g>
+</svg>`;
+  }
+
+  /* ======================================================================
+     Geschmacksnoten als kleine Icons
+     Auf der Produktseite steht neben jeder Note ein Zeichen, damit „fruchtig"
+     greifbar wird. Bewusst schlicht, damit sie in einer Reihe ruhig wirken.
+     ====================================================================== */
+  const NOTEN = {
+    pfirsich:   { farbe: '#FFB07C', blatt: true,  form: 'rund',   kerbe: true },
+    aprikose:   { farbe: '#FFC000', blatt: true,  form: 'rund',   kerbe: true },
+    kirsche:    { farbe: '#E7455B', blatt: true,  form: 'doppel', kerbe: false },
+    erdbeere:   { farbe: '#E7455B', blatt: true,  form: 'spitz',  kerbe: false },
+    orange:     { farbe: '#FF8A3D', blatt: true,  form: 'rund',   kerbe: false },
+    melasse:    { farbe: '#8B5A2B', blatt: false, form: 'tropfen',kerbe: false },
+    schokolade: { farbe: '#6B4226', blatt: false, form: 'tafel',  kerbe: false },
+    nuss:       { farbe: '#C98A4B', blatt: false, form: 'rund',   kerbe: false },
+    blume:      { farbe: '#E7455B', blatt: false, form: 'bluete', kerbe: false },
+    zitrone:    { farbe: '#FFC000', blatt: true,  form: 'oval',   kerbe: false },
+    // Dazugekommen mit den übrigen Kaffees im Sortiment.
+    dunkleschoggi:   { farbe: '#4A2C17', blatt: false, form: 'tafel',   kerbe: false },
+    milchschokolade: { farbe: '#8B5E3C', blatt: false, form: 'tafel',   kerbe: false },
+    praline:         { farbe: '#5C3A21', blatt: false, form: 'praline', kerbe: false },
+    mandeln:         { farbe: '#D9A566', blatt: false, form: 'mandel',  kerbe: false },
+    cranberries:     { farbe: '#B3123A', blatt: true,  form: 'doppel',  kerbe: false },
+    honigmelone:     { farbe: '#CFE08A', blatt: false, form: 'melone',  kerbe: false },
+    gruenerapfel:    { farbe: '#8FBF4A', blatt: true,  form: 'apfel',   kerbe: false },
+    kirschbluete:    { farbe: '#F2B8C6', blatt: false, form: 'bluete',  kerbe: false },
+    fruechtetee:     { farbe: '#C0392B', blatt: false, form: 'blatt',   kerbe: false },
+    nelke:           { farbe: '#7A4B2A', blatt: false, form: 'nelke',   kerbe: false },
+    cremig:          { farbe: '#F3DFC7', blatt: false, form: 'welle',   kerbe: false },
+    zuckerrohr:      { farbe: '#C9B072', blatt: false, form: 'halm',    kerbe: false }
+  };
+
+  function bwNote(name) {
+    // Umlaute werden umgeschrieben statt weggeworfen, damit «Früchtetee» und
+    // «Fruechtetee» denselben Eintrag finden. Der Shop schreibt sie mal so,
+    // mal so; im Text stehen sie richtig, im Schlüssel immer als ae/oe/ue.
+    const s = String(name || '').toLowerCase()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+      .replace(/[^a-z]/g, '');
+    const n = NOTEN[s] || { farbe: '#C98A4B', blatt: true, form: 'rund', kerbe: false };
+    const K = F.kontur;
+
+    let koerper;
+    switch (n.form) {
+      case 'doppel': // zwei Kirschen an Stielen
+        koerper = `<circle cx="17" cy="34" r="10" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <circle cx="33" cy="37" r="9" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M17 24C18 14 24 10 28 8M33 28C32 18 28 12 28 8" stroke="${K}"
+                         stroke-width="2" fill="none" stroke-linecap="round"/>`;
+        break;
+      case 'spitz': // Erdbeere
+        koerper = `<path d="M25 46C15 40 10 30 12 23C14 17 20 15 25 15C30 15 36 17 38 23C40 30 35 40 25 46Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <g fill="${K}" opacity=".55">
+                     <circle cx="20" cy="25" r="1.4"/><circle cx="30" cy="25" r="1.4"/>
+                     <circle cx="25" cy="32" r="1.4"/><circle cx="19" cy="34" r="1.4"/><circle cx="31" cy="34" r="1.4"/>
+                   </g>`;
+        break;
+      case 'tropfen':
+        koerper = `<path d="M25 10C25 10 37 26 37 34A12 12 0 0 1 13 34C13 26 25 10 25 10Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>`;
+        break;
+      case 'tafel':
+        koerper = `<rect x="11" y="15" width="28" height="26" rx="3" fill="${n.farbe}"
+                         stroke="${K}" stroke-width="2"/>
+                   <path d="M25 15v26M11 28h28" stroke="${K}" stroke-width="1.8" opacity=".6"/>`;
+        break;
+      case 'bluete':
+        koerper = `<g fill="${n.farbe}" stroke="${K}" stroke-width="1.8">
+                     <ellipse cx="25" cy="17" rx="6" ry="8"/><ellipse cx="25" cy="37" rx="6" ry="8"/>
+                     <ellipse cx="15" cy="27" rx="8" ry="6"/><ellipse cx="35" cy="27" rx="8" ry="6"/>
+                   </g><circle cx="25" cy="27" r="5" fill="#FFC000" stroke="${K}" stroke-width="1.8"/>`;
+        break;
+      case 'oval':
+        koerper = `<ellipse cx="25" cy="30" rx="13" ry="11" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>`;
+        break;
+      case 'mandel': // stehendes Oval, oben spitz
+        koerper = `<path d="M25 13C33 20 36 28 34 35C32 42 28 45 25 45C22 45 18 42 16 35C14 28 17 20 25 13Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M25 19v20" stroke="${K}" stroke-width="1.6" opacity=".45" stroke-linecap="round"/>`;
+        break;
+      case 'apfel': // runde Frucht mit Delle oben
+        koerper = `<path d="M25 20c-3-4-9-4-12 0c-4 5-3 15 1 20c3 4 7 5 11 3c4 2 8 1 11-3c4-5 5-15 1-20
+                            c-3-4-9-4-12 0Z" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>`;
+        break;
+      case 'melone': // aufgeschnittene Hälfte mit Schale
+        koerper = `<path d="M11 32a14 14 0 0 1 28 0Z" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M15 32a10 10 0 0 1 20 0" stroke="${K}" stroke-width="1.6" fill="none" opacity=".5"/>
+                   <path d="M11 32h28" stroke="${K}" stroke-width="2" stroke-linecap="round"/>`;
+        break;
+      case 'praline': // Kuppel mit Tupfer obendrauf
+        koerper = `<path d="M12 38a13 11 0 0 1 26 0Z" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M12 38h26" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+                   <path d="M25 27c0-4 3-5 3-8" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+        break;
+      case 'nelke': // Gewürznelke, Knospe oben, Stiel unten
+        koerper = `<path d="M25 44V24" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+                   <path d="M25 24c-4 0-7-3-7-7s3-6 7-6s7 3 7 6s-3 7-7 7Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M18 15l-5-3M32 15l5-3" stroke="${K}" stroke-width="2" stroke-linecap="round"/>`;
+        break;
+      case 'halm': // Zuckerrohr, Stange mit Knoten
+        koerper = `<rect x="19" y="9" width="12" height="34" rx="5" fill="${n.farbe}"
+                         stroke="${K}" stroke-width="2"/>
+                   <path d="M19 20h12M19 31h12" stroke="${K}" stroke-width="1.8" opacity=".6"/>`;
+        break;
+      case 'welle': // Milchtropfen im Kreis, für cremig
+        koerper = `<circle cx="25" cy="28" r="14" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M14 30c4-4 7 4 11 0s7-4 11 0" stroke="${K}" stroke-width="2"
+                         fill="none" stroke-linecap="round"/>`;
+        break;
+      case 'blatt': // Teeblatt, für Früchtetee
+        koerper = `<path d="M13 40C11 27 20 14 38 12C39 30 28 41 13 40Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M13 40C20 33 28 24 38 12" stroke="${K}" stroke-width="1.8"
+                         fill="none" stroke-linecap="round" opacity=".6"/>`;
+        break;
+      default: // rund
+        koerper = `<circle cx="25" cy="30" r="13" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>` +
+          (n.kerbe ? `<path d="M25 18c-3 5-3 19 0 24" stroke="${K}" stroke-width="1.8"
+                            fill="none" opacity=".5" stroke-linecap="round"/>` : '');
+    }
+
+    const blatt = n.blatt
+      ? `<path d="M27 17c3-6 9-8 13-7-1 5-5 9-11 9" fill="#8FAE6A" stroke="${K}" stroke-width="1.8"/>
+         <path d="M25 18c0-4 1-6 2-8" stroke="${K}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+      : '';
+
+    return `<svg class="note-icon" viewBox="0 0 50 50" fill="none" aria-hidden="true">
+      ${koerper}${blatt}</svg>`;
+  }
+
+  /* ======================================================================
+     Die Autofähre Horgen–Meilen
+     Seitenansicht, bewusst reduziert. Vorbild ist die MF Horgen der
+     Bodan-Werft von 1991: langer flacher Rumpf mit dunklem Unterwasserband,
+     trapezförmiger Aufbau, Steuerhaus mit Fensterband und die farbige Linie,
+     die an den offenen Decks gestrichelt läuft und über dem Aufbau ansteigt.
+     Wer sie einmal auf dem See gesehen hat, erkennt sie an dieser Linie.
+
+     Doppelender wie das Original: vorne und hinten sind gleich, die Fähre
+     wendet nie. Deshalb gibt es an beiden Enden Kielwasser, und die
+     Animation blendet jeweils das ein, das hinten liegt.
+
+     Koordinaten: Rumpf von x 8 bis 492, Wasserlinie bei y 132. Die viewBox
+     reicht links und rechts 50 Einheiten weiter, damit das Kielwasser Platz
+     hat. Ihre Mitte bleibt bei x 250, also bei der Schiffsmitte.
+
+     bwFaehre({ name, ladung, akzent })
+       name    Schriftzug auf dem Aufbau
+       ladung  'saecke', 'beutel' oder 'autos', auf beiden Decks gleich;
+               'stapel' oder 'haufen', je Deck verschieden (Startseite seit
+               dem 03.10.2026, entstanden in faehren-labor.html).
+               'haufen' zeichnet die Beutel mit bwBeutel() aus beutel.js,
+               das deshalb vorher geladen sein muss. Fehlt es, fährt die
+               Fähre 'beutel'.
+       akzent  'signal' (Redorange) oder 'kontur' (Dunkelblau) für Linie
+               und Wappen
+     ====================================================================== */
+  const FAEHRE = {
+    jute:     '#C8A46A',
+    juteNaht: '#9C7A45',
+    // Der Schiffsname steht auf dem Original in Gold.
+    gold:     '#B8860B',
+    signet:   '{{ 'logo-hellorange-signet.svg' | asset_url }}'
+  };
+
+  // Spiegelt ein Ladungsstück, das bei x beginnt und b breit ist, auf das
+  // andere Deck. Die Fähre ist um x 250 symmetrisch.
+  const gespiegelt = (x, b) => 500 - x - b;
+
+  function faehreAuto(x, farbe) {
+    const K = F.kontur;
+    return `<path d="M${x} 118 V109 Q${x} 104 ${x + 5} 104 H${x + 35} Q${x + 40} 104 ${x + 40} 109 V118 Z"
+                  fill="${farbe}" stroke="${K}" stroke-width="1.4"/>
+            <path d="M${x + 8} 104 L${x + 12} 97 H${x + 27} L${x + 31} 104 Z"
+                  fill="${farbe}" stroke="${K}" stroke-width="1.4"/>`;
+  }
+
+  // Ein liegender Jutesack: bauchig, mit gestrichelter Naht quer drüber.
+  function faehreSack(x, y) {
+    const K = F.kontur;
+    return `<g transform="translate(${x} ${y})">
+      <path d="M1 10.5 Q0 12 2.5 12 H29.5 Q32 12 31 10.5 L31.5 3 Q32 .5 28 .8 Q16 -.8 4 .8 Q0 .5 .5 3 Z"
+            fill="${FAEHRE.jute}" stroke="${K}" stroke-width="1.4"/>
+      <path d="M5 6.2 H27" stroke="${FAEHRE.juteNaht}" stroke-width="1.1" stroke-dasharray="2 1.6"/>
+    </g>`;
+  }
+
+  // Etiketten wie auf den echten Beuteln, CI-Guide Kapitel Packaging. Der
+  // Beutel selbst ist immer Cyan, das Etikett trägt die Identität: Grund,
+  // Logo-Motiv der Bohne und Linien in der zweiten Farbe. Die Logos kommen
+  // aus der Bibliothek, auf sattem Grund die Reverse-Zeichnung aus
+  // hellorange/. Den Jetski in Pink gibt es dort nicht, der Filterkaffee ist
+  // aber so gedruckt; pink/ ist deshalb eine Kopie der hellen Zeichnung.
+  const ETIKETT = {
+    standard:     { grund: F.kontur,  logo: FAEHRE.signet, linien: F.eis },
+    hoyoEspresso: { grund: '#E7455B', logo: '{{ 'logo-hellorange-jetski-vertikal.svg' | asset_url }}',   linien: F.papier },
+    hoyoFilter:   { grund: F.papier,  logo: '{{ 'logo-pink-jetski-vertikal.svg' | asset_url }}',         linien: '#E7455B' },
+    megaduFilter: { grund: F.signal,  logo: '{{ 'logo-hellorange-fernglas-vertikal.svg' | asset_url }}', linien: F.papier }
+  };
+
+  // Ein Beanwatch-Beutel: fast quadratisch, Cyan mit Etikett. Links darauf
+  // das Logo, rechts statt Name und Tabelle drei feine Linien.
+  // 30 × 30 Einheiten, der Boden verschwindet hinter der Bordwand.
+  function faehreBeutel(x, art) {
+    const K = F.kontur;
+    const e = ETIKETT[art] || ETIKETT.standard;
+    // Auf dem hellen Etikett braucht es eine Kante, sonst verschwimmt es
+    // mit dem Cyan des Beutels.
+    const kante = e.grund === F.papier ? ` stroke="${K}" stroke-width=".7"` : '';
+    return `<g transform="translate(${x} 85)">
+      <path d="M1 33 V7 Q1 3 5 3 H27 Q31 3 31 7 V33 Z"
+            fill="${F.eis}" stroke="${K}" stroke-width="1.5"/>
+      <path d="M3.5 8.2 H28.5" stroke="${K}" stroke-width="1" opacity=".45"/>
+      <rect x="4" y="12.5" width="24" height="14.5" rx="1.6" fill="${e.grund}"${kante}/>
+      <image href="${e.logo}" x="5" y="13.3" width="10" height="13"
+             preserveAspectRatio="xMidYMid meet"/>
+      <path d="M16.5 16.8 H26 M16.5 19.8 H26 M16.5 22.8 H23.4"
+            stroke="${e.linien}" stroke-width="1.1" stroke-linecap="round"/>
+    </g>`;
+  }
+
+  // Ein aufrecht stehender Jutesack mit Schablonendruck der Herkunft:
+  // bauchig, oben die zwei abgebundenen Ecken. 30 × 40 Einheiten.
+  //
+  // Ohne o steht er wie bisher bei y 78 auf dem Deck. Mit o, für 'stapel':
+  //   unten   Unterkante (y), mass  Verkleinerung, kipp  Grad um die Mitte
+  //   der Unterkante, rahmen  'rechteck' (Standard), 'oval' oder 'linien'.
+  // Die Länder rahmen ihren Druck verschieden, damit man sie auch im Hero
+  // auseinanderhält, wo die Schrift nur noch ein paar Pixel hoch ist. Die
+  // Laufweite richtet sich nach der Wortlänge, sonst würde ein kurzes Wort
+  // in die Breite gezogen.
+  const SACK_RAHMEN = {
+    rechteck: (K) => `<rect x="5" y="14" width="20" height="18" rx="1" fill="none" stroke="${K}" stroke-width=".9"/>`,
+    oval:     (K) => `<ellipse cx="15" cy="23" rx="11.5" ry="10" fill="none" stroke="${K}" stroke-width=".9"/>`,
+    linien:   (K) => `<path d="M5 14.5 H25 M5 31.5 H25" stroke="${K}" stroke-width=".9"/>`
+  };
+
+  function faehreSackAufrecht(x, zeile1, zeile2, o) {
+    const K = F.kontur;
+    const mass = (o && o.mass) || 1;
+    const lage = o
+      ? `translate(${x} ${o.unten - 40 * mass}) scale(${mass}) rotate(${o.kipp || 0} 15 40)`
+      : `translate(${x} 78)`;
+    const rahmen = SACK_RAHMEN[o && o.rahmen] || SACK_RAHMEN.rechteck;
+    const lang1 = Math.min(14.5, zeile1.length * 2.1);
+    const lang2 = Math.min(16.5, zeile2.length * 2.75);
+    return `<g transform="${lage}">
+      <path d="M3 40 Q0 40 .8 35 L2 10 Q2.4 6 .8 2.2 L6.5 4.6 Q15 3.2 23.5 4.6 L29.2 2.2
+               Q27.6 6 28 10 L29.2 35 Q30 40 27 40 Z"
+            fill="${FAEHRE.jute}" stroke="${K}" stroke-width="1.4"/>
+      <g fill="${K}" opacity=".88">
+        ${rahmen(K)}
+        <text x="15" y="20.6" text-anchor="middle" textLength="${lang1}" lengthAdjust="spacingAndGlyphs"
+              style="font:800 4.8px Gabarito,'Trebuchet MS',sans-serif">${zeile1}</text>
+        <text x="15" y="28.6" text-anchor="middle" textLength="${lang2}" lengthAdjust="spacingAndGlyphs"
+              style="font:800 7px Gabarito,'Trebuchet MS',sans-serif">${zeile2}</text>
+      </g>
+    </g>`;
+  }
+
+  /* --- Ladung 'stapel': Rohkaffee aus drei Ländern -----------------------
+     Links drei liegende Säcke, darauf zwei in den Lücken, obenauf zwei
+     aufrecht von vorne: Brasilien im Rechteck, Kolumbien im Oval, leicht
+     zueinander geneigt. Rechts drei liegende, darauf rechts einer, der
+     genauso liegt, links daneben aufrecht Äthiopien zwischen zwei Linien,
+     mit der Region Guji wie unsere Guji-Kaffees. Auf Portugiesisch heisst
+     es «Café do Brasil», die Mehrzahl wäre «Cafés do Brasil».
+
+     Die unterste Lage liegt bei y 103, fast ganz über der Bordwand (y 114).
+     Bei 106 wie in 'saecke' sähe man von drei Säcken nebeneinander nur die
+     Oberkanten. Jede weitere Lage liegt 11 höher. Die aufrechten sind auf
+     vier Fünftel verkleinert, sonst ragte der Stapel links über das
+     Oberdeck. */
+  const STAPEL = { lage: 103, stufe: 11, aufrecht: 0.8 };
+
+  function faehreStapel() {
+    const lage = (n) => STAPEL.lage - n * STAPEL.stufe;
+    const mass = STAPEL.aufrecht;
+    const links = [14, 48, 82].map(x => faehreSack(x, lage(0))).join('') +
+      [31, 65].map(x => faehreSack(x, lage(1))).join('') +
+      faehreSackAufrecht(38.5, 'CAFÉ DO', 'BRASIL', { unten: lage(1) + 1, mass, kipp: 2, rahmen: 'rechteck' }) +
+      faehreSackAufrecht(64.5, 'CAFÉ DE', 'COLOMBIA', { unten: lage(1) + 1, mass, kipp: -2, rahmen: 'oval' });
+    const rechts = [386, 420, 454].map(x => faehreSack(x, lage(0))).join('') +
+      faehreSack(437, lage(1)) +
+      faehreSackAufrecht(411, 'GUJI', 'ETHIOPIA', { unten: lage(0) + 1, mass, kipp: 2, rahmen: 'linien' });
+    return links + rechts;
+  }
+
+  /* --- Ladung 'haufen': Beutel mit echten Etiketten ----------------------
+     Auf jedem Deck ein Haufen aus bwBeutel() (beutel.js, aus dem CI-Guide:
+     der Rohling mit dem Etikett, wie es gedruckt ist). Links zehn, oben
+     drauf steht ordentlich gerade der Apas FT Blend. Rechts sieben, die
+     Spitze ist der Finca Hoyo Frío Filterkaffee, schräg wie der Rest.
+
+     bwBeutel misst 86 × 90 und steht auf ein Drittel verkleinert, so gross
+     wie die Beutel von 'beutel'. Die Unterkante liegt bei y 118 hinter der
+     Bordwand. Seine Striche wären verkleinert halb so stark wie der Rest
+     der Fähre, faehren.css zieht sie über .haufen-beutel nach.
+
+     Die unterste Reihe steht im Abstand von 56 Beutel-Einheiten, jede
+     höhere liegt gleichmässig in den Lücken der Reihe darunter. Drehung
+     und Versatz sind die festen Werte aus positionen() in beutel.js, ein
+     Haufen sieht also immer gleich aus. Der ordentliche Beutel steht auf
+     den Oberkanten der Reihe darunter und taucht nur ein Viertel ein.
+
+     Die Etiketten wechseln ab, anders als im Kennzahlenbericht, wo ein
+     Haufen eine Röstung ist: Kein Beutel trägt dieselbe Etikettfarbe wie
+     einer, den er berührt (nächste oder gleiche Reihe, Mitten weniger als
+     eine Beutelbreite auseinander). Der Vorrat geht reihum durch die
+     Sorten, mit Schritt 3, ohne die Spitze. Gesucht wird mit Zurücksetzen,
+     erst mit jeder Sorte einmal, dann zweimal, also immer mit demselben
+     Ergebnis. Links geht es einmal nicht auf: Unter dem Apas sind neun
+     Plätze, von je vier berühren sich immer mindestens zwei, also passen
+     die vier dunkelblauen nicht. Dort liegt der Hoyo Frío Filterkaffee
+     zweimal, nicht nebeneinander. Kommt eine Sorte dazu oder fällt eine
+     weg, verteilt die Suche neu. */
+  const HAUFEN = {
+    mass: 0.33, breite: 86, hoehe: 90, boden: 118,
+    abstand: 56, reihe: 36, eintauchen: 0.25,
+    decks: [
+      { mitte: 70,  reihen: [4, 3, 2, 1], spitze: 'Apas FT Blend|Espresso', ordentlich: true,  versatz: 0 },
+      { mitte: 430, reihen: [4, 2, 1],    spitze: 'Hoyo Frío|Filter',       ordentlich: false, versatz: 5 }
+    ]
+  };
+
+  function haufenLage(reihen) {
+    const { breite, abstand, reihe: hoch } = HAUFEN;
+    const pos = [];
+    let unten = [];
+    reihen.forEach((k, reihe) => {
+      let mitten;
+      if (!reihe) {
+        mitten = Array.from({ length: k }, (_, j) => (j - (k - 1) / 2) * abstand);
+      } else {
+        const luecken = unten.slice(1).map((m, i) => (unten[i] + m) / 2);
+        const mittig = (luecken[Math.floor((luecken.length - 1) / 2)] +
+                        luecken[Math.ceil((luecken.length - 1) / 2)]) / 2;
+        mitten = Array.from({ length: k }, (_, j) =>
+          k === 1 ? mittig : luecken[Math.round(j * (luecken.length - 1) / (k - 1))]);
+      }
+      mitten.forEach((mitte) => {
+        const i = pos.length;
+        pos.push({
+          reihe, mitte,
+          x: mitte - breite / 2 + ((i * 53 + 5) % 9 - 4) * 1.2,
+          y: reihe * hoch,
+          dreh: ((i * 37 + 11) % 15 - 7) * 1.1
+        });
+      });
+      unten = mitten;
+    });
+    return pos;
+  }
+
+  function haufenEtiketten(pos, versatz) {
+    const etiketten = global.BW_ETIKETTEN;
+    const sorten = Object.keys(etiketten);
+    const grund = (art) => etiketten[art].grund;
+    const fest = pos.filter(p => p.art).map(p => p.art);
+    const reihum = [];
+    for (let i = 0; i < sorten.length; i++) {
+      const art = sorten[(versatz + i * 3) % sorten.length];
+      if (!fest.includes(art)) reihum.push(art);
+    }
+    const frei = pos.filter(p => !p.art);
+
+    const nah = new Map(pos.map(p => [p, pos.filter(q => q !== p &&
+      Math.abs(q.reihe - p.reihe) <= 1 && Math.abs(q.mitte - p.mitte) < HAUFEN.breite)]));
+    const nachbarn = (p) => nah.get(p).map(q => q.art).filter(Boolean);
+    const farbeFrei = (p, art) => nachbarn(p).every(n => grund(n) !== grund(art));
+    const sorteFrei = (p, art) => nachbarn(p).every(n => n !== art);
+
+    let vorrat, schritte;
+    function setzen(i) {
+      if (i === frei.length) return true;
+      if (++schritte > 20000) return false;
+      const p = frei[i], versucht = new Set();
+      for (let v = 0; v < vorrat.length; v++) {
+        const art = vorrat[v];
+        if (versucht.has(art) || !farbeFrei(p, art)) continue;
+        versucht.add(art);
+        vorrat.splice(v, 1);
+        p.art = art;
+        if (setzen(i + 1)) return true;
+        p.art = null;
+        vorrat.splice(v, 0, art);
+      }
+      return false;
+    }
+
+    const einmal = Math.ceil(frei.length / reihum.length);
+    for (const runden of [einmal, einmal + 1]) {
+      vorrat = Array.from({ length: runden }, () => reihum).flat();
+      schritte = 0;
+      if (setzen(0)) return pos;
+    }
+    // Geht es mit den Farben gar nicht auf: der Reihe nach, was passt,
+    // zuletzt nur verschiedene Sorten.
+    frei.forEach((p) => {
+      let v = vorrat.findIndex(art => farbeFrei(p, art));
+      if (v < 0) v = vorrat.findIndex(art => sorteFrei(p, art));
+      if (v < 0) v = 0;
+      p.art = vorrat.splice(v, 1)[0];
+    });
+    return pos;
+  }
+
+  function haufenBeutel(p, mitte) {
+    const { mass, breite, hoehe, boden } = HAUFEN;
+    const x = mitte + p.x * mass;
+    const y = boden - (p.y + hoehe) * mass;
+    const dreh = p.dreh ? ` rotate(${p.dreh.toFixed(1)} ${breite / 2} ${hoehe / 2})` : '';
+    return `<g class="haufen-beutel${p.ordentlich ? ' haufen-beutel--ordentlich' : ''}"
+               transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${mass})${dreh}">${
+      global.bwBeutel(p.art, '/')}</g>`;
+  }
+
+  function faehreHaufen() {
+    const { breite, hoehe, reihe, eintauchen } = HAUFEN;
+    return HAUFEN.decks.map((deck) => {
+      const pos = haufenLage(deck.reihen);
+      const oben = pos[pos.length - 1];
+      oben.art = deck.spitze;
+      if (deck.ordentlich && pos.length > 1) {
+        oben.x = oben.mitte - breite / 2;
+        oben.dreh = 0;
+        oben.y = (oben.reihe - 1) * reihe + hoehe * (1 - eintauchen);
+        oben.ordentlich = true;
+      }
+      haufenEtiketten(pos, deck.versatz);
+      return `<g class="haufen">${pos.map(p => haufenBeutel(p, deck.mitte)).join('')}</g>`;
+    }).join('');
+  }
+
+  // Quadratisch, das Kreuz nach der Bundesvorgabe: Balken 6/32 breit,
+  // insgesamt 20/32 lang. Der Grund in Redorange statt Schweizer Rot, auf
+  // Wunsch in der Hausfarbe.
+  function schweizerFlagge(x, y, s) {
+    const b = s * 6 / 32;
+    const e = s * 20 / 32;
+    return `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${F.signal}"/>
+            <rect x="${x + (s - b) / 2}" y="${y + (s - e) / 2}" width="${b}" height="${e}" fill="#FFFFFF"/>
+            <rect x="${x + (s - e) / 2}" y="${y + (s - b) / 2}" width="${e}" height="${b}" fill="#FFFFFF"/>`;
+  }
+
+  function dunkelblaueFlagge(x, y, s) {
+    return `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${F.kontur}"/>`;
+  }
+
+  // 'saecke', 'beutel' und 'autos' bauen beide Decks gleich auf, wie es sich
+  // für einen Doppelender gehört. 'stapel' und 'haufen' sind je Deck
+  // verschieden, siehe oben.
+  function faehreLadung(ladung) {
+    if (ladung === 'stapel') return faehreStapel();
+    if (ladung === 'haufen') {
+      if (global.bwBeutel && global.BW_ETIKETTEN) return faehreHaufen();
+      ladung = 'beutel';
+    }
+    if (ladung === 'saecke') {
+      // Aussen ein liegender Stapel, zwei unten und einer oben, daneben am
+      // Aufbau ein aufrechter Sack mit der Herkunft. Rechts gespiegelt.
+      const stapel = [[16, 106], [50, 106], [33, 95]];
+      return stapel.map(([x, y]) => faehreSack(x, y) + faehreSack(gespiegelt(x, 32), y)).join('') +
+             faehreSackAufrecht(90, 'CAFÉ DO', 'BRASIL') +
+             faehreSackAufrecht(gespiegelt(90, 30), 'CAFÉ DE', 'COLOMBIA');
+    }
+    if (ladung === 'beutel') {
+      // Drei tragen die Etiketten echter Kaffees, drei das Standard-Dunkelblau.
+      const links = [[14, 'standard'], [48, 'hoyoEspresso'], [82, 'standard']];
+      const rechts = [[386, 'hoyoFilter'], [420, 'standard'], [454, 'megaduFilter']];
+      return [...links, ...rechts].map(([x, art]) => faehreBeutel(x, art)).join('');
+    }
+    return faehreAuto(20, F.eis) + faehreAuto(68, '#FFC000') +
+           faehreAuto(392, '#E7455B') + faehreAuto(440, F.signal);
+  }
+
+  function faehreFenster(xs, y, b, h) {
+    return xs.map(x => `<rect x="${x}" y="${y}" width="${b}" height="${h}" rx="1.4"/>`).join('');
+  }
+
+  function bwFaehre(o) {
+    const name = String((o && o.name) || 'HORGEN').toUpperCase();
+    const ladung = (o && o.ladung) || 'autos';
+    const akzent = (o && o.akzent) === 'kontur' ? F.kontur : F.signal;
+    const K = F.kontur;
+
+    // Der Name bekommt eine feste Breite, damit die Lücke in der Linie
+    // passt, egal wie lang er ist und in welcher Schrift er ankommt.
+    const schrift = name.length * 9.4;
+    const luecke = schrift / 2 + 7;
+
+    const kielwasser = (seite) => {
+      const zeichen = seite === 'links' ? -1 : 1;
+      const ende = seite === 'links' ? 10 : 490;
+      const striche = [[129, 30], [125.5, 44], [132, 22]]
+        .map(([y, laenge]) => `<path d="M${ende} ${y} H${ende + zeichen * laenge}"/>`).join('');
+      return `<g class="kielwasser kielwasser--${seite}" stroke="#FFFFFF" stroke-width="2.4"
+                 stroke-linecap="round" opacity="0">${striche}</g>`;
+    };
+
+    return `<svg class="faehre" viewBox="-50 0 600 140" fill="none" aria-hidden="true">
+  ${kielwasser('links')}${kielwasser('rechts')}
+  <g class="faehre-schiff" stroke-linejoin="round">
+    <g class="faehre-ladung">${faehreLadung(ladung)}</g>
+
+    <path d="M8 114 H492 L486 128 Q484 132 476 132 H24 Q16 132 14 128 Z"
+          fill="#FFFFFF" stroke="${K}" stroke-width="2"/>
+    <path d="M11.6 124 H488.4 L486 128 Q484 132 476 132 H24 Q16 132 14 128 Z" fill="${K}"/>
+
+    <path d="M130 114 L172 76 H328 L370 114 Z" fill="#FFFFFF" stroke="${K}" stroke-width="2"/>
+
+    <path d="M18 120 H126 M374 120 H482" stroke="${akzent}" stroke-width="3" stroke-dasharray="8 4"/>
+    <path d="M126 120 L166 86 H${250 - luecke} M${250 + luecke} 86 H334 L374 120"
+          stroke="${akzent}" stroke-width="3.5"/>
+
+    <text x="250" y="90.6" text-anchor="middle" fill="${FAEHRE.gold}"
+          textLength="${schrift}" lengthAdjust="spacing"
+          style="font:800 12.5px Gabarito,'Trebuchet MS',sans-serif">${name}</text>
+    <path d="M245.5 94 H254.5 V99 Q254.5 103.5 250 105.5 Q245.5 103.5 245.5 99 Z" fill="${akzent}"/>
+    <g fill="${K}">
+      ${faehreFenster([166, 180, 194, 208, 222, 269, 283, 297, 311, 325], 96, 9, 7)}
+    </g>
+
+    <rect x="192" y="58" width="116" height="18" fill="#FFFFFF" stroke="${K}" stroke-width="2"/>
+    <g fill="${K}">
+      ${faehreFenster([200, 213, 226, 239, 253, 266, 279, 292], 63, 8, 6)}
+    </g>
+
+    <rect x="212" y="40" width="76" height="18" fill="#FFFFFF" stroke="${K}" stroke-width="2"/>
+    <rect x="218" y="44" width="64" height="7" rx="1.5" fill="${K}"/>
+    <path d="M206 40 H294" stroke="${K}" stroke-width="2.6" stroke-linecap="round"/>
+
+    <path d="M250 40 V16 M245 24 H255" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M209 40 V22 M291 40 V22" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>
+    ${schweizerFlagge(196, 22, 12.5)}
+    ${dunkelblaueFlagge(291.5, 22, 12.5)}
+  </g>
+</svg>`;
+  }
+
+  /* ======================================================================
+     Prozessweg auf der Startseite
+     Fünf Stationen auf dunkelblauem Grund. Weil der Grund satt ist, sind es
+     Reverse-Zeichnungen: Kontur in Hellorange statt Dunkelblau, so wie es
+     der CI-Guide für dunkle Flächen verlangt. Die Strichstärken sind die
+     der Fähre, 3 für die Hauptkontur, 2.4 für die zweite Ebene, 1.4 bis 1.6
+     mit Deckkraft für die Innenzeichnung.
+
+     Flächen nur in Markenfarben, je Zeichnung ein Signalteil in Redorange.
+     Dunkelblau tritt hier als Fläche auf, wo etwas verdecken soll: der
+     Umschlag vor dem Beutel. Das ist genau die Farbe des Abschnitts.
+
+     Klassen als Angriffspunkt für prozess.js:
+       .kirsche  .container  .klappe  .hebel  .roestbohne  .roestdampf
+       .pfad-beutel  .strahl
+     ====================================================================== */
+  const H = F.papier;          // Kontur, Hellorange
+  const G = F.kontur;          // Grund des Abschnitts, Dunkelblau
+
+  // Ein Kaffeeblatt, angesetzt am Ast und nach aussen zeigend.
+  function zweigBlatt(x, y, winkel, l) {
+    const b = l * 0.38;
+    return `<g transform="translate(${x} ${y}) rotate(${winkel})">
+      <path class="strich" d="M0 0 Q${l * 0.5} ${-b} ${l} 0 Q${l * 0.5} ${b} 0 0"
+            stroke="${H}" stroke-width="2.4"/>
+      <path d="M2 0 H${l - 4}" stroke="${H}" stroke-width="1.4" opacity=".5"/>
+    </g>`;
+  }
+
+  // Kaffeekirschen wachsen nicht einzeln, sondern in Trauben dicht am Ast,
+  // genau dort, wo die Blätter ansetzen. Sechs Beeren je Knoten, leicht
+  // versetzt und überlappend; spiegel legt die Traube auf die andere Seite.
+  const TRAUBE = [[-2, -6, 7], [10, -9, 6.2], [4, 4, 7.6], [16, 1, 6.6], [-4, 8, 6.2], [10, 13, 6.6]];
+
+  function zweigTraube(x, y, s, spiegel) {
+    const m = spiegel ? -1 : 1;
+    const rd = (n) => Math.round(n * 10) / 10;
+    return TRAUBE.map(([bx, by, r]) =>
+      `<circle class="kirsche" cx="${rd(x + m * bx * s)}" cy="${rd(y + by * s)}" r="${rd(r * s)}"
+               fill="${F.signal}" stroke="${H}" stroke-width="2"/>`).join('');
+  }
+
+  // Ein Container an Deck. Ohne Farbe bleibt er offen gezeichnet.
+  function schiffContainer(x, y, farbe) {
+    return `<g class="container">
+      <rect x="${x}" y="${y}" width="19" height="15" rx="1.6"
+            fill="${farbe || 'none'}" stroke="${H}" stroke-width="2"/>
+      <path d="M${x + 6.5} ${y + 3} V${y + 12} M${x + 12.5} ${y + 3} V${y + 12}"
+            stroke="${H}" stroke-width="1.4" opacity=".45"/>
+    </g>`;
+  }
+
+  const PROZESS = {
+
+    /* 01 · Ein Ast mit Blattpaaren und Kirschtrauben.
+       An jedem Knoten sitzen zwei gegenständige Blätter und eine Traube,
+       so wie am echten Kaffeestrauch. */
+    zweig: `
+<svg class="illu illu-pfad" viewBox="0 0 160 190" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <!-- Blätter zuerst, damit der Ast sauber darüber liegt und die Ansätze
+       verdeckt. Die Trauben kommen zuletzt, sie sitzen vorn. -->
+  ${zweigBlatt(43, 146, -35, 56)}
+  ${zweigBlatt(43, 146, 155, 47)}
+  ${zweigBlatt(74, 116, -28, 58)}
+  ${zweigBlatt(74, 116, 150, 49)}
+  ${zweigBlatt(95, 90, -45, 50)}
+  ${zweigBlatt(95, 90, 145, 41)}
+  ${zweigBlatt(105, 54, -62, 42)}
+  ${zweigBlatt(105, 54, 132, 35)}
+
+  <path d="M24 182 C36 150 54 132 74 116 C96 98 108 74 106 18"
+        stroke="${H}" stroke-width="3"/>
+
+  ${zweigTraube(43, 146, 1, false)}
+  ${zweigTraube(74, 116, 0.92, true)}
+  ${zweigTraube(95, 90, 0.85, false)}
+  ${zweigTraube(105, 54, 0.72, true)}
+</svg>`,
+
+    /* 02 · Containerschiff von der Seite */
+    containerschiff: `
+<svg class="illu illu-pfad" viewBox="0 0 200 150" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <path d="M12 104 H188 L180 126 Q177 131 168 131 H32 Q23 131 20 126 Z"
+        stroke="${H}" stroke-width="3"/>
+  <path d="M24 118 H176" stroke="${F.signal}" stroke-width="3" stroke-linecap="round"/>
+
+  <path d="M140 104 V70 Q140 66 145 66 H172 Q177 66 177 70 V104"
+        stroke="${H}" stroke-width="2.4"/>
+  <g fill="${H}">
+    <rect x="146" y="74" width="7" height="5.5" rx="1"/>
+    <rect x="157" y="74" width="7" height="5.5" rx="1"/>
+    <rect x="168" y="74" width="6" height="5.5" rx="1"/>
+  </g>
+  <path d="M152 66 V54 H164 V66" stroke="${H}" stroke-width="2.4"/>
+
+  ${schiffContainer(24, 89, F.eis)}
+  ${schiffContainer(45, 89, null)}
+  ${schiffContainer(66, 89, '#FFC000')}
+  ${schiffContainer(87, 89, F.eis)}
+  ${schiffContainer(108, 89, null)}
+  ${schiffContainer(29, 73, null)}
+  ${schiffContainer(50, 73, '#FFC000')}
+  ${schiffContainer(71, 73, F.eis)}
+  ${schiffContainer(92, 73, null)}
+
+  <path d="M4 140 q13 -8 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0"
+        stroke="${F.eis}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M16 149 q13 -8 26 0 t26 0 t26 0 t26 0 t26 0"
+        stroke="${F.eis}" stroke-width="2.4" stroke-linecap="round" opacity=".6"/>
+</svg>`,
+
+    /* 03 · Aillio Bullet, nach den Produktbildern: liegende Trommel,
+       grosse Frontscheibe, Trichter oben, Bedienscheibe links auf einem
+       Arm, zwei Bogenbeine und die Auffangschale davor. */
+    bullet: `
+<svg class="illu illu-pfad" viewBox="0 0 210 175" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <!-- Trichter oben -->
+  <path d="M116 6 L130 40 H150 L164 6" stroke="${H}" stroke-width="2.6"/>
+  <ellipse cx="140" cy="6" rx="24" ry="6" stroke="${H}" stroke-width="2.6"/>
+
+  <!-- Trommel, hinten gerundet, mit Lüftungslinien -->
+  <path d="M98 40 H166 Q200 40 200 72 Q200 104 166 104 H98 Z"
+        stroke="${H}" stroke-width="3"/>
+  <path d="M178 52 Q186 72 178 92 M187 58 Q192 72 187 86"
+        stroke="${H}" stroke-width="1.6" opacity=".5"/>
+
+  <!-- Vier Beine, je ein o-beiniges Paar vorn unter der Frontscheibe und
+       hinten unter dem Trommelende. In jedem Paar steht das Bein im
+       Hintergrund perspektivisch weiter links und etwas höher, dünner und
+       blasser; das Bein im Vordergrund weiter rechts und tiefer, kräftig.
+       Beide holen nach aussen aus und laufen senkrecht auf den Fuss. -->
+  <g opacity=".55">
+    <path d="M110 105 C100 112 94 126 94 144 M160 103 C152 110 147 124 147 142"
+          stroke="${H}" stroke-width="3.4"/>
+    <path d="M87 146 H101 M140 144 H154" stroke="${H}" stroke-width="2.4"/>
+  </g>
+  <path d="M120 104 C132 114 136 130 136 152 M170 102 C182 113 186 130 186 150"
+        stroke="${H}" stroke-width="5"/>
+  <path d="M128 154 H144 M178 152 H194" stroke="${H}" stroke-width="3"/>
+
+  <!-- Frontscheibe mit Schraubenkranz -->
+  <circle cx="98" cy="72" r="37" fill="${G}" stroke="${H}" stroke-width="3"/>
+  <g fill="${H}" opacity=".5">
+    <circle cx="98" cy="41" r="1.9"/><circle cx="120" cy="50" r="1.9"/>
+    <circle cx="129" cy="72" r="1.9"/><circle cx="120" cy="94" r="1.9"/>
+    <circle cx="98" cy="103" r="1.9"/><circle cx="76" cy="94" r="1.9"/>
+    <circle cx="67" cy="72" r="1.9"/><circle cx="76" cy="50" r="1.9"/>
+  </g>
+
+  <!-- Probenzieher aus Holz, darunter die Klappe mit Hebel. Klappe und
+       Hebel sind eigene Gruppen ohne Transform im Markup: prozess.js
+       kippt die Klappe um ihre linke Kante und zieht den Hebel herunter. -->
+  <path d="M92 60 L110 50" stroke="${F.crema}" stroke-width="7"/>
+  <g class="klappe">
+    <rect x="82" y="68" width="36" height="22" rx="3" stroke="${H}" stroke-width="2.4"/>
+  </g>
+  <g class="hebel"><circle cx="122" cy="79" r="5" fill="${H}"/></g>
+
+  <!-- Bedienscheibe auf kurzem Arm, Anzeige in Redorange -->
+  <path d="M68 50 L62 43" stroke="${H}" stroke-width="3"/>
+  <circle cx="50" cy="34" r="21" fill="${G}" stroke="${H}" stroke-width="2.6"/>
+  <rect x="38" y="25" width="24" height="7" rx="1.8" fill="${F.signal}"/>
+  <rect x="38" y="37" width="15" height="6" rx="1.8" fill="${F.signal}" opacity=".7"/>
+
+  <!-- Frisch geröstete Bohnen an der Klappenöffnung, erst unsichtbar.
+       Gefüllt im warmen Braun, anders als die rohen im Trichter oben. Sie
+       stehen vor der Schale im Markup, damit deren Rand sie verdeckt,
+       sobald sie hineinfallen. -->
+  ${[[104, 88], [110, 90], [106, 92], [112, 87], [102, 90], [108, 86],
+     [114, 91], [100, 88], [116, 89], [107, 89], [111, 93], [103, 85]]
+    .map(([x, y]) => `<g class="roestbohne" opacity="0">
+    <ellipse cx="${x}" cy="${y}" rx="2.8" ry="3.6" fill="${F.crema}" stroke="${H}" stroke-width="1.2"/>
+    <path d="M${x} ${y - 2.6} Q${x - 1.1} ${y} ${x} ${y + 2.6}" stroke="${H}" stroke-width="1" opacity=".75"/>
+  </g>`).join('')}
+
+  <!-- Rauch aus der Schale, drei Fäden. Steigt einmal auf und verweht. -->
+  <g class="roestdampf" opacity="0" stroke="${H}" stroke-width="1.8">
+    <path d="M32 116 Q27 104 32 92 Q37 80 32 68"/>
+    <path d="M45 118 Q40 106 45 94 Q50 82 45 72"/>
+    <path d="M57 116 Q52 104 57 94 Q61 84 57 76"/>
+  </g>
+
+  <!-- Auffangschale davor -->
+  <path d="M18 124 V144 Q18 168 54 168 Q90 168 90 144 V124"
+        fill="${G}" stroke="${H}" stroke-width="3"/>
+  <ellipse cx="54" cy="124" rx="36" ry="9.5" fill="${G}" stroke="${H}" stroke-width="3"/>
+</svg>`,
+
+    /* 04 · Beutel, der in einen offenen Umschlag gleitet */
+    versand: `
+<svg class="illu illu-pfad" viewBox="0 0 190 150" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <path d="M22 70 L95 26 L168 70" stroke="${H}" stroke-width="3"/>
+  <path d="M22 70 H168 V128 Q168 134 162 134 H28 Q22 134 22 128 Z"
+        stroke="${H}" stroke-width="3"/>
+
+  <!-- Die äussere Gruppe bleibt ohne Transform, damit prozess.js sie
+       verschieben kann, ohne die Drehung auszurechnen. Der Beutel ist der
+       Rohling aus dem CI-Guide: fast quadratisch, cyanblau, oben die
+       Siegelnaht. Das Etikett trägt die Identität, beim Espresso in
+       Dunkelblau mit Logo und Schrift in Cyanblau. Links das Logo,
+       rechts die Zeilen. -->
+  <g class="pfad-beutel"><g transform="translate(52 6) rotate(-8)">
+    <path d="M4 86 L2 14 Q2 4 14 4 H72 Q84 4 84 14 L82 86 Z"
+          fill="${F.eis}" stroke="${H}" stroke-width="2.6"/>
+    <path d="M9 17 H77" stroke="${H}" stroke-width="1.6" opacity=".5"/>
+    <rect x="14" y="31" width="58" height="37" rx="3" fill="${G}"/>
+    <image href="{{ 'logo-cyanblau-signet.svg' | asset_url }}" x="18" y="36" width="21" height="27"
+           preserveAspectRatio="xMidYMid meet"/>
+    <path d="M44 43 H67 M44 50 H67 M44 57 H60"
+          stroke="${F.eis}" stroke-width="2.6" stroke-linecap="round"/>
+  </g></g>
+
+  <path d="M22 78 L95 112 L168 78 V128 Q168 134 162 134 H28 Q22 134 22 128 Z"
+        fill="${G}" stroke="${H}" stroke-width="3"/>
+</svg>`,
+
+    /* 05 · Zuriga: Mühle G2 und Espressomaschine E2, beide im Profil.
+       Die E2 ist von der Seite ein liegendes C, das sich nach vorn zur
+       Tasse öffnet; die G2 erkennt man am kelchförmigen Bohnenbehälter
+       mit dem Holzdeckel. Gezeichnet nach den Produktbildern. */
+    zuriga: `
+<svg class="illu illu-pfad" viewBox="0 0 210 165" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <!-- Mühle: Kelch, Mahlgradring, Körper, Auslauf, Siebträgergabel -->
+  <path d="M33 26 H73 C73 47 62 55 58 63 H48 C44 55 33 47 33 26 Z"
+        fill="${F.eis}" stroke="${H}" stroke-width="2.4"/>
+  <ellipse cx="53" cy="25" rx="20" ry="5" fill="${F.crema}" stroke="${H}" stroke-width="2.4"/>
+  <rect x="38" y="63" width="30" height="11" rx="2" stroke="${H}" stroke-width="2.4"/>
+  <path d="M43 66 V71 M48 66 V71 M53 66 V71 M58 66 V71 M63 66 V71"
+        stroke="${H}" stroke-width="1.4" opacity=".55"/>
+  <rect x="28" y="74" width="52" height="62" rx="4" stroke="${H}" stroke-width="3"/>
+  <path d="M40 92 H56 M40 99 H50" stroke="${H}" stroke-width="1.6" opacity=".5"/>
+  <path d="M28 108 H20 L18 118" stroke="${H}" stroke-width="2.4"/>
+  <path d="M26 128 H14" stroke="${H}" stroke-width="2.6"/>
+  <path d="M46 136 V146 M70 136 V146" stroke="${H}" stroke-width="2.6"/>
+
+  <!-- Espressomaschine: der Körper als liegendes C, vorn die Aussparung
+       für die Tasse, daraus der Siebträger mit Holzgriff -->
+  <path d="M110 26 H190 Q196 26 196 32 V140 Q196 146 190 146 H104 V128 H142 Q148 128 148 122 V72 H110 Q104 72 104 66 V32 Q104 26 110 26 Z"
+        fill="${F.signal}" stroke="${H}" stroke-width="3"/>
+  <circle cx="174" cy="46" r="9" stroke="${H}" stroke-width="2.4"/>
+  <path d="M174 46 L179 41" stroke="${H}" stroke-width="1.6"/>
+  <path d="M116 42 H150 M116 50 H138" stroke="${H}" stroke-width="1.6" opacity=".6"/>
+
+  <path d="M112 72 H136 V82 H112 Z" fill="${F.signal}" stroke="${H}" stroke-width="2.4"/>
+  <path d="M114 82 H134 L131 90 H117 Z" stroke="${H}" stroke-width="2.4"/>
+  <path d="M114 86 H92" stroke="${F.crema}" stroke-width="6"/>
+  <path class="fluss strahl" d="M124 90 V100" stroke="${H}" stroke-width="2.4"/>
+
+  <path d="M112 100 H138 L134 116 Q133 119 127 119 H123 Q117 119 116 116 Z"
+        stroke="${H}" stroke-width="2.4"/>
+  <path d="M138 104 Q146 104 146 109 Q146 114 137 114" stroke="${H}" stroke-width="2.4"/>
+  <path d="M110 146 V154 M188 146 V154" stroke="${H}" stroke-width="2.6"/>
+</svg>`
+  };
+
+  function bwProzess(name) {
+    return PROZESS[name] || '';
+  }
+
+  /* ======================================================================
+     Über uns: Ufer und Läufer
+     Die Szene aus dem bisherigen Foto der Über-uns-Seite: Joscha rennt mit
+     der Riesenbohne unter dem Arm über die Wiese vor der Seemauer. Stil wie
+     die Fähren, Kontur Dunkelblau, flache Flächen in Markenfarben. Einzige
+     Ausnahme ist das gedämpfte Grün der Wiese.
+     ====================================================================== */
+  const UFER = { gruen: '#8CB36E', gruenKante: '#6E9656' };
+
+  // bwUfer(breite, hoehe): Mauer und Wiese in echten Pixeln. So behalten die
+  // Steine bei jeder Breite ihre Form; bei neuer Breite wird neu gezeichnet.
+  // Der Zufall hat einen festen Startwert, dieselbe Breite ergibt dieselben
+  // Steine.
+  function bwUfer(breite, hoehe) {
+    const w = Math.max(1, Math.round(breite));
+    const h = Math.max(1, Math.round(hoehe));
+    const K = F.kontur;
+    const mauer = Math.round(h * 0.46);
+    const krone = Math.max(6, Math.round(mauer * 0.17));
+    const reihen = 2;
+    const reihe = (mauer - krone) / reihen;
+
+    let saat = 11;
+    const zufall = () => { saat = (saat * 16807) % 2147483647; return (saat - 1) / 2147483646; };
+    const z = (n) => n.toFixed(1);
+
+    let steine = '';
+    for (let r = 0; r < reihen; r++) {
+      const y = krone + r * reihe;
+      let x = r % 2 ? -reihe * 0.9 : -reihe * 0.3;
+      while (x < w) {
+        const b = reihe * (1.35 + zufall() * 1.4);
+        steine += `<rect x="${z(x + 1.3)}" y="${z(y + 1.3)}" width="${z(b - 2.6)}" height="${z(reihe - 2.6)}"
+                         rx="${z(reihe * 0.3)}" fill="${F.papier}" stroke="${K}" stroke-width="1.5"/>`;
+        if (zufall() < 0.35) {
+          steine += `<rect x="${z(x + 1.3)}" y="${z(y + 1.3)}" width="${z(b - 2.6)}" height="${z(reihe - 2.6)}"
+                           rx="${z(reihe * 0.3)}" fill="${K}" opacity=".07"/>`;
+        }
+        x += b;
+      }
+    }
+
+    let halme = '';
+    for (let x = 30 + zufall() * 40; x < w; x += 70 + zufall() * 90) {
+      const y = mauer + (h - mauer) * (0.35 + zufall() * 0.5);
+      halme += `<path d="M${z(x)} ${z(y)} l-3.5 -8 M${z(x)} ${z(y)} l.8 -10.5 M${z(x)} ${z(y)} l5 -7.5"/>`;
+    }
+
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none" aria-hidden="true">
+  <rect x="0" y="0" width="${w}" height="${mauer}" fill="${K}" opacity=".32"/>
+  ${steine}
+  <rect x="-2" y="0" width="${w + 4}" height="${krone}" fill="${F.papier}" stroke="${K}" stroke-width="2"/>
+  <rect x="0" y="${mauer}" width="${w}" height="${h - mauer}" fill="${UFER.gruen}"/>
+  <path d="M0 ${mauer + 1.5} H${w}" stroke="${UFER.gruenKante}" stroke-width="3"/>
+  <g stroke="${K}" stroke-width="1.6" stroke-linecap="round" opacity=".38">${halme}</g>
+</svg>`;
+  }
+
+  // Der Läufer ist das Signet selbst: bwLaeufer() in laeufer-signet.js,
+  // erzeugt von werkzeug/signet-laeufer.rb.
+
+  global.bwProzess = bwProzess;
+  global.bwUfer = bwUfer;
+  global.bwNote = bwNote;
+  global.bwGlas = bwGlas;
+  global.bwGeraet = bwGeraet;
+  global.bwMaschine = bwMaschine;
+  global.bwSiebtraeger = bwSiebtraeger;
+  global.bwAufguss = bwAufguss;
+  global.bwRettungsarm = bwRettungsarm;
+  global.bwTasse = bwTasse;
+  global.bwV60 = bwV60;
+  global.bwPappsticker = bwPappsticker;
+  global.bwFaehre = bwFaehre;
+  global.BW_FARBEN = F;
+})(window);

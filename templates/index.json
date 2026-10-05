@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-startseite",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

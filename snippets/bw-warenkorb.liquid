@@ -1,0 +1,26 @@
+{%- comment -%}
+  Die Warenkorb-Schublade. Gefüllt wird sie von bw-theme.js aus /cart.js,
+  geöffnet über den Warenkorb im Kopf oder nach «In den Warenkorb». Ohne
+  JavaScript führt der Link im Kopf auf die Warenkorbseite.
+{%- endcomment -%}
+<div class="bw-schublade" id="bw-warenkorb" hidden>
+  <div class="bw-schublade-schleier" data-bw-zu></div>
+  <div class="bw-schublade-panel" role="dialog" aria-modal="true" aria-labelledby="bw-warenkorb-titel" tabindex="-1">
+    <div class="bw-schublade-kopf">
+      <h2 id="bw-warenkorb-titel">{{ 'warenkorb.titel' | t }}</h2>
+      <button type="button" class="bw-schublade-zu" data-bw-zu aria-label="{{ 'warenkorb.schliessen' | t }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="bw-schublade-inhalt" id="bw-warenkorb-inhalt" aria-live="polite"></div>
+    <form class="bw-schublade-fuss" action="{{ routes.cart_url }}" method="post" id="bw-warenkorb-fuss" hidden>
+      <div class="bw-summe">
+        <span>{{ 'warenkorb.zwischensumme' | t }}</span>
+        <strong id="bw-warenkorb-summe"></strong>
+      </div>
+      <p class="bw-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
+      <button type="submit" name="checkout" class="btn btn--primaer" data-pfeil>{{ 'warenkorb.zur_kasse' | t }}</button>
+      <a class="bw-schublade-seite" href="{{ routes.cart_url }}">{{ 'warenkorb.zur_seite' | t }}</a>
+    </form>
+  </div>
+</div>

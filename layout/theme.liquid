@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{%- render 'bw-kopfdaten' -%}
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+{{ 'Gabarito-Regular.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+{{ 'Gabarito-Bold.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+{{ 'beanwatch.css' | asset_url | stylesheet_tag }}
+{{ 'seiten.css' | asset_url | stylesheet_tag }}
+{{ 'bw-theme.css' | asset_url | stylesheet_tag }}
+{%- render 'bw-seitendaten' -%}
+{%- comment -%}
+  start.js liest window.BW_PLAN aus bw-seitendaten und muss vor allen
+  anderen Skripten laufen; defer hält die Reihenfolge. Anders als in der
+  Werkstatt muss es nicht vor dem ersten Zeichnen ausblenden: Was nicht
+  veröffentlicht ist, baut Liquid gar nicht erst.
+{%- endcomment -%}
+<script src="{{ 'start.js' | asset_url }}" defer></script>
+{%- comment -%}
+  GSAP und die gemeinsamen Skripte mit defer: Sie laufen in dieser
+  Reihenfolge nach dem Parsen, vor DOMContentLoaded. Sections laden ihre
+  eigenen Skripte ebenfalls mit defer und rufen sie in DOMContentLoaded auf.
+{%- endcomment -%}
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomEase.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/DrawSVGPlugin.min.js" defer></script>
+<script src="{{ 'illustrationen.js' | asset_url }}" defer></script>
+<script src="{{ 'basis.js' | asset_url }}" defer></script>
+<script src="{{ 'bw-theme.js' | asset_url }}" defer></script>
+{{ content_for_header }}
+</head>
+<body>
+<a class="bw-sprung" href="#inhalt">{{ 'allgemein.zum_inhalt' | t }}</a>
+{% sections 'header-group' %}
+<main id="inhalt">
+{{ content_for_layout }}
+</main>
+{% sections 'footer-group' %}
+{% render 'bw-warenkorb' %}
+</body>
+</html>

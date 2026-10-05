@@ -1,0 +1,1205 @@
+/* ==========================================================================
+   Beanwatch · Tools
+   Zwei Rechner, die tatsächlich rechnen: Koffein über den Tag und
+   Wasserhärte. Beide laufen komplett im Browser, ohne Anmeldung und ohne
+   dass Daten irgendwohin gehen.
+   ========================================================================== */
+
+window.BWTools = (function () {
+  'use strict';
+
+  const ruhig = window.BW && window.BW.wenigerBewegung;
+
+  /* ======================================================================
+     Koffeinrechner
+     ====================================================================== */
+
+  /* Nach der Espresso-Basis sortiert statt nach Getränkenamen. Wer einen
+     Flat White getrunken hat, weiss meist nicht, ob ein oder zwei Shots drin
+     waren, aber „doppelter Espresso“ versteht jeder.
+
+     Drei Arten von Einträgen:
+       mg            fester Wert pro Portion
+       proGramm      Koffein je Gramm Kaffeemehl, fragt die Menge ab
+       proHundertMl  Koffein je 100 ml, fragt die Menge ab                */
+  const GETRAENKE = [
+    {
+      name: 'Einfacher Espresso', kurz: 'Espresso', mg: 63,
+      liste: 'Einfacher Espresso (als Cappuccino, Latte Macchiato, Cortado oder pur)',
+      hinweis: 'ein Shot, egal ob pur oder mit Milch'
+    },
+    {
+      name: 'Doppelter Espresso', kurz: 'Doppelter Espresso', mg: 126,
+      liste: 'Doppelter Espresso (als Flat White, Espresso Tonic, Americano oder pur)',
+      hinweis: 'zwei Shots, egal ob pur oder mit Milch'
+    },
+    {
+      name: 'Café Crème', kurz: 'Café Crème', mg: 100,
+      liste: 'Café Crème (der lange Bezug, in der Schweiz «ein Kaffee»)',
+      hinweis: 'länger bezogen als ein Espresso, daher mehr Koffein'
+    },
+    {
+      name: 'Filterkaffee', kurz: 'Filterkaffee', proGramm: 9, standard: 15, einheit: 'g',
+      liste: 'Filterkaffee (V60, Chemex, French Press, Filtermaschine)',
+      hinweis: 'gerechnet wird mit der Kaffeemenge, nicht mit der Tassengrösse'
+    },
+    {
+      name: 'Cold Brew', kurz: 'Cold Brew', proGramm: 10, standard: 20, einheit: 'g',
+      liste: 'Cold Brew (kalt angesetzt, über Nacht gezogen)',
+      hinweis: 'lange Extraktion, holt am meisten Koffein heraus'
+    },
+    {
+      name: 'Matcha Latte', kurz: 'Matcha', proGramm: 35, standard: 2, einheit: 'g',
+      liste: 'Matcha Latte (nach Matcha-Menge)',
+      hinweis: 'ein gehäufter Teelöffel sind etwa 2 g'
+    },
+    {
+      name: 'Decaf Espresso', kurz: 'Decaf', mg: 3,
+      liste: 'Decaf Espresso (einfach oder doppelt)',
+      hinweis: 'praktisch koffeinfrei, der Unterschied ist hier egal'
+    },
+    {
+      name: 'Decaf Filterkaffee', kurz: 'Decaf Filter', proGramm: 0.3, standard: 15, einheit: 'g',
+      liste: 'Decaf Filterkaffee (nach Kaffeemenge)',
+      hinweis: 'praktisch koffeinfrei'
+    },
+    {
+      name: 'Schwarztee', kurz: 'Schwarztee', proHundertMl: 19, standard: 250, einheit: 'ml',
+      liste: 'Schwarztee (nach Tassengrösse)',
+      hinweis: 'zum Vergleich, schwankt stark mit der Ziehzeit'
+    },
+    {
+      name: 'Grüntee', kurz: 'Grüntee', proHundertMl: 12, standard: 250, einheit: 'ml',
+      liste: 'Grüntee (nach Tassengrösse)',
+      hinweis: 'zum Vergleich'
+    },
+    {
+      name: 'Cola', kurz: 'Cola', proHundertMl: 10, standard: 330, einheit: 'ml',
+      liste: 'Cola (nach Menge)',
+      hinweis: 'zum Vergleich'
+    },
+    {
+      name: 'Energydrink', kurz: 'Energydrink', proHundertMl: 32, standard: 250, einheit: 'ml',
+      liste: 'Energydrink (nach Menge)',
+      hinweis: 'zum Vergleich'
+    }
+  ];
+
+  /** Koffein einer Portion, je nach Art des Eintrags. */
+  function mgVon(index, menge) {
+    const g = GETRAENKE[index];
+    if (g.mg !== undefined) return g.mg;
+    if (g.proGramm !== undefined) return g.proGramm * (menge || g.standard);
+    if (g.proHundertMl !== undefined) return g.proHundertMl * (menge || g.standard) / 100;
+    return 0;
+  }
+
+  /** Beschriftung für die Liste im Ergebnis. */
+  function nameVon(index, menge) {
+    const g = GETRAENKE[index];
+    if (g.einheit) return `${g.name}, ${menge || g.standard} ${g.einheit}`;
+    return g.name;
+  }
+
+  const HALBWERTSZEIT = 5;   // Stunden, gesunder Erwachsener ohne Medikamente
+  const SCHLAFGRENZE = 50;   // mg im Körper, ab hier wird Einschlafen schwerer
+
+  let konsum = [];           // {getraenkIndex, stunde, menge}
+  let schlafenszeit = 23;
+
+  function mgZurZeit(stunde) {
+    return konsum.reduce((summe, c) => {
+      if (stunde < c.stunde) return summe;
+      const dosis = mgVon(c.getraenkIndex, c.menge);
+      return summe + dosis * Math.pow(0.5, (stunde - c.stunde) / HALBWERTSZEIT);
+    }, 0);
+  }
+
+  function gesamt() {
+    return konsum.reduce((s, c) => s + mgVon(c.getraenkIndex, c.menge), 0);
+  }
+
+  /* ------------------------------------------------------------------
+     Ergebnis in der Adresse
+     Der Stand wird in die URL geschrieben, Format k=index@stunde[xmenge].
+     Damit lässt sich ein Ergebnis per Link weitergeben und wiederherstellen.
+     Gleichzeitig ist das die Grundlage, falls später ein Dienst daraus ein
+     og:image erzeugen soll: Dann trägt der Link alles, was das Bild braucht.
+     ------------------------------------------------------------------ */
+  function inAdresseSchreiben() {
+    if (!konsum.length) return;
+    const k = konsum
+      .map(c => c.getraenkIndex + '@' + c.stunde + (c.menge ? 'x' + c.menge : ''))
+      .join(',');
+    const p = new URLSearchParams({ k, s: schlafenszeit });
+    history.replaceState(null, '', location.pathname + '?' + p.toString());
+  }
+
+  function ausAdresseLesen() {
+    const p = new URLSearchParams(location.search);
+    const k = p.get('k');
+    if (!k) return false;
+
+    const gelesen = k.split(',').map((teil) => {
+      const [kopf, menge] = teil.split('x');
+      const [index, stunde] = kopf.split('@').map(Number);
+      if (!Number.isFinite(index) || !Number.isFinite(stunde)) return null;
+      if (!GETRAENKE[index]) return null;
+      return {
+        getraenkIndex: index,
+        stunde: Math.min(23, Math.max(5, stunde)),
+        menge: menge ? Number(menge) : undefined
+      };
+    }).filter(Boolean);
+
+    if (!gelesen.length) return false;
+    konsum = gelesen;
+
+    const s = Number(p.get('s'));
+    if (Number.isFinite(s) && s >= 19 && s <= 26) schlafenszeit = s;
+    return true;
+  }
+
+  /* --- Tageskurve als SVG ------------------------------------------------- */
+  function kurvePfad(vonStunde, bisStunde, breite, hoehe, maxWert) {
+    const schritte = 96;
+    const punkte = [];
+    for (let i = 0; i <= schritte; i++) {
+      const std = vonStunde + (bisStunde - vonStunde) * (i / schritte);
+      const wert = mgZurZeit(std);
+      const x = (i / schritte) * breite;
+      const y = hoehe - (wert / maxWert) * hoehe;
+      punkte.push(`${x.toFixed(1)},${Math.max(0, y).toFixed(1)}`);
+    }
+    return 'M' + punkte.join(' L');
+  }
+
+  function zeichneKurve() {
+    const svg = document.getElementById('koffein-kurve');
+    if (!svg) return;
+
+    const B = 600, H = 180;
+    const maxWert = Math.max(150, gesamt() * 0.85);
+    const linie = kurvePfad(5, 26, B, H, maxWert);
+    const flaeche = linie + ` L${B},${H} L0,${H} Z`;
+
+    svg.querySelector('.kurve-linie').setAttribute('d', linie);
+    svg.querySelector('.kurve-flaeche').setAttribute('d', flaeche);
+
+    // Schlafenszeit als Markierung
+    const xSchlaf = ((schlafenszeit - 5) / 21) * B;
+    const marke = svg.querySelector('.schlaf-marke');
+    marke.setAttribute('x1', xSchlaf); marke.setAttribute('x2', xSchlaf);
+    const text = svg.querySelector('.schlaf-text');
+    text.setAttribute('x', Math.min(xSchlaf + 6, B - 60));
+
+    // Grenzlinie mit Beschriftung, sonst weiss niemand, was sie bedeutet.
+    const ySchwelle = Math.max(12, H - (SCHLAFGRENZE / maxWert) * H);
+    const schwelle = svg.querySelector('.schwelle');
+    schwelle.setAttribute('y1', ySchwelle);
+    schwelle.setAttribute('y2', ySchwelle);
+
+    const schwelleText = svg.querySelector('.schwelle-text');
+    if (schwelleText) schwelleText.setAttribute('y', ySchwelle - 7);
+
+    /* An jeden Hochpunkt schreiben, was dort getrunken wurde. Die Labels
+       stehen abwechselnd höher und tiefer, damit sie sich bei mehreren
+       Getränken kurz nacheinander nicht überlagern. */
+    const marken = svg.querySelector('.kurve-marken');
+    if (marken) {
+      marken.innerHTML = konsum
+        .slice()
+        .sort((a, b) => a.stunde - b.stunde)
+        .map((c, i) => {
+          const x = ((c.stunde - 5) / 21) * B;
+          const wert = mgZurZeit(c.stunde);
+          const y = Math.max(6, H - (wert / maxWert) * H);
+          const hoch = (i % 2 === 0) ? 26 : 46;          // versetzt stapeln
+          const yText = Math.max(12, y - hoch);
+          const name = GETRAENKE[c.getraenkIndex].kurz || GETRAENKE[c.getraenkIndex].name;
+          // Labels am rechten Rand nach links ausrichten, sonst ragen sie raus.
+          const anker = x > B - 80 ? 'end' : (x < 60 ? 'start' : 'middle');
+          const xText = anker === 'end' ? x - 4 : (anker === 'start' ? x + 4 : x);
+
+          return `<g class="kurve-marke">
+            <line x1="${x.toFixed(1)}" y1="${(y - 5).toFixed(1)}"
+                  x2="${x.toFixed(1)}" y2="${(yText + 5).toFixed(1)}"
+                  stroke="rgba(255,243,232,.5)" stroke-width="1.5"/>
+            <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"
+                    fill="#FFF3E8" stroke="#FF4612" stroke-width="2"/>
+            <text x="${xText.toFixed(1)}" y="${yText.toFixed(1)}" text-anchor="${anker}"
+                  fill="rgba(255,243,232,.92)"
+                  style="font:700 12px Gabarito,sans-serif">${name}</text>
+          </g>`;
+        }).join('');
+
+      if (!ruhig) {
+        gsap.from(marken.children, {
+          opacity: 0, y: 8, duration: 0.5, stagger: 0.07, ease: 'bw-aus', overwrite: true
+        });
+      }
+    }
+
+    if (!ruhig) {
+      gsap.fromTo(svg.querySelector('.kurve-linie'),
+        { drawSVG: '0% 0%' }, { drawSVG: '0% 100%', duration: 0.9, ease: 'power2.out', overwrite: true });
+      gsap.fromTo(svg.querySelector('.kurve-flaeche'),
+        { opacity: 0 }, { opacity: 0.22, duration: 0.7, ease: 'power2.out', overwrite: true });
+    }
+  }
+
+  /* --- Ergebnis schreiben ------------------------------------------------- */
+  function aktualisiere() {
+    const rest = mgZurZeit(schlafenszeit);
+    const summe = gesamt();
+
+    setzeZahl('#wert-gesamt', summe);
+    setzeZahl('#wert-rest', rest);
+
+    const anteil = Math.min(1, rest / 200);
+    const fuellung = document.querySelector('#balken-rest .fuellung');
+    if (fuellung) {
+      if (ruhig) gsap.set(fuellung, { scaleX: anteil });
+      else gsap.to(fuellung, { scaleX: anteil, duration: 0.7, ease: 'bw-aus', overwrite: true });
+      fuellung.style.background = rest > SCHLAFGRENZE ? 'var(--redorange)' : 'var(--cyanblau)';
+    }
+
+    const urteil = document.getElementById('urteil');
+    if (urteil) {
+      if (summe === 0) {
+        urteil.textContent = 'Trag oben ein, was Du heute getrunken hast.';
+      } else if (rest > 100) {
+        urteil.innerHTML = `Beim Schlafengehen sind noch <strong>${Math.round(rest)} mg</strong> in Dir. ` +
+          'Das ist etwa ein doppelter Espresso, den Du mit ins Bett nimmst. Der letzte Kaffee dürfte früher sein.';
+      } else if (rest > SCHLAFGRENZE) {
+        urteil.innerHTML = `Noch <strong>${Math.round(rest)} mg</strong> im Körper. ` +
+          'Einschlafen geht meist, aber die Tiefschlafphasen leiden. Zwei Stunden früher wäre besser.';
+      } else {
+        urteil.innerHTML = `Nur noch <strong>${Math.round(rest)} mg</strong>. ` +
+          'Das steht Deinem Schlaf nicht im Weg. Passt so.';
+      }
+    }
+
+    const menge = document.getElementById('tagesmenge');
+    if (menge) {
+      if (summe > 400) {
+        menge.hidden = false;
+        menge.innerHTML = `<strong>${Math.round(summe)} mg</strong> am Tag liegen über der Menge, ` +
+          'die die EFSA für gesunde Erwachsene als unbedenklich einstuft (400 mg). ' +
+          'Kein Drama an einem einzelnen Tag, aber dauerhaft einen Blick wert.';
+      } else {
+        menge.hidden = true;
+      }
+    }
+
+    // Der Teilen-Knopf taucht erst auf, wenn es etwas zu zeigen gibt.
+    const teilen = document.getElementById('teilen-knopf');
+    if (teilen) {
+      const zeigen = konsum.length > 0;
+      if (zeigen && teilen.hidden) {
+        teilen.hidden = false;
+        if (!ruhig) gsap.from(teilen, { opacity: 0, y: 14, duration: 0.5, ease: 'bw-aus' });
+      } else if (!zeigen) {
+        teilen.hidden = true;
+      }
+    }
+
+    inAdresseSchreiben();
+    zeichneListe();
+    zeichneKurve();
+  }
+
+  function setzeZahl(auswahl, wert) {
+    const el = document.querySelector(auswahl);
+    if (!el) return;
+    const von = parseFloat(el.dataset.wert || '0');
+    const stand = { v: von };
+    el.dataset.wert = wert;
+
+    if (ruhig) {
+      el.innerHTML = Math.round(wert) + '<span class="einheit"> mg</span>';
+      return;
+    }
+    gsap.to(stand, {
+      v: wert, duration: 0.7, ease: 'power2.out', overwrite: true,
+      onUpdate: () => { el.innerHTML = Math.round(stand.v) + '<span class="einheit"> mg</span>'; }
+    });
+  }
+
+  function zeichneListe() {
+    const liste = document.getElementById('konsum-liste');
+    if (!liste) return;
+
+    if (!konsum.length) {
+      liste.innerHTML = '<p style="opacity:.6;font-size:.9rem">Noch nichts eingetragen.</p>';
+      return;
+    }
+
+    liste.innerHTML = konsum
+      .slice()
+      .sort((a, b) => a.stunde - b.stunde)
+      .map((c) => {
+        const echterIndex = konsum.indexOf(c);
+        return `<div class="zutat">
+          <span>${String(c.stunde).padStart(2, '0')}:00 · ${nameVon(c.getraenkIndex, c.menge)}</span>
+          <span class="menge">${Math.round(mgVon(c.getraenkIndex, c.menge))} mg
+            <button class="entfernen" data-weg="${echterIndex}" aria-label="Entfernen"
+                    style="margin-left:8px;color:inherit;opacity:.5">✕</button>
+          </span>
+        </div>`;
+      }).join('');
+  }
+
+  /* --- Aufbau ------------------------------------------------------------- */
+  function koffeinrechner() {
+    const auswahl = document.getElementById('getraenk-auswahl');
+    const zeit = document.getElementById('konsum-zeit');
+    const schlaf = document.getElementById('schlaf-zeit');
+    const hinzu = document.getElementById('hinzufuegen');
+    const liste = document.getElementById('konsum-liste');
+
+    const mengenfeld = document.getElementById('mengenfeld');
+    const menge = document.getElementById('menge');
+    const mengenLabel = document.getElementById('menge-label');
+    const hinweisZeile = document.getElementById('getraenk-hinweis');
+
+    if (!auswahl) return;
+
+    /* In der Liste steht gleich dabei, welche Getränke dazugehören.
+       Sonst muss man raten, ob ein Flat White ein oder zwei Shots hat. */
+    auswahl.innerHTML = GETRAENKE.map((g, i) => {
+      const wert = g.mg !== undefined
+        ? `${g.mg} mg`
+        : `${Math.round(mgVon(i))} mg bei ${g.standard} ${g.einheit}`;
+      return `<option value="${i}">${g.liste || g.name} · ${wert}</option>`;
+    }).join('');
+
+    /* Nur Getränke mit eigener Menge bekommen ein Eingabefeld. */
+    function feldAnpassen() {
+      const g = GETRAENKE[+auswahl.value];
+      hinweisZeile.textContent = g.hinweis || '';
+
+      if (g.einheit) {
+        mengenfeld.hidden = false;
+        mengenLabel.textContent = g.einheit === 'g'
+          ? 'Wie viel Kaffee hast Du verwendet?'
+          : 'Wie viel hast Du getrunken?';
+        menge.value = g.standard;
+        menge.step = g.einheit === 'g' ? 1 : 10;
+        menge.min = g.einheit === 'g' ? 5 : 50;
+        menge.max = g.einheit === 'g' ? 120 : 1000;
+        document.getElementById('menge-einheit').textContent = g.einheit;
+      } else {
+        mengenfeld.hidden = true;
+      }
+    }
+
+    auswahl.addEventListener('change', feldAnpassen);
+    feldAnpassen();
+
+    // Ein Ergebnis aus der Adresse hat Vorrang, sonst ein typischer Tag.
+    if (!ausAdresseLesen()) {
+      konsum = [
+      { getraenkIndex: 1, stunde: 7 },                 // doppelter Espresso
+      { getraenkIndex: 0, stunde: 10 },                // einfacher Espresso
+      { getraenkIndex: 3, stunde: 14, menge: 15 }      // Filterkaffee aus 15 g
+      ];
+    }
+
+    hinzu.addEventListener('click', () => {
+      const g = GETRAENKE[+auswahl.value];
+      konsum.push({
+        getraenkIndex: +auswahl.value,
+        stunde: +zeit.value,
+        menge: g.einheit ? +menge.value : undefined
+      });
+      aktualisiere();
+      if (!ruhig) {
+        gsap.fromTo(liste.lastElementChild || liste,
+          { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: 'bw-aus' });
+      }
+    });
+
+    liste.addEventListener('click', (e) => {
+      const knopf = e.target.closest('[data-weg]');
+      if (!knopf) return;
+      konsum.splice(+knopf.dataset.weg, 1);
+      aktualisiere();
+    });
+
+    zeit.addEventListener('input', () => {
+      document.getElementById('zeit-anzeige').textContent =
+        String(zeit.value).padStart(2, '0') + ':00';
+    });
+
+    schlaf.addEventListener('input', () => {
+      schlafenszeit = +schlaf.value;
+      document.getElementById('schlaf-anzeige').textContent =
+        String(schlaf.value).padStart(2, '0') + ':00';
+      aktualisiere();
+    });
+
+    // Kam der Stand aus einem Link, müssen Regler und Anzeige nachziehen.
+    schlaf.value = schlafenszeit;
+    document.getElementById('schlaf-anzeige').textContent =
+      String(schlafenszeit % 24).padStart(2, '0') + ':00';
+
+    const teilen = document.getElementById('teilen-knopf');
+    if (teilen) {
+      teilen.addEventListener('click', async () => {
+        const alt = teilen.textContent;
+        teilen.textContent = 'Bild wird gebaut …';
+        teilen.disabled = true;
+        try {
+          const flaeche = await zeichneTeilenBild();
+          teilenDialog(flaeche);
+        } finally {
+          teilen.textContent = alt;
+          teilen.disabled = false;
+        }
+      });
+    }
+
+    aktualisiere();
+  }
+
+  /* ======================================================================
+     Teilbares Bild
+     Zeichnet das Ergebnis als 1080 mal 1350 auf ein Canvas, also im Format,
+     das der CI-Guide für Instagram und LinkedIn vorgibt. Bewusst selbst
+     gezeichnet statt einen Screenshot der Box zu nehmen: So stimmen
+     Schrift, Abstände und Farben, und das Bild bleibt scharf.
+     ====================================================================== */
+
+  const BILD_B = 1080, BILD_H = 1350;
+
+  /* Sichere Zone.
+     Im Feed zeigen Instagram und LinkedIn 4:5 vollständig. Im
+     Instagram-Profilraster wird derselbe Beitrag aber mittig auf 1:1
+     beschnitten, oben und unten fallen je 135 px weg. Alles, was gelesen
+     werden muss, bleibt deshalb zwischen diesen beiden Linien. */
+  const SICHER_OBEN = 150;
+  const SICHER_UNTEN = 1215;
+
+  function signetLaden() {
+    return new Promise((fertig) => {
+      const bild = new Image();
+      bild.onload = () => fertig(bild);
+      bild.onerror = () => fertig(null);
+      bild.src = '{{ 'logo-hellorange-signet.svg' | asset_url }}';
+    });
+  }
+
+  /** Text auf mehrere Zeilen umbrechen und zeichnen. Gibt die neue y-Position zurück. */
+  function textBlock(ctx, text, x, y, maxBreite, zeilenHoehe) {
+    const woerter = String(text).split(' ');
+    let zeile = '';
+    woerter.forEach((wort) => {
+      const test = zeile ? zeile + ' ' + wort : wort;
+      if (ctx.measureText(test).width > maxBreite && zeile) {
+        ctx.fillText(zeile, x, y);
+        y += zeilenHoehe;
+        zeile = wort;
+      } else {
+        zeile = test;
+      }
+    });
+    if (zeile) { ctx.fillText(zeile, x, y); y += zeilenHoehe; }
+    return y;
+  }
+
+  async function zeichneTeilenBild() {
+    const flaeche = document.createElement('canvas');
+    flaeche.width = BILD_B;
+    flaeche.height = BILD_H;
+    const ctx = flaeche.getContext('2d');
+
+    // Schrift muss geladen sein, sonst zeichnet Canvas die Ersatzschrift.
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.load('900 100px Gabarito'); await document.fonts.ready; } catch (e) { /* egal */ }
+    }
+    const signet = await signetLaden();
+
+    const S = 'Gabarito, Trebuchet MS, sans-serif';
+    const rest = mgZurZeit(schlafenszeit);
+    const summe = gesamt();
+    const uhr = String(schlafenszeit % 24).padStart(2, '0') + ':00';
+
+    // Sortierte Einträge, sie werden mehrfach gebraucht.
+    const eintraege = konsum.slice().sort((a, b) => a.stunde - b.stunde);
+
+    // --- Grund ---
+    ctx.fillStyle = '#004B5C';
+    ctx.fillRect(0, 0, BILD_B, BILD_H);
+
+    // --- Kopfzeile ---
+    // Sagt sofort, worum es geht. „Koffeinrechner“ allein weckt kein Interesse.
+    ctx.fillStyle = '#4FC4E2';
+    ctx.font = `700 30px ${S}`;
+    ctx.letterSpacing = '4px';
+    ctx.fillText('SO VIEL KOFFEIN HABE ICH IN MIR', 80, SICHER_OBEN + 12);
+    ctx.letterSpacing = '0px';
+
+    if (signet) {
+      try { ctx.drawImage(signet, BILD_B - 80 - 88, SICHER_OBEN - 62, 88, 90); } catch (e) { /* egal */ }
+    }
+
+    // --- Grosse Zahl ---
+    ctx.fillStyle = '#FFF3E8';
+    ctx.font = `900 180px ${S}`;
+    const zahl = String(Math.round(rest));
+    ctx.fillText(zahl, 80, 342);
+    const zahlBreite = ctx.measureText(zahl).width;
+    ctx.font = `800 60px ${S}`;
+    ctx.fillStyle = 'rgba(255,243,232,.72)';
+    ctx.fillText('mg', 80 + zahlBreite + 16, 342);
+
+    ctx.font = `600 32px ${S}`;
+    ctx.fillStyle = 'rgba(255,243,232,.88)';
+    ctx.fillText(`nehme ich um ${uhr} mit in den Schlaf`, 80, 392);
+    ctx.font = `500 28px ${S}`;
+    ctx.fillStyle = 'rgba(255,243,232,.6)';
+    ctx.fillText(`von insgesamt ${Math.round(summe)} mg an diesem Tag`, 80, 432);
+
+    // --- Kurve ---
+    const kx = 80, ky = 480, kb = BILD_B - 160, kh = 268;
+    const maxWert = Math.max(150, summe * 0.85);
+
+    // Schlafgrenze
+    const ySchwelle = ky + kh - (SCHLAFGRENZE / maxWert) * kh;
+    ctx.strokeStyle = 'rgba(255,243,232,.34)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 7]);
+    ctx.beginPath(); ctx.moveTo(kx, ySchwelle); ctx.lineTo(kx + kb, ySchwelle); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = `600 21px ${S}`;
+    const grenzText = '50 mg · Schlafgrenze';
+    const grenzBreite = ctx.measureText(grenzText).width;
+    ctx.fillStyle = '#004B5C';
+    ctx.fillRect(kx + 2, ySchwelle - 32, grenzBreite + 16, 25);
+    ctx.fillStyle = 'rgba(255,243,232,.8)';
+    ctx.fillText(grenzText, kx + 10, ySchwelle - 14);
+
+    // Fläche und Linie
+    const punkte = [];
+    for (let i = 0; i <= 120; i++) {
+      const std = 5 + 21 * (i / 120);
+      const w = mgZurZeit(std);
+      punkte.push([kx + (i / 120) * kb, ky + kh - Math.min(1, w / maxWert) * kh]);
+    }
+    ctx.beginPath();
+    ctx.moveTo(punkte[0][0], ky + kh);
+    punkte.forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.lineTo(kx + kb, ky + kh);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,70,18,.38)';
+    ctx.fill();
+
+    ctx.beginPath();
+    punkte.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    ctx.strokeStyle = '#FF4612';
+    ctx.lineWidth = 6;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Grundlinie
+    ctx.strokeStyle = 'rgba(255,243,232,.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(kx, ky + kh); ctx.lineTo(kx + kb, ky + kh); ctx.stroke();
+
+    // Schlafenszeit, mit Uhrzeit direkt darunter
+    const xSchlaf = kx + ((schlafenszeit - 5) / 21) * kb;
+    ctx.strokeStyle = '#4FC4E2';
+    ctx.setLineDash([7, 6]);
+    ctx.beginPath(); ctx.moveTo(xSchlaf, ky); ctx.lineTo(xSchlaf, ky + kh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#4FC4E2';
+    ctx.textAlign = xSchlaf > BILD_B - 260 ? 'right' : 'left';
+    const versatz = ctx.textAlign === 'right' ? -12 : 12;
+    ctx.font = `700 24px ${S}`;
+    ctx.fillText('Schlafenszeit', xSchlaf + versatz, ky + 26);
+    ctx.font = `700 24px ${S}`;
+    ctx.fillText(`(${uhr})`, xSchlaf + versatz, ky + 54);
+    ctx.textAlign = 'left';
+
+    /* Marken an den Hochpunkten.
+       Bei vielen Einträgen wird es schnell unleserlich, deshalb bekommen
+       nur die vier grössten Sprünge eine Beschriftung. Die übrigen behalten
+       ihren Punkt auf der Kurve, aber ohne Text. */
+    const beschriftet = (() => {
+      // Bei vielen Einträgen liegen die Punkte so dicht, dass jede
+      // Beschriftung die nächste überdeckt. Dann sprechen die Punkte für
+      // sich, die Liste darunter nennt ohnehin alles.
+      if (eintraege.length > 6) return [];
+      const wieViele = eintraege.length <= 4 ? eintraege.length : 3;
+
+      const kandidaten = eintraege
+        .map((c, i) => ({ i, x: kx + ((c.stunde - 5) / 21) * kb, dosis: mgVon(c.getraenkIndex, c.menge) }))
+        .sort((a, b) => b.dosis - a.dosis);
+
+      // Nur aufnehmen, was genug Abstand zu bereits gewählten Labels hat.
+      const gewaehlt = [];
+      kandidaten.forEach((k) => {
+        if (gewaehlt.length >= wieViele) return;
+        if (gewaehlt.some(g => Math.abs(g.x - k.x) < 150)) return;
+        gewaehlt.push(k);
+      });
+      return gewaehlt.map(g => g.i);
+    })();
+
+    eintraege.forEach((c, i) => {
+      const x = kx + ((c.stunde - 5) / 21) * kb;
+      const w = mgZurZeit(c.stunde);
+      const y = ky + kh - Math.min(1, w / maxWert) * kh;
+
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFF3E8'; ctx.fill();
+      ctx.strokeStyle = '#FF4612'; ctx.lineWidth = 4; ctx.stroke();
+
+      if (!beschriftet.includes(i)) return;
+
+      /* Versatz nach der Zeitreihenfolge, nicht nach der Dosis: Sonst
+         landen zwei kurz aufeinander folgende Getränke auf gleicher Höhe.
+         Die Klemme sitzt hoch genug, dass die obere Reihe Platz hat. */
+      const yText = Math.max(ky + 34, y - (i % 2 === 0 ? 34 : 72));
+      ctx.strokeStyle = 'rgba(255,243,232,.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x, yText + 8); ctx.stroke();
+
+      ctx.font = `700 22px ${S}`;
+      ctx.fillStyle = 'rgba(255,243,232,.92)';
+      ctx.textAlign = x > BILD_B - 200 ? 'right' : (x < 200 ? 'left' : 'center');
+      ctx.fillText(GETRAENKE[c.getraenkIndex].kurz || GETRAENKE[c.getraenkIndex].name, x, yText);
+      ctx.textAlign = 'left';
+    });
+
+    // Zeitachse
+    ctx.font = `500 22px ${S}`;
+    ctx.fillStyle = 'rgba(255,243,232,.55)';
+    ctx.fillText('05:00', kx, ky + kh + 34);
+    ctx.textAlign = 'center'; ctx.fillText('14:00', kx + kb / 2, ky + kh + 34);
+    ctx.textAlign = 'right'; ctx.fillText('02:00', kx + kb, ky + kh + 34);
+    ctx.textAlign = 'left';
+
+    /* --- Was getrunken wurde ---
+       Der Platz bis zum Farbband ist fest. Passen nicht alle Einträge hinein,
+       werden die restlichen in einer Zeile zusammengefasst, statt aus dem
+       Bild zu laufen. */
+    let y = 852;
+    const bandOben = 1080;
+    const zeilenHoehe = 42;
+    const platz = Math.floor((bandOben - 40 - y - 30) / zeilenHoehe);
+    const zeigen = Math.max(1, Math.min(eintraege.length, platz));
+
+    ctx.font = `700 24px ${S}`;
+    ctx.fillStyle = '#4FC4E2';
+    ctx.letterSpacing = '3px';
+    ctx.fillText('MEIN TAG', 80, y);
+    ctx.letterSpacing = '0px';
+    y += 42;
+
+    eintraege.slice(0, zeigen).forEach((c) => {
+      ctx.font = `500 28px ${S}`;
+      ctx.fillStyle = 'rgba(255,243,232,.9)';
+      ctx.fillText(`${String(c.stunde).padStart(2, '0')}:00 · ${nameVon(c.getraenkIndex, c.menge)}`, 80, y);
+      ctx.textAlign = 'right';
+      ctx.font = `700 28px ${S}`;
+      ctx.fillStyle = '#FF4612';
+      ctx.fillText(`${Math.round(mgVon(c.getraenkIndex, c.menge))} mg`, BILD_B - 80, y);
+      ctx.textAlign = 'left';
+      y += zeilenHoehe;
+    });
+
+    const uebrig = eintraege.slice(zeigen);
+    if (uebrig.length) {
+      const uebrigMg = uebrig.reduce((s, c) => s + mgVon(c.getraenkIndex, c.menge), 0);
+      ctx.font = `600 26px ${S}`;
+      ctx.fillStyle = 'rgba(255,243,232,.62)';
+      ctx.fillText(`und ${uebrig.length} weitere`, 80, y);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,70,18,.85)';
+      ctx.fillText(`${Math.round(uebrigMg)} mg`, BILD_B - 80, y);
+      ctx.textAlign = 'left';
+    }
+
+    /* --- Farbband unten ---
+       Das Band reicht bis zur Bildkante, der Text darin bleibt aber
+       oberhalb der sicheren Linie, damit er im Profilraster nicht
+       abgeschnitten wird. */
+    ctx.fillStyle = '#FF4612';
+    ctx.fillRect(0, bandOben, BILD_B, BILD_H - bandOben);
+    ctx.fillStyle = '#FFF3E8';
+    ctx.font = `800 36px ${S}`;
+    ctx.fillText('Und wie viel Koffein nimmst Du', 80, 1150);
+    ctx.fillText('mit in den Schlaf?', 80, 1194);
+    ctx.font = `600 27px ${S}`;
+    ctx.fillStyle = 'rgba(255,243,232,.9)';
+    ctx.fillText('beanwatch.ch/koffeinrechner', 80, SICHER_UNTEN + 28);
+
+    return flaeche;
+  }
+
+
+  /* --- Dialog zum Teilen ---------------------------------------------------
+     Keine der drei Plattformen erlaubt es, über einen Link ein Bild an einen
+     Beitrag anzuhängen. Über die Share-URL lässt sich nur Text vorbereiten.
+     Es gibt deshalb zwei Wege, und der Dialog nimmt den besseren, der da ist:
+
+       1. Web Share API mit Datei. Auf dem Handy und in Safari geht damit Bild
+          und Text in einem Schritt in die App der Wahl.
+       2. Zwischenablage. Auf dem Desktop landet das Bild per Klick in der
+          Ablage, die Plattform öffnet sich mit vorbereitetem Text, und es
+          fehlt nur noch ein Einfügen im Editor.
+
+     Als Rückfalllinie bleibt der Download.                                  */
+
+  const TEILTEXT = 'Wie viel Koffein nimmst Du mit in den Schlaf? ' +
+                   'Ausgerechnet mit dem Koffeinrechner von Beanwatch.';
+
+  const PLATTFORMEN = [
+    {
+      schluessel: 'linkedin', name: 'LinkedIn',
+      url: 'https://www.linkedin.com/feed/?shareActive=true&text=' +
+           encodeURIComponent(TEILTEXT + ' beanwatch.ch/koffeinrechner')
+    },
+    {
+      schluessel: 'facebook', name: 'Facebook',
+      url: 'https://www.facebook.com/sharer/sharer.php?u=' +
+           encodeURIComponent('https://beanwatch.ch/koffeinrechner')
+    },
+    {
+      schluessel: 'instagram', name: 'Instagram',
+      url: 'https://www.instagram.com/'
+    }
+  ];
+
+  function blobVon(flaeche) {
+    return new Promise(fertig => flaeche.toBlob(fertig, 'image/png'));
+  }
+
+  /** Kann dieses Gerät Bilddateien direkt teilen? */
+  function kannNativTeilen() {
+    if (typeof navigator.canShare !== 'function') return false;
+    try {
+      const probe = new File([new Blob([''], { type: 'image/png' })], 'p.png', { type: 'image/png' });
+      return navigator.canShare({ files: [probe] });
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function teilenDialog(flaeche) {
+    const alt = document.getElementById('teilen-dialog');
+    if (alt) alt.remove();
+
+    const nativ = kannNativTeilen();
+    const ablageGeht = !!(navigator.clipboard && window.ClipboardItem);
+
+    const dialog = document.createElement('div');
+    dialog.id = 'teilen-dialog';
+    dialog.className = 'teilen-dialog';
+    dialog.innerHTML = `
+      <div class="teilen-fenster" role="dialog" aria-modal="true" aria-label="Ergebnis teilen">
+        <button class="teilen-zu" aria-label="Schliessen">✕</button>
+        <span class="eyebrow" style="color:var(--redorange)">Dein Ergebnis</span>
+        <h3 style="margin-top:12px">Wohin damit?</h3>
+        <div class="teilen-vorschau"></div>
+
+        ${nativ ? `
+          <button class="btn btn--primaer" data-nativ style="width:100%;justify-content:center">
+            Bild teilen
+          </button>
+          <p class="teilen-erklaerung">Bild und Text gehen zusammen an die App Deiner Wahl.</p>
+        ` : `
+          <p class="teilen-erklaerung">
+            ${ablageGeht
+              ? 'Ein Klick legt das Bild in die Zwischenablage und öffnet die Plattform. Dort fügst Du es mit ' +
+                (navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : 'Strg + V') +
+                ' in den Beitrag ein.'
+              : 'Das Bild wird gespeichert und die Plattform öffnet sich. Lade es dort im Beitrag hoch.'}
+          </p>
+          <div class="teilen-knoepfe">
+            ${PLATTFORMEN.map(p => `
+              <button class="btn btn--linie" data-plattform="${p.schluessel}">${p.name}</button>
+            `).join('')}
+          </div>
+        `}
+
+        <button class="btn btn--linie" data-speichern style="margin-top:12px;width:100%;justify-content:center">
+          Nur speichern
+        </button>
+        <p class="teilen-hinweis" role="status"></p>
+      </div>`;
+    document.body.appendChild(dialog);
+
+    const hinweis = dialog.querySelector('.teilen-hinweis');
+    const vorschau = dialog.querySelector('.teilen-vorschau');
+
+    const mini = new Image();
+    mini.src = flaeche.toDataURL('image/png');
+    mini.alt = 'Vorschau des Bildes';
+    vorschau.appendChild(mini);
+
+    function speichern() {
+      const a = document.createElement('a');
+      a.href = flaeche.toDataURL('image/png');
+      a.download = 'beanwatch-koffeinrechner.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function inAblage() {
+      if (!ablageGeht) return false;
+      try {
+        const blob = await blobVon(flaeche);
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function schliessen() {
+      if (ruhig) { dialog.remove(); return; }
+      gsap.to(dialog, { opacity: 0, duration: 0.22, onComplete: () => dialog.remove() });
+    }
+
+    dialog.querySelector('.teilen-zu').addEventListener('click', schliessen);
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) schliessen(); });
+
+    dialog.querySelector('[data-speichern]').addEventListener('click', () => {
+      speichern();
+      hinweis.textContent = 'Gespeichert. Du findest es in Deinem Download-Ordner.';
+    });
+
+    const nativKnopf = dialog.querySelector('[data-nativ]');
+    if (nativKnopf) {
+      nativKnopf.addEventListener('click', async () => {
+        try {
+          const blob = await blobVon(flaeche);
+          const datei = new File([blob], 'beanwatch-koffeinrechner.png', { type: 'image/png' });
+          await navigator.share({ files: [datei], text: TEILTEXT + ' beanwatch.ch/koffeinrechner' });
+          schliessen();
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;   // Nutzer hat abgebrochen
+          speichern();
+          hinweis.textContent = 'Teilen ging nicht, das Bild wurde stattdessen gespeichert.';
+        }
+      });
+    }
+
+    dialog.querySelectorAll('[data-plattform]').forEach((knopf) => {
+      knopf.addEventListener('click', async () => {
+        const p = PLATTFORMEN.find(x => x.schluessel === knopf.dataset.plattform);
+        const kopiert = await inAblage();
+        if (!kopiert) speichern();
+
+        const taste = navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : 'Strg + V';
+        hinweis.textContent = kopiert
+          ? `Bild ist in der Zwischenablage. Im Beitrag auf ${p.name} mit ${taste} einfügen.`
+          : `Bild gespeichert. Im Beitrag auf ${p.name} hochladen.`;
+
+        window.open(p.url, '_blank', 'noopener');
+      });
+    });
+
+    if (!ruhig) {
+      gsap.from(dialog, { opacity: 0, duration: 0.25 });
+      gsap.from(dialog.querySelector('.teilen-fenster'),
+        { y: 26, scale: 0.97, duration: 0.45, ease: 'bw-aus' });
+    }
+  }
+
+
+  /* ======================================================================
+     Kaffeewasser
+     Eingabe sind die drei Werte, die auf jeder Flaschenetikette und in jedem
+     Trinkwasserbericht stehen: Calcium, Magnesium und Hydrogencarbonat.
+     Daraus werden Gesamthärte und Karbonathärte gerechnet und im Diagramm
+     gegen die Zielbereiche für Filterkaffee und Espresso gestellt.
+
+     Umrechnungsfaktoren (Standard):
+       1 °dH Gesamthärte  = 7,14 mg/l Ca  oder  4,34 mg/l Mg
+       1 °dH Karbonathärte = 21,8 mg/l HCO₃⁻
+       1 °dH              = 17,8 mg/l CaCO₃ (ppm)
+     ====================================================================== */
+
+  const F_CA = 7.14, F_MG = 4.34, F_HCO3 = 21.8, F_PPM = 17.8;
+
+  /* Zielbereiche in °dH. Grundlage ist der SCA Water Standard, aufgeteilt
+     nach Zubereitung: Filter darf weicher sein, Espresso braucht etwas mehr
+     Puffer, auch zum Schutz der Maschine. Es sind Richtbereiche, keine
+     Grenzwerte. */
+  /* Farbzuordnung wie in der Rösterei: Filterkaffee trägt Redorange,
+     Espresso Cyanblau. */
+  const ZIELE = {
+    filter:   { gh: [2.5, 7.0], kh: [0.5, 3.5], farbe: '#FF4612', name: 'Filterkaffee' },
+    espresso: { gh: [3.5, 8.5], kh: [2.0, 5.0], farbe: '#4FC4E2', name: 'Espresso' }
+  };
+
+  const ACHSE_MAX = 16;   // °dH auf beiden Achsen, deckt Schweizer Leitungswasser ab
+
+  /* In der Schweiz ist die französische Härte genauso verbreitet wie die
+     deutsche. Intern wird durchgehend in °dH gerechnet, nur die Anzeige
+     wechselt. 1 °fH = 0,56 °dH */
+  const EINHEITEN = {
+    dh: { kuerzel: '°dH', faktor: 1,      name: 'Deutsche Härte' },
+    fh: { kuerzel: '°fH', faktor: 1.7857, name: 'Französische Härte' }
+  };
+  let einheit = 'dh';
+
+  function imBereich(wert, spanne) {
+    return wert >= spanne[0] && wert <= spanne[1];
+  }
+
+  function wasserrechner() {
+    const eCa = document.getElementById('wert-calcium');
+    const eMg = document.getElementById('wert-magnesium');
+    const eHco = document.getElementById('wert-hydrogencarbonat');
+    if (!eCa) return;
+
+    const svg = document.getElementById('wasser-diagramm');
+    const punkt = svg && svg.querySelector('.eigenes-wasser');
+    const punktText = svg && svg.querySelector('.eigenes-wasser-text');
+
+    /* Vorlagen, damit man nicht bei null anfängt. */
+    const VORLAGEN = {
+      horgen:      { ca: 78,  mg: 12, hco3: 250, name: 'Leitungswasser Horgen' },
+      zuerich:     { ca: 45,  mg: 6,  hco3: 140, name: 'Leitungswasser Zürich' },
+      volvic:      { ca: 12,  mg: 8,  hco3: 71,  name: 'Volvic' },
+      evian:       { ca: 80,  mg: 26, hco3: 360, name: 'Evian' },
+      lauretana:   { ca: 1,   mg: 0.3, hco3: 4,  name: 'Lauretana' },
+      valser:      { ca: 420, mg: 62, hco3: 385, name: 'Valser' }
+    };
+
+    function rechne() {
+      const ca = Math.max(0, +eCa.value || 0);
+      const mg = Math.max(0, +eMg.value || 0);
+      const hco3 = Math.max(0, +eHco.value || 0);
+
+      const gh = ca / F_CA + mg / F_MG;
+      const kh = hco3 / F_HCO3;
+
+      // Werte in der gewählten Einheit anzeigen
+      const E = EINHEITEN[einheit];
+      document.getElementById('anzeige-gh').textContent =
+        (gh * E.faktor).toFixed(1) + ' ' + E.kuerzel;
+      document.getElementById('anzeige-kh').textContent =
+        (kh * E.faktor).toFixed(1) + ' ' + E.kuerzel;
+      document.getElementById('anzeige-ppm').textContent = Math.round(gh * F_PPM) + ' ppm';
+
+      // Punkt im Diagramm setzen
+      if (punkt) {
+        const x = 60 + Math.min(kh, ACHSE_MAX) / ACHSE_MAX * 380;
+        const y = 300 - Math.min(gh, ACHSE_MAX) / ACHSE_MAX * 260;
+        if (ruhig) { punkt.setAttribute('cx', x); punkt.setAttribute('cy', y); }
+        else gsap.to(punkt, { attr: { cx: x, cy: y }, duration: 0.6, ease: 'bw-aus', overwrite: true });
+        if (punktText) {
+          punktText.setAttribute('x', Math.min(x + 12, 400));
+          punktText.setAttribute('y', y - 10);
+        }
+      }
+
+      // Bewertung je Zubereitung
+      const treffer = {};
+      Object.keys(ZIELE).forEach((k) => {
+        const z = ZIELE[k];
+        treffer[k] = imBereich(gh, z.gh) && imBereich(kh, z.kh);
+        const marke = document.getElementById('treffer-' + k);
+        if (marke) {
+          marke.textContent = treffer[k] ? 'Im Zielbereich' : 'Ausserhalb';
+          marke.className = 'pill' + (treffer[k] ? ' pill--gefuellt' : '');
+          // Keine eigene Farbe setzen: Die Pille steht auf dem dunkelblauen
+          // Ergebnisfeld und erbt von dort Hellorange. Ein fest gesetztes
+          // Dunkelblau war auf diesem Grund unsichtbar.
+        }
+      });
+
+      // Urteil in Worten
+      const urteil = document.getElementById('wasser-urteil');
+      const rat = document.getElementById('wasser-rat');
+      if (!urteil) return;
+
+      if (treffer.filter && treffer.espresso) {
+        urteil.innerHTML = 'Dieses Wasser passt für <strong>beides</strong>. Filterkaffee und Espresso liegen im Zielbereich.';
+        rat.textContent = 'Nichts zu tun. Wenn Du eine Espressomaschine hast, entkalke sie trotzdem im üblichen Rhythmus.';
+      } else if (treffer.filter) {
+        urteil.innerHTML = 'Gut für <strong>Filterkaffee</strong>. Für Espresso ist es etwas zu weich.';
+        rat.textContent = 'Für die Espressomaschine wäre etwas mehr Karbonathärte besser, sonst kann der Espresso dünn und spitz wirken.';
+      } else if (treffer.espresso) {
+        urteil.innerHTML = 'Gut für <strong>Espresso</strong>. Für hellen Filterkaffee ist es einen Tick zu hart.';
+        rat.textContent = 'Für Pour Over lohnt sich ein Tischwasserfilter, dann kommen die Fruchtnoten klarer durch.';
+      } else if (kh > 5) {
+        urteil.innerHTML = 'Die <strong>Karbonathärte ist zu hoch</strong>. Sie puffert die Säuren weg, der Kaffee schmeckt flach.';
+        rat.textContent = 'Ein Wasserfilter mit Ionenaustauscher senkt gezielt die Karbonathärte. Für die Espressomaschine ist er hier praktisch Pflicht.';
+      } else if (gh < 2) {
+        urteil.innerHTML = 'Sehr <strong>mineralarm</strong>. Ohne Mineralien fehlt dem Kaffee der Körper.';
+        rat.textContent = 'Destilliertes oder sehr weiches Wasser ergibt dünnen, oft sauren Kaffee. Hier hilft Aufmineralisieren, etwa mit Mineralkonzentrat.';
+      } else {
+        urteil.innerHTML = 'Ausserhalb der beiden Zielbereiche, aber <strong>nicht dramatisch</strong>.';
+        rat.textContent = 'Probier es einfach aus. Wenn der Kaffee flach schmeckt, liegt es meist an zu hoher Karbonathärte.';
+      }
+    }
+
+    [eCa, eMg, eHco].forEach(el => el.addEventListener('input', rechne));
+
+    const vorlage = document.getElementById('wasser-vorlage');
+    if (vorlage) {
+      vorlage.innerHTML = '<option value="">Eigene Werte eingeben</option>' +
+        Object.keys(VORLAGEN).map(k => `<option value="${k}">${VORLAGEN[k].name}</option>`).join('');
+
+      vorlage.addEventListener('change', () => {
+        const v = VORLAGEN[vorlage.value];
+        if (!v) return;
+        eCa.value = v.ca; eMg.value = v.mg; eHco.value = v.hco3;
+        rechne();
+      });
+    }
+
+    /* Achsenbeschriftung wird gezeichnet, nicht fest im Markup gesetzt,
+       damit sie beim Wechsel auf französische Härte mitwandert. */
+    function achsenZeichnen() {
+      if (!svg) return;
+      const E = EINHEITEN[einheit];
+      const schritte = einheit === 'fh' ? [0, 5, 10, 15, 20, 25] : [0, 2, 4, 6, 8, 10, 12, 14, 16];
+
+      const x = svg.querySelector('#achse-x');
+      const y = svg.querySelector('#achse-y');
+      const raster = svg.querySelector('#raster');
+
+      const alsDh = (w) => w / E.faktor;   // Anzeigewert zurück in °dH
+
+      if (x) {
+        x.innerHTML = schritte
+          .filter(w => alsDh(w) <= ACHSE_MAX)
+          .map(w => `<text x="${(60 + alsDh(w) / ACHSE_MAX * 380).toFixed(1)}" y="320">${w}</text>`)
+          .join('');
+      }
+      if (y) {
+        y.innerHTML = schritte
+          .filter(w => alsDh(w) <= ACHSE_MAX)
+          .map(w => `<text x="50" y="${(304 - alsDh(w) / ACHSE_MAX * 260).toFixed(1)}">${w}</text>`)
+          .join('');
+      }
+      if (raster) {
+        raster.innerHTML = schritte
+          .filter(w => alsDh(w) <= ACHSE_MAX)
+          .map((w) => {
+            const px = (60 + alsDh(w) / ACHSE_MAX * 380).toFixed(1);
+            const py = (300 - alsDh(w) / ACHSE_MAX * 260).toFixed(1);
+            return `<line x1="60" y1="${py}" x2="440" y2="${py}"/>` +
+                   `<line x1="${px}" y1="40" x2="${px}" y2="300"/>`;
+          }).join('');
+      }
+
+      const xt = svg.querySelector('#achse-x-titel');
+      const yt = svg.querySelector('#achse-y-titel');
+      if (xt) xt.textContent = `Karbonathärte KH in ${E.kuerzel}`;
+      if (yt) yt.textContent = `Gesamthärte GH in ${E.kuerzel}`;
+    }
+
+    const einheitWahl = document.getElementById('haerte-einheit');
+    if (einheitWahl) {
+      einheitWahl.addEventListener('change', () => {
+        einheit = einheitWahl.value;
+        achsenZeichnen();
+        rechne();
+      });
+    }
+
+    achsenZeichnen();
+
+    // Zielbereiche als Rechtecke ins Diagramm zeichnen
+    if (svg) {
+      const gruppe = svg.querySelector('.zielbereiche');
+      if (gruppe) {
+        gruppe.innerHTML = Object.keys(ZIELE).map((k) => {
+          const z = ZIELE[k];
+          const x = 60 + z.kh[0] / ACHSE_MAX * 380;
+          const b = (z.kh[1] - z.kh[0]) / ACHSE_MAX * 380;
+          const y = 300 - z.gh[1] / ACHSE_MAX * 260;
+          const h = (z.gh[1] - z.gh[0]) / ACHSE_MAX * 260;
+          return `<rect x="${x}" y="${y}" width="${b}" height="${h}" rx="6"
+                        fill="${z.farbe}" opacity=".18" stroke="${z.farbe}"
+                        stroke-width="2" stroke-dasharray="5 4"/>
+                  <text x="${x + 7}" y="${y + 19}" fill="${z.farbe}"
+                        style="font:700 13px Gabarito,sans-serif">${z.name}</text>`;
+        }).join('');
+      }
+    }
+
+    rechne();
+  }
+
+  /* ======================================================================
+     Brüh-Timer
+     Läuft über eine GSAP-Timeline statt über setInterval, damit er
+     denselben Ticker nutzt wie alles andere und beim Pausieren sauber steht.
+     ====================================================================== */
+  /* Der Abschlusstext hing fest am Filterkaffee. Espresso-Guides brauchen
+     einen eigenen, deshalb als zweites Argument überschreibbar. */
+  const TIMER_ENDE = 'Trichter abnehmen, umrühren, probieren. Wie ist es geworden?';
+
+  function brewTimer(phasen, schlusstext) {
+    const uhr = document.getElementById('timer-uhr');
+    const phase = document.getElementById('timer-phase');
+    const anweisung = document.getElementById('timer-anweisung');
+    const fuellung = document.querySelector('#timer-spur .fuellung');
+    const start = document.getElementById('timer-start');
+    const zurueck = document.getElementById('timer-zurueck');
+    if (!uhr || !phasen || !phasen.length) return;
+
+    const gesamt = phasen[phasen.length - 1].bis;
+    const stand = { s: 0 };
+    let laeuft = false;
+
+    function zeige(sekunden) {
+      const m = Math.floor(sekunden / 60);
+      const s = Math.floor(sekunden % 60);
+      uhr.textContent = `${m}:${String(s).padStart(2, '0')}`;
+
+      const aktuell = phasen.find(p => sekunden < p.bis) || phasen[phasen.length - 1];
+      phase.textContent = aktuell.name;
+      anweisung.textContent = aktuell.text;
+      if (fuellung) fuellung.style.transform = `scaleX(${sekunden / gesamt})`;
+    }
+
+    const tl = gsap.to(stand, {
+      s: gesamt,
+      duration: gesamt,
+      ease: 'none',
+      paused: true,
+      onUpdate: () => zeige(stand.s),
+      onComplete: () => {
+        laeuft = false;
+        start.textContent = 'Nochmal';
+        phase.textContent = 'Fertig';
+        anweisung.textContent = schlusstext || TIMER_ENDE;
+      }
+    });
+
+    start.addEventListener('click', () => {
+      if (tl.progress() === 1) {
+        tl.restart(); tl.pause(); stand.s = 0; zeige(0);
+      }
+      laeuft = !laeuft;
+      if (laeuft) { tl.play(); start.textContent = 'Pause'; }
+      else { tl.pause(); start.textContent = 'Weiter'; }
+    });
+
+    zurueck.addEventListener('click', () => {
+      tl.pause(0);
+      stand.s = 0;
+      laeuft = false;
+      start.textContent = 'Start';
+      zeige(0);
+    });
+
+    zeige(0);
+  }
+
+  return { koffeinrechner, wasserrechner, brewTimer, GETRAENKE, ZIELE, mgVon };
+})();
