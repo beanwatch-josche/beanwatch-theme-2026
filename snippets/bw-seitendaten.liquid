@@ -19,8 +19,13 @@
 <script>
   window.BW_SEITE = {{ bw_seite | json }};
   window.BW_PLAN = {
+    {%- comment -%} Fehlt ein Blog, bleibt sein Eintrag {} (nichts sichtbar). {%- endcomment -%}
     {%- for h in guide_blogs -%}
-      {{ h | json }}: { {%- for a in blogs[h].articles -%}{{ a.handle | json }}: "sichtbar"{%- unless forloop.last -%}, {% endunless -%}{%- endfor -%} }{%- unless forloop.last -%}, {% endunless -%}
+      {{ h | json }}: {
+        {%- if blogs[h] != blank -%}
+          {%- for a in blogs[h].articles -%}{%- if a.handle != blank -%}{{ a.handle | json }}: "sichtbar", {% endif -%}{%- endfor -%}
+        {%- endif -%}
+      }{%- unless forloop.last -%}, {% endunless -%}
     {%- endfor -%}
   };
   window.BW_ROUTEN = {

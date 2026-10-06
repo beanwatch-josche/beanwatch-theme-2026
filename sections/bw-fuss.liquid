@@ -56,7 +56,17 @@
           {%- if blogs['kaffeerezepte'] != blank %}
           <li><a href="{{ blogs['kaffeerezepte'].url }}">{{ 'fuss.kaffeerezepte' | t }}</a></li>
           {%- endif %}
-          {%- if blogs['brew-guides'].articles_count > 0 %}
+          {%- comment -%}
+            Fehlt der Blog, liefert Shopify für articles_count einen leeren
+            Text, und «> 0» bricht ab. Deshalb zuerst auf blank prüfen.
+          {%- endcomment -%}
+          {%- liquid
+            assign anzahl_guides = 0
+            if blogs['brew-guides'] != blank
+              assign anzahl_guides = blogs['brew-guides'].articles_count | plus: 0
+            endif
+          -%}
+          {%- if anzahl_guides > 0 %}
           <li><a href="{{ blogs['brew-guides'].url }}">{{ 'fuss.brew_guides' | t }}</a></li>
           {%- endif %}
           {%- if pages['tools'] != blank %}
