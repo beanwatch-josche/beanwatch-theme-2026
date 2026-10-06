@@ -17,10 +17,20 @@ window.BWWissen = (function () {
   // der Entwurfsansicht. Ohne start.js steht alles wie bisher.
   const eintrag = (b) => !window.BWStart || BWStart.eintrag(b);
 
+  // Im Shopify-Theme liefert Liquid den Bestand als JSON-Block
+  // <script type="application/json" id="bw-beitraege"> (Snippet
+  // bw-beitraege-daten), mit übersetzten Labels. Ohne den Block gilt die
+  // Liste unten, so wie im Prototyp.
+  const DATEN = (function () {
+    const el = document.getElementById('bw-beitraege');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  })();
+
   /* art:    wissen | rezept | guide | tool
      themen: für die Filterleiste
      stand:  live | geplant                                                */
-  const BEITRAEGE = [
+  const BEITRAEGE = (DATEN && DATEN.beitraege) || [
 
     /* ---------- Brew Guides (neu, gibt es bisher nicht) ---------- */
     {
@@ -336,6 +346,11 @@ window.BWWissen = (function () {
     { schluessel: 'grundlagen',  titel: 'Grundlagen' }
   ];
 
+  // Übersetzte Labels aus dem Theme, sonst Deutsch wie oben.
+  const TEXTE = (DATEN && DATEN.texte) || {};
+  Object.keys(ARTEN).forEach((k) => { if (TEXTE.arten && TEXTE.arten[k]) ARTEN[k].label = TEXTE.arten[k]; });
+  FILTER.forEach((f) => { if (TEXTE.filter && TEXTE.filter[f.schluessel]) f.titel = TEXTE.filter[f.schluessel]; });
+
   /* ------------------------------------------------------------------
      Eine Karte bauen
      ------------------------------------------------------------------ */
@@ -424,7 +439,7 @@ window.BWWissen = (function () {
     const einsetzen = () => {
       rasterEl.innerHTML = treffer.length
         ? treffer.map(karte).join('')
-        : '<p style="opacity:.7">Zu diesem Filter gibt es noch nichts. Kommt aber.</p>';
+        : `<p style="opacity:.7">${TEXTE.leer || 'Zu diesem Filter gibt es noch nichts. Kommt aber.'}</p>`;
 
       if (ruhig) return;
       gsap.fromTo(rasterEl.children,

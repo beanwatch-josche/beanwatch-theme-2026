@@ -23,7 +23,11 @@ Das Konzept zum Umzug steht in der Werkstatt: `beanwatch-website-2026/MIGRATION-
 | `sections/bw-kopf.liquid`, `bw-fuss.liquid` | Kopfleiste und Fuss, übertragen aus `shell.js` der Werkstatt. Navigation fest im Code (Entscheid 05.10.2026) |
 | `sections/header-group.json`, `footer-group.json` | Die Gruppen, in denen Kopf und Fuss stehen |
 | `sections/bw-rezept.liquid` | **Rezeptseite** (Vorlage `article.rezept`, seit 0.2.0), übertragen aus `werkzeug/rezepte-bauen.rb` der Werkstatt. Liest Metafelder und Metaobjekte der Rezepte, siehe Kommentar oben in der Datei |
-| `snippets/bw-rezept-*.liquid`, `bw-zahl`, `bw-datum` | Teile der Rezeptseite: strukturierte Daten (Recipe, Breadcrumb, FAQ), Nährwerte, Rezeptkarte, Symbole, Zahlen und Daten in der Sprache der Seite |
+| `snippets/bw-rezept-*.liquid`, `bw-zahl`, `bw-datum` | Teile der Rezeptseite: strukturierte Daten (Recipe, Breadcrumb, FAQ), Nährwerte, Symbole, Zahlen und Daten in der Sprache der Seite |
+| `sections/bw-rezepte.liquid` | **Rezeptübersicht** (Vorlage `blog.rezept-template`, seit 0.3.0), übertragen aus `rezepte.html` der Werkstatt. Kopf, Filterleiste und Raster aus `wissen.js`, Band zum Shop, Schema BreadcrumbList und ItemList |
+| `snippets/bw-beitrag.liquid` | Ein Beitrag als Karte (wie `BWWissen.karte`) oder als JSON-Eintrag. Kurztitel, Teaser und Themen aus den Metafeldern `custom.kurztitel`, `custom.teaser`, `custom.themen` (seit 06.10.2026), sonst Titel und Auszug |
+| `snippets/bw-beitraege-daten.liquid` | Der Bestand für `wissen.js` als JSON-Block `#bw-beitraege`: alle veröffentlichten Artikel der Blogs mit übersetzten Labels. Ohne den Block nimmt `wissen.js` seine feste Liste wie im Prototyp |
+| `snippets/bw-dauer.liquid` | Dauer eines Rezepts für Karten aus der ISO-Zeit, Regeln wie `teaser-abgleichen.rb` |
 | `sections/bw-*.liquid` (übrige) | Die Vorlagen der übrigen Seitentypen. Heute noch **Rohbau**: echte Inhalte, Preise und Warenkorb, aber noch ohne das Design aus dem Prototyp. Erkennbar an der gelben Marke «Rohbau» |
 | `sections/bw-warenkorb-seite.liquid` | Warenkorbseite `/cart`, funktioniert auch ohne JavaScript |
 | `snippets/bw-warenkorb.liquid` | Die Warenkorb-Schublade, gefüllt von `bw-theme.js` |
@@ -40,7 +44,7 @@ Shopify-Admin → Onlineshop → Themes → bei diesem Theme «…» → **Stand
 
 ### Übersetzte Texte in Liquid
 
-Shopify gibt Texte aus `| t` schon maskiert aus, ausser der Schlüssel endet auf `_html` (etwa `rezept.aktualisiert_html` mit dem `<time>`-Element). Nach `| t` deshalb nie `| escape`, sonst steht `&amp;#39;` im Text. Texte für Skripte (Portionen, Bewertung) stehen als `data-text-*` am Element; ohne sie fallen die Skripte auf Deutsch zurück.
+Shopify gibt Texte aus `| t` schon maskiert aus, ausser der Schlüssel endet auf `_html` (etwa `rezept.aktualisiert_html` mit dem `<time>`-Element). Nach `| t` deshalb nie `| escape`, sonst steht `&amp;#39;` im Text. Texte für Skripte (Portionen, Bewertung) stehen als `data-text-*` am Element; ohne sie fallen die Skripte auf Deutsch zurück. Für `wissen.js` stehen sie unter `texte` im Datenblock.
 
 ### Start-Modus im Theme
 

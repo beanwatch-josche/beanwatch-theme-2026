@@ -432,7 +432,7 @@
     {%- endfor -%}
     {%- if passt -%}
       {%- assign treffer = treffer | plus: 1 -%}
-      {% render 'bw-rezept-karte', a: a %}
+      {% render 'bw-beitrag', a: a, art: 'rezept' %}
     {%- endif -%}
   {%- endfor -%}
 {%- endcapture -%}

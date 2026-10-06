@@ -3,7 +3,11 @@
     "zum_inhalt": "Zum Inhalt springen",
     "seite": "Seite {{ nummer }}",
     "monate": "Januar,Februar,März,April,Mai,Juni,Juli,August,September,Oktober,November,Dezember",
-    "datum_lang": "{{ tag }}. {{ monat }} {{ jahr }}"
+    "datum_lang": "{{ tag }}. {{ monat }} {{ jahr }}",
+    "dauer_minuten": "{{ n }} Minuten",
+    "dauer_stunden": "{{ n }} Stunden",
+    "dauer_std": "{{ h }} Std.",
+    "dauer_std_min": "{{ h }} Std. {{ m }} Min."
   },
   "kopf": {
     "espresso": "Espresso",
@@ -130,5 +134,35 @@
     "lade_fehler": "Bewertung konnte nicht geladen werden.",
     "speicher_fehler": "Bewertung konnte nicht gespeichert werden.",
     "dezimal": ","
+  },
+  "beitraege": {
+    "art_wissen": "Wissen",
+    "art_rezept": "Rezept",
+    "art_guide": "Brew Guide",
+    "art_baristaguide": "Barista Guide",
+    "art_tool": "Tool",
+    "filter_alle": "Alles",
+    "filter_art_wissen": "Artikel",
+    "filter_art_rezept": "Rezepte",
+    "filter_art_guide": "Brew Guides",
+    "filter_art_baristaguide": "Barista Guides",
+    "filter_art_tool": "Tools",
+    "filter_espresso": "Espresso",
+    "filter_filter": "Filterkaffee",
+    "filter_milch": "Milch",
+    "filter_kalt": "Kalte Drinks",
+    "filter_koffein": "Koffein",
+    "filter_grundlagen": "Grundlagen",
+    "leer": "Zu diesem Filter gibt es noch nichts. Kommt aber.",
+    "lesezeit": "{{ n }} Min."
+  },
+  "rezepte": {
+    "eyebrow": "Kaffeerezepte",
+    "titel": "Coole Ideen für heisse Tage.",
+    "lead": "Hole mehr aus unseren Bohnen heraus. Julia zeigt Dir Schritt für Schritt, wie es geht, und wir sagen Dir dazu, welche Bohne am besten passt.",
+    "band_eyebrow": "Fehlt noch die Bohne?",
+    "band_titel_html": "Fruchtig wirkt<br>in kalten Drinks.",
+    "band_text": "Für Espresso Tonic und Freddo nimm einen anaerob aufbereiteten Kaffee. Der Guji Megadu bringt Kirsche und Erdbeere mit, die durch das Eis tragen.",
+    "band_knopf": "Bohnen ansehen"
   }
 }

@@ -3,7 +3,11 @@
     "zum_inhalt": "Aller au contenu",
     "seite": "Page {{ nummer }}",
     "monate": "janvier,février,mars,avril,mai,juin,juillet,août,septembre,octobre,novembre,décembre",
-    "datum_lang": "{{ tag }} {{ monat }} {{ jahr }}"
+    "datum_lang": "{{ tag }} {{ monat }} {{ jahr }}",
+    "dauer_minuten": "{{ n }} minutes",
+    "dauer_stunden": "{{ n }} heures",
+    "dauer_std": "{{ h }} h",
+    "dauer_std_min": "{{ h }} h {{ m }} min"
   },
   "kopf": {
     "espresso": "Espresso",
@@ -130,5 +134,35 @@
     "lade_fehler": "Impossible de charger les avis.",
     "speicher_fehler": "Impossible d’enregistrer ton avis.",
     "dezimal": ","
+  },
+  "beitraege": {
+    "art_wissen": "Savoir",
+    "art_rezept": "Recette",
+    "art_guide": "Brew Guide",
+    "art_baristaguide": "Barista Guide",
+    "art_tool": "Outil",
+    "filter_alle": "Tout",
+    "filter_art_wissen": "Articles",
+    "filter_art_rezept": "Recettes",
+    "filter_art_guide": "Brew Guides",
+    "filter_art_baristaguide": "Barista Guides",
+    "filter_art_tool": "Outils",
+    "filter_espresso": "Espresso",
+    "filter_filter": "Café filtre",
+    "filter_milch": "Lait",
+    "filter_kalt": "Boissons froides",
+    "filter_koffein": "Caféine",
+    "filter_grundlagen": "Bases",
+    "leer": "Rien pour ce filtre pour le moment. Ça arrive.",
+    "lesezeit": "{{ n }} min"
+  },
+  "rezepte": {
+    "eyebrow": "Recettes de café",
+    "titel": "Des idées fraîches pour les jours chauds.",
+    "lead": "Tire le meilleur de nos grains. Julia te montre comment, étape par étape, et nous te disons quel grain convient le mieux.",
+    "band_eyebrow": "Il te manque les grains ?",
+    "band_titel_html": "Le fruité brille<br>dans les boissons froides.",
+    "band_text": "Pour l’Espresso Tonic et le Freddo, choisis un café à fermentation anaérobie. Le Guji Megadu apporte cerise et fraise, qui traversent la glace.",
+    "band_knopf": "Voir les grains"
   }
 }

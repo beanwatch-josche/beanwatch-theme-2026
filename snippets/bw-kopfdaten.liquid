@@ -15,6 +15,15 @@
     assign seite = 'allgemein.seite' | t: nummer: current_page
     assign titel = titel | append: ' · ' | append: seite
   endif
+  comment
+    Getaggte Blogseiten (/blogs/kaffeerezepte/tagged/…) zeigen auf die
+    Blogseite, wie im bisherigen Shop. Sonst zählt Google jede Tag-Seite
+    als eigene Seite mit fast gleichem Inhalt.
+  endcomment
+  assign kanonisch = canonical_url
+  if request.page_type == 'blog' and current_tags
+    assign kanonisch = request.origin | append: blog.url
+  endif
   if request.page_type == 'index'
     assign voll = shop.name
   elsif titel contains marke
@@ -27,14 +36,14 @@
 {%- if page_description != blank %}
 <meta name="description" content="{{ page_description | escape }}">
 {%- endif %}
-<link rel="canonical" href="{{ canonical_url }}">
+<link rel="canonical" href="{{ kanonisch }}">
 {%- if settings.favicon != blank %}
 <link rel="icon" href="{{ settings.favicon | image_url: width: 64 }}">
 {%- else %}
 <link rel="icon" href="{{ 'logo-redorange-signet.svg' | asset_url }}" type="image/svg+xml">
 {%- endif %}
 <meta property="og:site_name" content="{{ shop.name | escape }}">
-<meta property="og:url" content="{{ canonical_url }}">
+<meta property="og:url" content="{{ kanonisch }}">
 <meta property="og:title" content="{{ voll | escape }}">
 <meta property="og:type" content="{% if request.page_type == 'product' %}product{% elsif request.page_type == 'article' %}article{% else %}website{% endif %}">
 <meta property="og:description" content="{{ page_description | default: shop.description | escape }}">

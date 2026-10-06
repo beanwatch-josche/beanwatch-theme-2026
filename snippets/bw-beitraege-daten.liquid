@@ -1,0 +1,40 @@
+{%- comment -%}
+  Der Bestand für wissen.js (BWWissen.raster, BWBeitrag.verwandte) als
+  JSON-Block. Im Prototyp steht dieselbe Liste fest in wissen.js
+  (BEITRAEGE); liegt dieser Block in der Seite, nimmt wissen.js ihn.
+
+  Reihenfolge wie im Prototyp: Brew Guides, Barista Guides, Wissen,
+  Rezepte, je neuste zuerst. blogs[…].articles liefert nur Veröffentlichtes,
+  ein fehlender Blog liefert nichts. Tools kommen mit ihren Seiten.
+
+  texte  übersetzte Labels für Arten, Filter und den Leertext.
+  Aufruf: {%- render 'bw-beitraege-daten' -%}
+{%- endcomment -%}
+{%- liquid
+  assign quellen = 'brew-guides:guide,barista-guides:baristaguide,kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  assign arten = 'wissen,rezept,guide,baristaguide,tool' | split: ','
+  assign filter = 'alle,art:wissen,art:rezept,art:guide,art:baristaguide,art:tool,espresso,filter,milch,kalt,koffein,grundlagen' | split: ','
+  assign erste = true
+-%}
+<script type="application/json" id="bw-beitraege">
+{"beitraege":[
+{%- for q in quellen -%}
+  {%- assign teile = q | split: ':' -%}
+  {%- for a in blogs[teile[0]].articles -%}
+    {%- unless erste %},{% endunless -%}
+    {%- render 'bw-beitrag', a: a, art: teile[1], modus: 'json' -%}
+    {%- assign erste = false -%}
+  {%- endfor -%}
+{%- endfor -%}
+],"texte":{"arten":{
+{%- for k in arten -%}
+  {%- assign schluessel = 'beitraege.art_' | append: k -%}
+  {{ k | json }}:{{ schluessel | t | json }}{% unless forloop.last %},{% endunless %}
+{%- endfor -%}
+},"filter":{
+{%- for f in filter -%}
+  {%- assign schluessel = 'beitraege.filter_' | append: f | replace: ':', '_' -%}
+  {{ f | json }}:{{ schluessel | t | json }}{% unless forloop.last %},{% endunless %}
+{%- endfor -%}
+},"leer":{{ 'beitraege.leer' | t | json }}}}
+</script>

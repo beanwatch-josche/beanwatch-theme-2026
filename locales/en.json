@@ -3,7 +3,11 @@
     "zum_inhalt": "Skip to content",
     "seite": "Page {{ nummer }}",
     "monate": "January,February,March,April,May,June,July,August,September,October,November,December",
-    "datum_lang": "{{ monat }} {{ tag }}, {{ jahr }}"
+    "datum_lang": "{{ monat }} {{ tag }}, {{ jahr }}",
+    "dauer_minuten": "{{ n }} minutes",
+    "dauer_stunden": "{{ n }} hours",
+    "dauer_std": "{{ h }} hr",
+    "dauer_std_min": "{{ h }} hr {{ m }} min"
   },
   "kopf": {
     "espresso": "Espresso",
@@ -130,5 +134,35 @@
     "lade_fehler": "Ratings could not be loaded.",
     "speicher_fehler": "Your rating could not be saved.",
     "dezimal": "."
+  },
+  "beitraege": {
+    "art_wissen": "Knowledge",
+    "art_rezept": "Recipe",
+    "art_guide": "Brew Guide",
+    "art_baristaguide": "Barista Guide",
+    "art_tool": "Tool",
+    "filter_alle": "All",
+    "filter_art_wissen": "Articles",
+    "filter_art_rezept": "Recipes",
+    "filter_art_guide": "Brew Guides",
+    "filter_art_baristaguide": "Barista Guides",
+    "filter_art_tool": "Tools",
+    "filter_espresso": "Espresso",
+    "filter_filter": "Filter coffee",
+    "filter_milch": "Milk",
+    "filter_kalt": "Cold drinks",
+    "filter_koffein": "Caffeine",
+    "filter_grundlagen": "Basics",
+    "leer": "Nothing here yet for this filter. It is on its way.",
+    "lesezeit": "{{ n }} min"
+  },
+  "rezepte": {
+    "eyebrow": "Coffee recipes",
+    "titel": "Cool ideas for hot days.",
+    "lead": "Get more out of our beans. Julia shows you how, step by step, and we tell you which bean suits it best.",
+    "band_eyebrow": "Still missing the beans?",
+    "band_titel_html": "Fruity works<br>in cold drinks.",
+    "band_text": "For Espresso Tonic and Freddo, choose an anaerobically processed coffee. Guji Megadu brings cherry and strawberry that carry through the ice.",
+    "band_knopf": "See the beans"
   }
 }

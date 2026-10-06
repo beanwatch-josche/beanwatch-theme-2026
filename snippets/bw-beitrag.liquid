@@ -1,0 +1,88 @@
+{%- comment -%}
+  Ein Beitrag (Artikel oder Rezept) als Karte oder als JSON-Eintrag für
+  wissen.js. Beide Fassungen rechnen hier dieselben Werte, damit die Karte
+  aus Liquid und die Karte aus BWWissen.karte gleich aussehen.
+
+  a       der Artikel
+  art     wissen | rezept | guide | baristaguide (kommt vom Blog, denn
+          ein Artikel kennt seinen Blog in Liquid nicht)
+  modus   'json' für den Datenblock, sonst die Karte
+
+  Felder wie im Prototyp (BEITRAEGE in wissen.js):
+    titel      custom.kurztitel, sonst der Artikeltitel
+    text       custom.teaser, sonst der Auszug
+    themen     custom.themen
+    datum      Veröffentlichung
+    dauer      Rezept: aus der ISO-Zeit (bw-dauer); Artikel: Lesezeit,
+               200 Wörter je Minute wie artikel-holen.rb. split: ' '
+               trennt in Shopify an jedem Leerraum (wie Ruby), das
+               Leerzeichen vor «<» hält Wörter an Tag-Grenzen auseinander.
+    bewertung  nur mit Stimmen
+
+  Aufruf: {%- render 'bw-beitrag', a: artikel, art: 'rezept' -%}
+          {%- render 'bw-beitrag', a: artikel, art: 'wissen', modus: 'json' -%}
+{%- endcomment -%}
+{%- liquid
+  assign mf = a.metafields.custom
+  assign titel = mf.kurztitel.value | default: a.title
+  assign text = mf.teaser.value
+  if text == blank
+    assign text = a.excerpt | default: a.content | strip_html | strip | truncatewords: 18
+  endif
+  assign themen = mf.themen.value
+
+  capture datum
+    render 'bw-datum', datum: a.published_at
+  endcapture
+  assign datum = datum | strip
+
+  if art == 'rezept'
+    assign basis = mf.recipe_base.value
+    assign iso = basis.iso_total_time.value | default: basis.prep_time_iso.value
+    capture dauer
+      render 'bw-dauer', iso: iso
+    endcapture
+  else
+    assign woerter = a.content | replace: '<', ' <' | strip_html | split: ' ' | size
+    assign lesezeit = woerter | divided_by: 200.0 | round | at_least: 1
+    assign dauer = 'beitraege.lesezeit' | t: n: lesezeit
+  endif
+  assign dauer = dauer | strip
+
+  assign anzahl = mf.rating_count.value | default: 0 | plus: 0
+  assign bewertung = ''
+  if anzahl > 0 and mf.rating_average.value != blank
+    capture bewertung
+      render 'bw-zahl', wert: mf.rating_average.value, stellen: 1
+    endcapture
+  endif
+
+  assign art_schluessel = 'beitraege.art_' | append: art
+  assign art_klasse = art
+  if art == 'baristaguide'
+    assign art_klasse = 'guide'
+  endif
+-%}
+{%- if modus == 'json' -%}
+{"art":{{ art | json }},"titel":{{ titel | json }},"text":{{ text | json }},"themen":{{ themen | json }},"datum":{{ datum | json }},"dauer":{{ dauer | json }},"bewertung":{% if bewertung != blank %}{{ bewertung | json }}{% else %}null{% endif %},"ziel":{{ a.url | json }},"bild":{% if a.image %}{{ a.image | image_url: width: 640 | json }}{% else %}null{% endif %},"stand":"live"}
+{%- else -%}
+<a class="beitrag" href="{{ a.url }}" data-art="{{ art }}" data-themen="{{ themen | join: ' ' }}">
+  {%- if a.image %}
+  <span class="beitrag-bild">{{ a.image | image_url: width: 640 | image_tag: loading: 'lazy', widths: '320, 480, 640', sizes: '(min-width: 900px) 30vw, 100vw', alt: '' }}</span>
+  {%- else %}
+  <span class="beitrag-bild ist-leer"><svg viewBox="0 0 24 24" fill="none" stroke="#004B5C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+  {%- endif %}
+  <span class="beitrag-koerper">
+    <span class="beitrag-art beitrag-art--{{ art_klasse }}"><i class="punkt"></i>{{ art_schluessel | t }}</span>
+    <h3>{{ titel | escape }}</h3>
+    <p>{{ text | escape }}</p>
+    <span class="fusszeile"><span>{{ datum | default: dauer }}</span>
+      {%- if bewertung != blank -%}
+      <span>★ {{ bewertung }}</span>
+      {%- else -%}
+      <span>{{ dauer }}</span>
+      {%- endif -%}
+    </span>
+  </span>
+</a>
+{%- endif -%}
