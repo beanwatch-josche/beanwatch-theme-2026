@@ -1,7 +1,8 @@
 /* ==========================================================================
    Beanwatch · Produktseite
-   Galerie, Geschmacksnoten, Mahlgradwahl und die beiden Meter für Röstgrad
-   und Geschmacksprofil.
+   Galerie, Geschmacksnoten, Kaufwahl (einmal oder im Abo), Mahlgradwahl
+   (nur noch im Kaffeefinder) und die beiden Meter für Röstgrad und
+   Geschmacksprofil.
    ========================================================================== */
 
 window.BWProdukt = (function () {
@@ -89,6 +90,43 @@ window.BWProdukt = (function () {
   }
 
   /* ------------------------------------------------------------------
+     Kaufwahl: einmal kaufen oder im Abo (seit 06.10.2026)
+     Die gewählte Karte wird hervorgehoben, das Intervall erscheint nur
+     beim Abo, und die Preiszeile zeigt Preis und Grundpreis der Wahl. Im Theme steht
+     im Formular ein Feld selling_plan; dorthin kommt die Plan-ID aus dem
+     Intervall. Bei «Einmal» bleibt es leer und gesperrt, damit es nicht
+     mitgeschickt wird. Im Prototyp fehlt das Feld.
+     ------------------------------------------------------------------ */
+  function kaufwahl() {
+    const box = document.getElementById('kaufwahl');
+    if (!box) return;
+    const form = box.closest('form');
+    const planFeld = form && form.querySelector('input[name="selling_plan"]');
+    const intervall = box.querySelector('.kaufwahl-intervall');
+    const auswahl = intervall && intervall.querySelector('select');
+    const preis = document.querySelector('[data-kaufwahl-preis]');
+    const grundpreis = document.querySelector('[data-kaufwahl-grundpreis]');
+
+    const setzen = () => {
+      const gewaehlt = box.querySelector('input[name="kaufart"]:checked');
+      const option = gewaehlt && gewaehlt.closest('.kaufwahl-option');
+      const abo = !!gewaehlt && gewaehlt.value === 'abo';
+      box.querySelectorAll('.kaufwahl-option').forEach((o) => o.classList.toggle('ist-aktiv', o === option));
+      if (intervall) intervall.hidden = !abo;
+      if (planFeld) {
+        planFeld.value = abo && auswahl ? auswahl.value : '';
+        planFeld.disabled = !planFeld.value;
+      }
+      const p = option && option.querySelector('.kaufwahl-preis');
+      if (preis && p) preis.textContent = p.textContent;
+      if (grundpreis && option && option.dataset.grundpreis) grundpreis.textContent = option.dataset.grundpreis;
+    };
+
+    box.addEventListener('change', setzen);
+    setzen();
+  }
+
+  /* ------------------------------------------------------------------
      Meter für Röstgrad und Profil
      Die Stufen füllen sich nacheinander, sobald die Karte sichtbar wird.
      ------------------------------------------------------------------ */
@@ -127,8 +165,9 @@ window.BWProdukt = (function () {
     galerie();
     noten();
     mahlgrad();
+    kaufwahl();
     meter();
   }
 
-  return { start, galerie, noten, mahlgrad, meter };
+  return { start, galerie, noten, mahlgrad, kaufwahl, meter };
 })();

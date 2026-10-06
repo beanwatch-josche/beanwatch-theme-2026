@@ -1,0 +1,12 @@
+{%- comment -%}
+  Mehrzeiliger Text aus dem Shop (multi_line_text_field) als Absätze:
+  jede nicht leere Zeile wird ein <p>.
+  Aufruf: {%- render 'bw-absaetze', text: mf.kaffeeursprung_beschreibung.value -%}
+{%- endcomment -%}
+{%- assign zeilen = text | newline_to_br | split: '<br />' -%}
+{%- for z in zeilen -%}
+  {%- assign z = z | strip -%}
+  {%- if z != blank %}
+<p>{{ z | escape }}</p>
+  {%- endif -%}
+{%- endfor -%}

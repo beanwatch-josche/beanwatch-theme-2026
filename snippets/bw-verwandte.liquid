@@ -1,0 +1,35 @@
+{%- comment -%}
+  «Passt dazu» in Liquid, wie BWBeitrag.verwandte im Prototyp: die ersten
+  Beiträge, die die meisten Themen teilen, in der Reihenfolge des Bestands
+  (wie bw-beitraege-daten: Brew Guides, Barista Guides, Wissen, Rezepte, je
+  neuste zuerst). Liquid zeichnet die Karten vor, für Google und ohne
+  JavaScript; beitrag.js zeichnet sie danach gleich neu und animiert sie.
+  Für zwei Themen: zuerst die Beiträge mit beiden, dann die mit einem.
+
+  themen   Liste, etwa ['espresso', 'milch']
+  anzahl   höchstens so viele Karten
+  Aufruf: {%- render 'bw-verwandte', themen: themen, anzahl: 3 -%}
+{%- endcomment -%}
+{%- liquid
+  assign quellen = 'brew-guides:guide,barista-guides:baristaguide,kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  assign gezeigt = 0
+  assign stufen = themen.size
+-%}
+{%- for stufe in (1..stufen) -%}
+  {%- assign noetig = stufen | plus: 1 | minus: stufe -%}
+  {%- for q in quellen -%}
+    {%- assign teile = q | split: ':' -%}
+    {%- for a in blogs[teile[0]].articles -%}
+      {%- if gezeigt >= anzahl -%}{%- break -%}{%- endif -%}
+      {%- assign seine = a.metafields.custom.themen.value -%}
+      {%- assign gleich = 0 -%}
+      {%- for t in themen -%}
+        {%- if seine contains t -%}{%- assign gleich = gleich | plus: 1 -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if gleich == noetig -%}
+        {%- render 'bw-beitrag', a: a, art: teile[1] -%}
+        {%- assign gezeigt = gezeigt | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endfor -%}
+{%- endfor -%}

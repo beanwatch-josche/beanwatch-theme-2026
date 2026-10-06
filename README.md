@@ -27,6 +27,11 @@ Das Konzept zum Umzug steht in der Werkstatt: `beanwatch-website-2026/MIGRATION-
 | `sections/bw-rezepte.liquid` | **Rezeptübersicht** (Vorlage `blog.rezept-template`, seit 0.3.0), übertragen aus `rezepte.html` der Werkstatt. Kopf, Filterleiste und Raster aus `wissen.js`, Band zum Shop, Schema BreadcrumbList und ItemList |
 | `snippets/bw-beitrag.liquid` | Ein Beitrag als Karte (wie `BWWissen.karte`) oder als JSON-Eintrag. Kurztitel, Teaser und Themen aus den Metafeldern `custom.kurztitel`, `custom.teaser`, `custom.themen` (seit 06.10.2026), sonst Titel und Auszug |
 | `snippets/bw-beitraege-daten.liquid` | Der Bestand für `wissen.js` als JSON-Block `#bw-beitraege`: alle veröffentlichten Artikel der Blogs mit übersetzten Labels. Ohne den Block nimmt `wissen.js` seine feste Liste wie im Prototyp |
+| `sections/bw-produkt-kaffee.liquid` | **Kaffeeseite** (seit 0.4.0) für alle drei Kaffee-Vorlagen `product.kaffee-mit-geschichte`, `product.kaffee-decaf-mit-geschich` und `product.kaffee-fermentation-gesch` (Namen wie im alten Theme, weil die Produkte darauf zeigen), übertragen aus `products/*.html` der Werkstatt. Bestehende Shop-Texte bleiben, neue Felder seit 06.10.2026 für das, was nur der Prototyp kannte; siehe Kommentar oben in der Datei. Fehlt ein Feld, fällt sein Teil weg |
+| `snippets/bw-kaufwahl.liquid` | Preis und Kauf: nur der Knopf, solange es keine Abo-Pläne gibt; mit Plänen (App «Shopify Subscriptions») «Einmal kaufen» oder «Im Abo» mit Intervall. `produkt.js` schreibt den Plan ins Feld `selling_plan` |
+| `snippets/bw-produkt-schema.liquid` | Product und BreadcrumbList der Kaffeeseite, übertragen aus dem alten `microdata-schema.liquid` (Versand CHF 3.40, Lieferzeit, Rückgabe 14 Tage stehen dort zum Pflegen) |
+| `snippets/bw-verwandte.liquid` | «Passt dazu» in Liquid, gleiche Auswahl wie `BWBeitrag.verwandte` |
+| `snippets/bw-grundpreis`, `bw-gramm`, `bw-absaetze`, `bw-produkt-bild`, `bw-produkt-merkmale` | Kleine Teile der Kaffeeseite: Grundpreis je 100 g, Menge in Gramm, mehrzeiliger Shop-Text als Absätze, Bild und Merkmale eines Bildblocks |
 | `snippets/bw-dauer.liquid` | Dauer eines Rezepts für Karten aus der ISO-Zeit, Regeln wie `teaser-abgleichen.rb` |
 | `sections/bw-*.liquid` (übrige) | Die Vorlagen der übrigen Seitentypen. Heute noch **Rohbau**: echte Inhalte, Preise und Warenkorb, aber noch ohne das Design aus dem Prototyp. Erkennbar an der gelben Marke «Rohbau» |
 | `sections/bw-warenkorb-seite.liquid` | Warenkorbseite `/cart`, funktioniert auch ohne JavaScript |
@@ -75,6 +80,8 @@ Das Gerüst 0.1.0 wurde vor dem ersten Push so geprüft (05.10.2026): Theme Chec
 
 Die Rezeptvorlage 0.2.0 wurde so geprüft (06.10.2026): echte Daten von Iced Latte, Espresso Tonic und dem Entwurf Flat White aus der Admin API, gerendert mit einer Nachbildung von Shopify-Liquid (Metafelder mit `.value`, maskierte Übersetzungen, strenge Vergleiche) in Deutsch, Englisch und Französisch, dazu ein Rezept ohne Nährwerte, Equipment, FAQ und Bewertung. JSON-LD Feld für Feld gegen den Prototyp verglichen. Im Browser bei 1440 und 375 px: Portionen, Bewertung gegen ein nachgebildetes Supabase (keine Teststimme in der echten Tabelle), Schema-Nachführung, Anker `#schritt-N` und `#step-N`, verwandte Rezepte.
 
+Die Kaffeeseite 0.4.0 wurde so geprüft (06.10.2026): alle 10 Kaffees mit echten Daten aus einem Bulk-Export der Admin API gerendert, dazu Englisch, Französisch, ausverkauft, ein Kaffee mit vielen leeren Feldern und zwei Fälle mit nachgebildeten Abo-Plänen (10 %, alle 2, 4 und 6 Wochen). Im Browser bei 1440 und 375 px: keine Skriptfehler, kein Querscrollen, Noten, Meter, Zähler, Galerie, Inhaltsverzeichnis nur mit vorhandenen Ankern, JSON-LD lesbar, keine verzerrten Bilder; Kauf gegen eine nachgebildete Cart-API: ohne Abo nur `id`, mit Abo `selling_plan` des gewählten Intervalls, zurück auf «Einmal» ohne `selling_plan`. «Passt dazu» ohne JavaScript gleich wie mit. Mit echten Abo-Plänen noch nicht geprüft: Sie gibt es erst mit der App.
+
 **Bilder:** Shopify schreibt mit `image_tag` immer `width` und `height` ans Bild. Wo das CSS nur Breite und Seitenverhältnis vorgibt, braucht es `height:auto` (steht seit 06.10.2026 im Grundstil `img` in `beanwatch.css`), sonst wird das Bild verzerrt oder zum Streifen. Die Nachbildung zum Prüfen setzt die Attribute seither genauso und misst jedes Bild gegen den Prototyp.
 
 ### Beim ersten Vorschau-Theme in Shopify prüfen
@@ -82,6 +89,8 @@ Die Rezeptvorlage 0.2.0 wurde so geprüft (06.10.2026): echte Daten von Iced Lat
 - Zählt `blogs['brew-guides'].articles_count` nur veröffentlichte Artikel, und fehlen unveröffentlichte in `blogs[…].articles`? Davon hängt der Start-Modus ab (im Quelltext der Seite muss `window.BW_PLAN` je Blog `{}` zeigen, solange kein Guide veröffentlicht ist).
 - Stimmen die Navigationspunkte auf Espresso-, Filterkaffee- und Decaf-Produkten (aktiver Punkt)?
 - Warenkorb mit einem echten Produkt: hinzufügen, Menge ändern, zur Kasse.
+- Kaffeeseite (seit 0.4.0), etwa `/products/guji-megadu-espresso`: Brotkrumen und aktiver Navigationspunkt, «Zur Rezeptur» auf die Hub-Seite, Preis und Grundpreis im Format des Shops.
+- Nach der Installation von «Shopify Subscriptions»: Wie heissen die Pläne? Die Intervall-Auswahl zeigt die erste Option des Plans (etwa «4 Wochen») hinter «Lieferung alle», sonst den Plannamen. Vorgewählt ist der Plan, dessen Name «4 » enthält.
 
 ---
 

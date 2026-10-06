@@ -1,0 +1,185 @@
+{%- comment -%}
+  Strukturierte Daten der Kaffeeseite: BreadcrumbList und Product.
+  WebSite und Organization kommen aus bw-kopfdaten.
+
+  Übertragen aus beanwatch-theme/snippets/microdata-schema.liquid:
+  Beschreibung aus den Metafeldern, Marke, Angebot mit Versand und
+  Rückgabe. Dazu wie im Prototyp alle Produktbilder, countryOfOrigin und
+  additionalProperty. Korrigiert: Das alte Snippet las die Fermentation aus
+  custom.fermentation_method, das Feld heisst fermentation_methode. Werte,
+  die schon mit einem Punkt enden («m ü. M.»), bekommen keinen zweiten.
+
+  Versand und Rückgabe hier pflegen, wenn sich Tarife, Laufzeiten oder
+  das Widerrufsrecht ändern:
+    versand          Tarif für einen Beutel (265 g fallen unter «Brief bis
+                     500 g», CHF 3.40). Google bezieht shippingDetails auf
+                     ein Stück, nicht auf den Warenkorb.
+    rueckgabe_tage   Widerrufsfrist in Tagen
+    bearbeitung_*    Werktage bis zur Übergabe an die Post (Röstung)
+    transit_*        Laufzeit der Post (A-Post 1 Tag, B-Post 1 bis 2)
+  Beträge als Zahl, nicht als Text: schema.org erwartet bei MonetaryAmount
+  einen Zahlenwert.
+
+  p         das Produkt
+  hub_url   Espresso, Filterkaffee oder Decaf (aus der Sektion)
+  hub_name
+  Aufruf: {% render 'bw-produkt-schema', p: product, hub_url: hub_url, hub_name: hub_name %}
+{%- endcomment -%}
+{%- liquid
+  assign versand = 3.40
+  assign versand_waehrung = 'CHF'
+  assign rueckgabe_tage = 14
+  assign bearbeitung_min = 1
+  assign bearbeitung_max = 3
+  assign transit_min = 1
+  assign transit_max = 2
+
+  assign mf = p.metafields.custom
+  assign v = p.selected_or_first_available_variant
+  assign seite = request.origin | append: p.url
+  assign land = mf.ursprungsland.value
+  assign region = mf.region.value
+  assign farm = mf.ort_der_kaffeefarm.value
+  assign aufbereitung = mf.processing.value
+  assign fermentation = mf.fermentation_methode.value
+  assign varietaet = mf.arabica_varietat.value
+  assign hoehe = mf.elevation.value
+  assign produzent = mf.kaffeeproduzent_name.value
+  assign score = mf.cupping_score.value
+  assign ideal = mf.best_for.value
+  assign profil = mf.profile_description.value | strip | strip_newlines
+  assign roest = mf.roast_description.value | strip | strip_newlines
+
+  assign noten = ''
+  for i in (1..6)
+    assign k = 'product_icon_' | append: i | append: '_label'
+    assign n = mf[k].value | strip
+    if n != blank
+      if noten != blank
+        assign noten = noten | append: ', '
+      endif
+      assign noten = noten | append: n
+    endif
+  endfor
+
+  # Schlusspunkte weg, der Satzbau unten setzt eigene.
+  assign letztes = profil | slice: -1, 1
+  if letztes == '.'
+    assign laenge = profil.size | minus: 1
+    assign profil = profil | slice: 0, laenge
+  endif
+  assign letztes = roest | slice: -1, 1
+  if letztes == '.'
+    assign laenge = roest.size | minus: 1
+    assign roest = roest | slice: 0, laenge
+  endif
+
+  # Steht die Fermentation schon in der Aufbereitung («Anaerobic Natural
+  # (Trockenaufbereitung)»), nicht doppelt nennen.
+  if fermentation != blank and aufbereitung contains fermentation
+    assign fermentation = ''
+  endif
+
+  assign bilder = p.media | where: 'media_type', 'image'
+-%}
+{%- capture beschreibung -%}
+{{ p.title }}{% if land != blank %} {{ 'produkt.schema_aus' | t: land: land }}{% endif %}{% if region != blank %}, {{ 'produkt.fakt_region' | t }} {{ region }}{% endif %}{% if farm != blank %}, {{ 'produkt.schema_farm' | t: ort: farm }}{% endif %}.
+{%- if aufbereitung != blank or fermentation != blank %} {{ 'produkt.fakt_aufbereitung' | t }}:{% if aufbereitung != blank %} {{ aufbereitung }}{% endif %}{% if fermentation != blank %}, {{ fermentation }}{% endif %}.{% endif %}
+{%- if noten != blank %} {{ 'produkt.schema_noten' | t }}: {{ noten }}.{% endif %}
+{%- if profil != blank %} {{ profil }}.{% endif %}
+{%- if varietaet != blank %} {{ 'produkt.fakt_varietaet' | t }}: {{ varietaet }}.{% endif %}
+{%- if hoehe != blank %} {{ 'produkt.fakt_hoehe' | t }}: {{ hoehe }}.{% endif %}
+{%- if produzent != blank %} {{ 'produkt.fakt_produzent' | t }}: {{ produzent }}.{% endif %}
+{%- if score != blank %} {{ 'produkt.fakt_score' | t }}: {{ score }}.{% endif %}
+{%- if ideal != blank %} {{ 'produkt.schema_ideal' | t }}: {{ ideal }}.{% endif %}
+{%- if roest != blank %} {{ 'produkt.meter_roest' | t }}: {{ roest }}.{% endif %}
+{%- endcapture -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": {{ 'rezept.schema_start' | t | json }}, "item": {{ request.origin | append: routes.root_url | json }} },
+    { "@type": "ListItem", "position": 2, "name": {{ 'kopf.shop' | t | json }}, "item": {{ request.origin | append: routes.all_products_collection_url | json }} },
+    {%- if hub_url != blank %}
+    { "@type": "ListItem", "position": 3, "name": {{ hub_name | json }}, "item": {{ request.origin | append: hub_url | json }} },
+    { "@type": "ListItem", "position": 4, "name": {{ p.title | json }}, "item": {{ seite | json }} }
+    {%- else %}
+    { "@type": "ListItem", "position": 3, "name": {{ p.title | json }}, "item": {{ seite | json }} }
+    {%- endif %}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "@id": {{ seite | append: '#product' | json }},
+  "name": {{ p.title | json }},
+  "url": {{ seite | json }},
+  "description": {{ beschreibung | strip | strip_newlines | replace: '  ', ' ' | replace: '..', '.' | json }},
+  "brand": { "@type": "Brand", "name": {{ shop.name | json }} },
+  {%- if bilder.size > 0 %}
+  "image": [
+    {%- for b in bilder limit: 10 %}
+    {{ b | image_url: width: 1600 | prepend: 'https:' | json }}{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ],
+  {%- endif %}
+  {%- if v.sku != blank %}
+  "sku": {{ v.sku | json }},
+  {%- endif %}
+  {%- if land != blank %}
+  "countryOfOrigin": {{ land | json }},
+  {%- endif %}
+  "additionalProperty": [
+    {%- assign erste = true -%}
+    {%- for paar in (1..6) -%}
+      {%- case paar -%}
+        {%- when 1 -%}{%- assign name = 'produkt.fakt_aufbereitung' | t -%}{%- assign wert = aufbereitung -%}
+        {%- when 2 -%}{%- assign name = 'produkt.fakt_varietaet' | t -%}{%- assign wert = varietaet -%}
+        {%- when 3 -%}{%- assign name = 'produkt.fakt_hoehe' | t -%}{%- assign wert = hoehe -%}
+        {%- when 4 -%}{%- assign name = 'produkt.fakt_score' | t -%}{%- assign wert = score -%}
+        {%- when 5 -%}{%- assign name = 'produkt.fakt_region' | t -%}{%- assign wert = region -%}
+        {%- when 6 -%}{%- assign name = 'produkt.fakt_entkoffeinierung' | t -%}{%- assign wert = mf.entkoffinierung_methode.value -%}
+      {%- endcase -%}
+      {%- if wert != blank -%}
+        {%- unless erste %},{% endunless %}
+    { "@type": "PropertyValue", "name": {{ name | json }}, "value": {{ wert | append: '' | json }} }
+        {%- assign erste = false -%}
+      {%- endif -%}
+    {%- endfor %}
+  ],
+  "offers": {
+    "@type": "Offer",
+    "url": {{ seite | json }},
+    "priceCurrency": {{ cart.currency.iso_code | json }},
+    "price": {{ v.price | divided_by: 100.0 | json }},
+    "availability": "https://schema.org/{% if v.available %}InStock{% else %}OutOfStock{% endif %}",
+    "itemCondition": "https://schema.org/NewCondition",
+    "seller": { "@type": "Organization", "name": {{ shop.name | json }} },
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": { "@type": "MonetaryAmount", "value": {{ versand | json }}, "currency": {{ versand_waehrung | json }} },
+      "shippingDestination": [
+        { "@type": "DefinedRegion", "addressCountry": "CH" },
+        { "@type": "DefinedRegion", "addressCountry": "LI" }
+      ],
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": {{ bearbeitung_min | json }}, "maxValue": {{ bearbeitung_max | json }}, "unitCode": "DAY" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": {{ transit_min | json }}, "maxValue": {{ transit_max | json }}, "unitCode": "DAY" }
+      }
+    },
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": ["CH", "LI"],
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": {{ rueckgabe_tage | json }},
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility",
+      "merchantReturnLink": {{ request.origin | append: '/policies/refund-policy' | json }}
+    }
+  }
+}
+</script>

@@ -1,0 +1,11 @@
+{%- comment -%}
+  Drei Merkmale als Pillen unter einem Bildblock, wie im Prototyp.
+  Aufruf: {%- render 'bw-produkt-merkmale', liste: mf.aufbereitung_merkmale.value -%}
+{%- endcomment -%}
+{%- if liste.size > 0 %}
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:22px">
+          {%- for m in liste %}
+          <span class="pill">{{ m }}</span>
+          {%- endfor %}
+        </div>
+{%- endif -%}

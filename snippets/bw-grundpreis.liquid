@@ -1,0 +1,18 @@
+{%- comment -%}
+  Grundpreis je 100 g wie im Prototyp: «250 g · CHF 9.60 / 100 g».
+
+  preis   in Rappen: variant.price oder selling_plan_allocation.price
+  v       die Variante; die Menge in Gramm liefert bw-gramm. Ohne sie
+          bleibt die Ausgabe leer.
+
+  Aufruf: {%- render 'bw-grundpreis', preis: variante.price, v: variante -%}
+{%- endcomment -%}
+{%- capture gramm -%}{%- render 'bw-gramm', v: v -%}{%- endcapture -%}
+{%- liquid
+  assign gramm = gramm | strip | plus: 0
+  if gramm > 0
+    assign je_100 = preis | times: 100.0 | divided_by: gramm | round | money
+    assign menge = gramm | append: ' g'
+    echo 'produkt.grundpreis' | t: menge: menge, preis: je_100
+  endif
+-%}

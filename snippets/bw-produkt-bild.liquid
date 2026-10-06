@@ -1,0 +1,10 @@
+{%- comment -%}
+  Bild eines Bildblocks auf der Kaffeeseite (Aufbereitung, Varietät,
+  Fermentation, Entkoffeinierung). Ohne Bild gibt es nichts aus.
+  Aufruf: {%- render 'bw-produkt-bild', bild: mf.processing_bild.value -%}
+{%- endcomment -%}
+{%- if bild != blank %}
+      <div class="bildblock-bild">
+        {{ bild | image_url: width: 1200 | image_tag: loading: 'lazy', widths: '600, 900, 1200', sizes: '(min-width: 900px) 45vw, 100vw', alt: bild.alt }}
+      </div>
+{%- endif -%}

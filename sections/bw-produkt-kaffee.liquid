@@ -1,0 +1,515 @@
+{%- comment -%}
+  Kaffee-Produktseite, übertragen aus products/*.html der Werkstatt. Alle
+  drei Kaffee-Vorlagen (kaffee-mit-geschichte, kaffee-decaf-mit-geschich,
+  kaffee-fermentation-gesch) zeigen hierher; die Sektion erkennt an den
+  Feldern, ob es eine Fermentation oder eine Entkoffeinierung gibt.
+
+  Woher die Inhalte kommen:
+    Bestehende Shop-Texte bleiben, wie sie sind (sie sind übersetzt):
+    Beschreibung (ohne das führende <h4>), Herkunft, Varietät,
+    Aufbereitung, Meter-Texte, best_for, Farm, Fermentation und
+    Entkoffeinierung. Was nur der Prototyp kannte, steht seit 06.10.2026
+    in neuen Feldern: kurzbeschrieb, geschichte_titel, aufbereitung_text
+    und _merkmale, varietaet_text, fermentation_ und
+    entkoffeinierung_merkmale und _bild, farm_titel, die zwei Legenden,
+    zubereitung_text und zubereitung_werte (Metaobjekt zubereitungswert).
+    Hergeleitet werden die Titel der Meter (aus dem Wert), die Themen für
+    «Passt dazu» und das Ziel von «Zur Rezeptur».
+
+  Fehlt ein Feld, fällt sein Teil weg, ohne leere Überschrift; das
+  Inhaltsverzeichnis nennt nur Abschnitte, die es gibt.
+
+  Espresso, Filter und Decaf kommen aus den Kollektionen, verglichen über
+  IDs wie in bw-navschluessel (Handles sind übersetzt).
+
+  Schema: bw-produkt-schema (Product und BreadcrumbList).
+{%- endcomment -%}
+{%- liquid
+  assign mf = product.metafields.custom
+  assign v = product.selected_or_first_available_variant
+
+  assign ids = product.collections | map: 'id'
+  assign ist_decaf = false
+  assign ist_filter = false
+  if collections['decaf-coffee'] != blank and ids contains collections['decaf-coffee'].id
+    assign ist_decaf = true
+  endif
+  if collections['filterkaffee'] != blank and ids contains collections['filterkaffee'].id
+    assign ist_filter = true
+  endif
+
+  if ist_decaf
+    assign hub_url = collections['decaf-coffee'].url
+    assign hub_name = 'kopf.decaf' | t
+  elsif ist_filter
+    assign hub_url = pages['filterkaffee'].url
+    assign hub_name = 'kopf.filterkaffee' | t
+  else
+    assign hub_url = pages['espresso'].url
+    assign hub_name = 'kopf.espresso' | t
+  endif
+
+  # Themen für «Passt dazu» wie im Prototyp (BWBeitrag.verwandte).
+  if ist_decaf and ist_filter
+    assign themen = 'koffein,filter' | split: ','
+  elsif ist_decaf
+    assign themen = 'koffein,espresso' | split: ','
+  elsif ist_filter
+    assign themen = 'filter,zubereitung' | split: ','
+  else
+    assign themen = 'espresso,milch' | split: ','
+  endif
+
+  # «Zur Rezeptur»: beim Filter der V60 Brew Guide, sobald er veröffentlicht
+  # ist, sonst die Rezeptur auf der Hub-Seite.
+  assign rezeptur_url = ''
+  assign rezeptur_text = 'produkt.zur_rezeptur' | t
+  if ist_filter
+    if pages['filterkaffee'] != blank
+      assign rezeptur_url = pages['filterkaffee'].url | append: '#rezeptur'
+    endif
+    for a in blogs['brew-guides'].articles
+      if a.handle == 'hario-v60'
+        assign rezeptur_url = a.url
+        assign rezeptur_text = 'produkt.zum_v60' | t
+      endif
+    endfor
+  elsif pages['espresso'] != blank
+    assign rezeptur_url = pages['espresso'].url | append: '#rezeptur'
+  endif
+
+  assign verfahren = mf.fermentation_methode.value | default: mf.processing.value
+  assign herkunft = ''
+  for teil in (1..3)
+    case teil
+      when 1
+        assign stueck = mf.ursprungsland.value
+      when 2
+        assign stueck = mf.region.value
+      when 3
+        assign stueck = verfahren
+    endcase
+    if stueck != blank
+      if herkunft != blank
+        assign herkunft = herkunft | append: ' · '
+      endif
+      assign herkunft = herkunft | append: stueck
+    endif
+  endfor
+
+  assign noten = ''
+  for i in (1..6)
+    assign k = 'product_icon_' | append: i | append: '_label'
+    assign n = mf[k].value | strip
+    if n != blank
+      if noten != blank
+        assign noten = noten | append: ','
+      endif
+      assign noten = noten | append: n
+    endif
+  endfor
+
+  # Cupping Score aus number_decimal: 82.0 als «82», 86.25 bleibt.
+  assign score = mf.cupping_score.value | append: ''
+  if score.size > 2
+    assign ende = score | slice: -2, 2
+    if ende == '.0'
+      assign laenge = score.size | minus: 2
+      assign score = score | slice: 0, laenge
+    endif
+  endif
+
+  # Die Beschreibung beginnt im Shop meist mit einem <h4> für die alte
+  # Seite. Hier steht dafür geschichte_titel.
+  assign geschichte = product.description | strip
+  assign anfang = geschichte | slice: 0, 3
+  if anfang == '<h4'
+    assign kopf = geschichte | split: '</h4>' | first | append: '</h4>'
+    assign geschichte = geschichte | remove_first: kopf | strip
+  endif
+
+  assign hat_aufbereitung = false
+  if mf.processing.value != blank or mf.aufbereitung_text.value != blank
+    assign hat_aufbereitung = true
+  endif
+  assign hat_varietaet = false
+  if mf.arabica_varietat.value != blank or mf.varietaet_text.value != blank
+    assign hat_varietaet = true
+  endif
+  assign hat_fermentation = false
+  if mf.fermentation_methode.value != blank or mf.fermentation_erklarung.value != blank
+    assign hat_fermentation = true
+  endif
+  assign hat_entkoffeinierung = false
+  if mf.entkoffinierung_methode.value != blank or mf.entkoffinierung_erklarung.value != blank
+    assign hat_entkoffeinierung = true
+  endif
+  assign hat_farm = false
+  if mf.kaffeeursprung_beschreibung.value != blank or mf.farm_titel.value != blank
+    assign hat_farm = true
+  endif
+  assign werte = mf.zubereitung_werte.value
+  assign hat_zubereitung = false
+  if werte.size > 0 or mf.zubereitung_text.value != blank
+    assign hat_zubereitung = true
+  endif
+  assign schwester = mf.schwesterprodukt.value
+  assign hat_geschichte = false
+  if mf.geschichte_titel.value != blank or geschichte != blank or mf.best_for.value != blank
+    assign hat_geschichte = true
+  endif
+-%}
+
+<section class="produktkopf">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'produkt.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'produkt.brot_start' | t }}</a><span class="teiler">·</span>
+      <a href="{{ routes.all_products_collection_url }}">{{ 'kopf.shop' | t }}</a><span class="teiler">·</span>
+      {%- if hub_url != blank %}
+      <a href="{{ hub_url }}">{{ hub_name }}</a><span class="teiler">·</span>
+      {%- endif %}
+      <span>{{ product.title }}</span>
+    </nav>
+
+    <div class="produktkopf-raster">
+      <div>
+        {%- assign bilder = product.media | where: 'media_type', 'image' -%}
+        <div class="galerie-haupt" id="galerie-haupt">
+          {%- if bilder.size > 0 %}
+          {%- comment -%} Ohne srcset: produkt.js tauscht beim Klick auf ein Vorschaubild nur src. {%- endcomment %}
+          {{ bilder.first | image_url: width: 1200 | image_tag: id: 'galerie-bild', loading: 'eager', fetchpriority: 'high', alt: bilder.first.alt | default: product.title }}
+          {%- endif %}
+        </div>
+        {%- if bilder.size > 1 %}
+        <div class="galerie-mini" id="galerie-mini">
+          {%- for b in bilder %}
+          <button type="button"{% if forloop.first %} class="ist-aktiv"{% endif %} data-bild="{{ b | image_url: width: 1200 }}" aria-label="{{ b.alt | default: product.title | escape }}">
+            {{ b | image_url: width: 240 | image_tag: loading: 'lazy', alt: '' }}
+          </button>
+          {%- endfor %}
+        </div>
+        {%- endif %}
+      </div>
+
+      <div class="produkt-kauf">
+        {%- if herkunft != blank %}
+        <span class="herkunftszeile">{{ herkunft }}</span>
+        {%- endif %}
+        <h1 data-split="zeilen">{{ product.title }}</h1>
+        {%- if mf.kurzbeschrieb.value != blank %}
+        <p class="kurzbeschrieb">{{ mf.kurzbeschrieb.value }}</p>
+        {%- endif %}
+        {%- if noten != blank %}
+        <div class="notenreihe" id="notenreihe" data-noten="{{ noten | escape }}"></div>
+        {%- endif %}
+
+        {% render 'bw-kaufwahl', p: product %}
+
+        {%- if schwester != blank %}
+        <a class="schwester" href="{{ schwester.url }}">
+          {%- if schwester.featured_image %}
+          {{ schwester.featured_image | image_url: width: 120 | image_tag: loading: 'lazy', alt: '' }}
+          {%- endif %}
+          <span class="text">
+            <span class="rolle">{{ 'produkt.schwester' | t }}</span>
+            <h4>{{ schwester.title }}</h4>
+          </span>
+          <span class="hin">{{ 'produkt.ansehen' | t }}
+            <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sektion" style="padding-block:clamp(30px,4vw,52px)">
+  <div class="wrap">
+    <div class="fakten" data-batch>
+      {%- if mf.ursprungsland.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_land' | t }}</span><span class="wert">{{ mf.ursprungsland.value }}</span></div>{% endif %}
+      {%- if mf.region.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_region' | t }}</span><span class="wert">{{ mf.region.value }}</span></div>{% endif %}
+      {%- if mf.kaffeeproduzent_name.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_produzent' | t }}</span><span class="wert">{{ mf.kaffeeproduzent_name.value }}</span></div>{% endif %}
+      {%- if mf.arabica_varietat.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_varietaet' | t }}</span><span class="wert">{{ mf.arabica_varietat.value }}</span></div>{% endif %}
+      {%- if mf.processing.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_aufbereitung' | t }}</span><span class="wert">{{ mf.processing.value }}</span></div>{% endif %}
+      {%- if mf.elevation.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_hoehe' | t }}</span><span class="wert">{{ mf.elevation.value }}</span></div>{% endif %}
+      {%- if score != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_score' | t }}</span><span class="wert">{{ 'produkt.punkte' | t: wert: score }}</span></div>{% endif %}
+      {%- if mf.entkoffinierung_methode.value != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_entkoffeinierung' | t }}</span><span class="wert">{{ mf.entkoffinierung_methode.value }}</span></div>{% endif %}
+      {%- capture gramm -%}{%- render 'bw-gramm', v: v -%}{%- endcapture -%}
+      {%- assign gramm = gramm | strip -%}
+      {%- if gramm != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_menge' | t }}</span><span class="wert">{{ 'produkt.menge' | t: menge: gramm }}</span></div>{% endif %}
+    </div>
+  </div>
+</section>
+
+{%- assign roest = mf.roast_meter_value.value | plus: 0 -%}
+{%- assign profil = mf.profile_meter_value.value | plus: 0 -%}
+{%- if roest > 0 or profil > 0 %}
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <div class="meter-paar" data-batch>
+      {%- if roest > 0 %}
+      {%- assign titel = 'produkt.roest_' | append: roest %}
+      <article class="meter-karte">
+        <span class="rolle">{{ 'produkt.meter_roest' | t }}</span>
+        <h3>{{ titel | t }}</h3>
+        <div class="meter" data-meter="{{ roest }}" data-stufen="5">
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="meter-skala"><span>{{ 'produkt.skala_hell' | t }}</span><span>{{ 'produkt.skala_dunkel' | t }}</span></div>
+        {%- if mf.roast_description.value != blank %}
+        <p>{{ mf.roast_description.value }}</p>
+        {%- endif %}
+      </article>
+      {%- endif %}
+      {%- if profil > 0 %}
+      {%- assign titel = 'produkt.profil_' | append: profil %}
+      <article class="meter-karte">
+        <span class="rolle">{{ 'produkt.meter_profil' | t }}</span>
+        <h3>{{ titel | t }}</h3>
+        <div class="meter" data-meter="{{ profil }}" data-stufen="5">
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="meter-skala"><span>{{ 'produkt.skala_schokoladig' | t }}</span><span>{{ 'produkt.skala_fruchtig' | t }}</span></div>
+        {%- if mf.profile_description.value != blank %}
+        <p>{{ mf.profile_description.value }}</p>
+        {%- endif %}
+      </article>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
+  <div class="wrap">
+    <div class="beitragslayout" style="padding-block:0">
+      <div class="beitragstext">
+        {%- if hat_geschichte %}
+        <span class="eyebrow" style="color:var(--redorange)">{{ 'produkt.geschichte_eyebrow' | t }}</span>
+        {%- endif %}
+        {%- if mf.geschichte_titel.value != blank %}
+        <h2 data-split="zeilen" style="margin-top:14px">{{ mf.geschichte_titel.value }}</h2>
+        {%- endif %}
+        {{ geschichte }}
+        {%- if mf.best_for.value != blank %}
+        <div class="merksatz">
+          <strong>{{ 'produkt.tipp' | t }}</strong> {{ mf.best_for.value }}
+        </div>
+        {%- endif %}
+      </div>
+
+      <aside class="beitragsseite">
+        <div class="seitenbox">
+          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+          <h4>{{ 'produkt.frisch_titel' | t }}</h4>
+          <p>{{ 'produkt.frisch_text' | t }}</p>
+          {%- if v.available %}
+          <button type="submit" form="produkt-form" class="btn btn--hell" data-pfeil>{{ 'produkt.in_den_warenkorb' | t }}</button>
+          {%- endif %}
+        </div>
+
+        {%- if hat_aufbereitung or hat_varietaet or hat_fermentation or hat_entkoffeinierung or hat_farm or hat_zubereitung %}
+        <div class="inhaltsverzeichnis">
+          <h4>{{ 'produkt.inhalt' | t }}</h4>
+          {%- if hat_aufbereitung %}<a href="#aufbereitung">{{ 'produkt.inhalt_aufbereitung' | t }}</a>{% endif %}
+          {%- if hat_varietaet %}<a href="#varietaet">{{ 'produkt.inhalt_varietaet' | t }}</a>{% endif %}
+          {%- if hat_fermentation %}<a href="#fermentation">{{ 'produkt.inhalt_fermentation' | t }}</a>{% endif %}
+          {%- if hat_entkoffeinierung %}<a href="#entkoffeinierung">{{ 'produkt.inhalt_entkoffeinierung' | t }}</a>{% endif %}
+          {%- if hat_farm %}<a href="#farm">{{ 'produkt.inhalt_farm' | t }}</a>{% endif %}
+          {%- if hat_zubereitung %}<a href="#zubereitung">{{ 'produkt.inhalt_zubereitung' | t }}</a>{% endif %}
+        </div>
+        {%- endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+
+{%- if hat_aufbereitung %}
+<section class="sektion" id="aufbereitung">
+  <div class="wrap">
+    <div class="bildblock" data-reveal>
+      {%- render 'bw-produkt-bild', bild: mf.processing_bild.value %}
+      <div>
+        <span class="eyebrow">{{ 'produkt.eyebrow_aufbereitung' | t }}</span>
+        {%- if mf.processing.value != blank %}
+        <h3>{{ mf.processing.value }}</h3>
+        {%- endif %}
+        {%- if mf.aufbereitung_text.value != blank %}{{ mf.aufbereitung_text | metafield_tag }}{% endif %}
+        {%- render 'bw-produkt-merkmale', liste: mf.aufbereitung_merkmale.value %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_varietaet %}
+<section class="sektion" id="varietaet"{% if hat_aufbereitung %} style="padding-top:0"{% endif %}>
+  <div class="wrap">
+    <div class="bildblock bildblock--gedreht" data-reveal>
+      {%- render 'bw-produkt-bild', bild: mf.arabica_varietat_bild.value %}
+      <div>
+        <span class="eyebrow">{{ 'produkt.eyebrow_varietaet' | t }}</span>
+        {%- if mf.arabica_varietat.value != blank %}
+        <h3>{{ mf.arabica_varietat.value }}</h3>
+        {%- endif %}
+        {%- if mf.varietaet_text.value != blank %}{{ mf.varietaet_text | metafield_tag }}{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_fermentation %}
+<section class="sektion" id="fermentation">
+  <div class="wrap">
+    <div class="bildblock" data-reveal>
+      {%- render 'bw-produkt-bild', bild: mf.fermentation_bild.value %}
+      <div>
+        <span class="eyebrow">{{ 'produkt.eyebrow_fermentation' | t }}</span>
+        {%- if mf.fermentation_methode.value != blank %}
+        <h3>{{ mf.fermentation_methode.value }}</h3>
+        {%- endif %}
+        {%- render 'bw-absaetze', text: mf.fermentation_erklarung.value %}
+        {%- render 'bw-produkt-merkmale', liste: mf.fermentation_merkmale.value %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_entkoffeinierung %}
+<section class="sektion" id="entkoffeinierung">
+  <div class="wrap">
+    <div class="bildblock" data-reveal>
+      {%- render 'bw-produkt-bild', bild: mf.entkoffeinierung_bild.value %}
+      <div>
+        <span class="eyebrow">{{ 'produkt.eyebrow_entkoffeinierung' | t }}</span>
+        {%- if mf.entkoffinierung_methode.value != blank %}
+        <h3>{{ mf.entkoffinierung_methode.value }}</h3>
+        {%- endif %}
+        {%- render 'bw-absaetze', text: mf.entkoffinierung_erklarung.value %}
+        {%- render 'bw-produkt-merkmale', liste: mf.entkoffeinierung_merkmale.value %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_farm %}
+<section class="sektion farm" id="farm">
+  <div class="wrap">
+    <div class="farm-raster">
+      <div class="farm-text">
+        <span class="eyebrow">{{ 'produkt.eyebrow_farm' | t }}</span>
+        <h2 data-split="zeilen" style="margin-top:16px">{{ mf.farm_titel.value | default: mf.kaffeeproduzent_name.value }}</h2>
+        {%- render 'bw-absaetze', text: mf.kaffeeursprung_beschreibung.value %}
+        {%- assign karte_1 = mf.kontextkarte.value -%}
+        {%- assign karte_2 = mf.reliefkarte.value -%}
+        {%- if karte_1 != blank or karte_2 != blank %}
+        <div class="karten-paar">
+          {%- if karte_1 != blank %}
+          <figure>
+            {{ karte_1 | image_url: width: 800 | image_tag: loading: 'lazy', widths: '400, 600, 800', sizes: '(min-width: 900px) 22vw, 100vw', alt: karte_1.alt | default: mf.kontextkarte_legende.value }}
+            {%- if mf.kontextkarte_legende.value != blank %}<figcaption>{{ mf.kontextkarte_legende.value }}</figcaption>{% endif %}
+          </figure>
+          {%- endif %}
+          {%- if karte_2 != blank %}
+          <figure>
+            {{ karte_2 | image_url: width: 800 | image_tag: loading: 'lazy', widths: '400, 600, 800', sizes: '(min-width: 900px) 22vw, 100vw', alt: karte_2.alt | default: mf.reliefkarte_legende.value }}
+            {%- if mf.reliefkarte_legende.value != blank %}<figcaption>{{ mf.reliefkarte_legende.value }}</figcaption>{% endif %}
+          </figure>
+          {%- endif %}
+        </div>
+        {%- endif %}
+      </div>
+
+      {%- comment -%} Vier Bilder wie im Prototyp (Raster 2 × 2), auch wenn der Shop sechs hat. {%- endcomment -%}
+      {%- capture farmbilder -%}
+        {%- for i in (1..6) -%}
+          {%- assign k = 'kaffeeproduzent_bild_' | append: i -%}
+          {%- assign b = mf[k].value -%}
+          {%- if b != blank -%}{{ k }},{%- endif -%}
+        {%- endfor -%}
+      {%- endcapture -%}
+      {%- assign farmbilder = farmbilder | split: ',' -%}
+      {%- if farmbilder.size > 0 %}
+      <div class="farm-bilder" data-batch>
+        {%- for k in farmbilder limit: 4 %}
+        {%- assign b = mf[k].value %}
+        <div class="farm-bild">
+          {{ b | image_url: width: 900 | image_tag: loading: 'lazy', widths: '450, 700, 900', sizes: '(min-width: 900px) 25vw, 100vw', alt: b.alt }}
+        </div>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_zubereitung %}
+<section class="sektion" id="zubereitung">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'produkt.eyebrow_zubereitung' | t }}</span>
+        <h2 data-split="zeilen">{{ 'produkt.zubereitung_titel_html' | t }}</h2>
+        {%- if mf.zubereitung_text.value != blank %}
+        <p>{{ mf.zubereitung_text.value }}</p>
+        {%- endif %}
+      </div>
+      {%- if rezeptur_url != blank %}
+      <a class="btn btn--linie" href="{{ rezeptur_url }}" data-pfeil>{{ rezeptur_text }}</a>
+      {%- endif %}
+    </div>
+    {%- if werte.size > 0 %}
+    <div class="rezeptur" data-batch style="margin-top:0">
+      {%- for w in werte %}
+      <div class="rezeptur-wert">
+        <span class="zahl" data-zaehler="{{ w.zahl.value }}"{% if w.einheit.value != blank %} data-suffix=" {{ w.einheit.value | escape }}"{% endif %}></span>
+        <span class="rolle">{{ w.rolle.value }}</span>
+        {%- if w.text.value != blank %}
+        <p>{{ w.text.value }}</p>
+        {%- endif %}
+      </div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  </div>
+</section>
+{%- endif %}
+
+<section class="sektion verwandt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'produkt.passt_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'produkt.passt_titel_html' | t }}</h2>
+      </div>
+      {%- if blogs['kaffeerezepte'] != blank %}
+      <a class="btn btn--linie" href="{{ blogs['kaffeerezepte'].url }}" data-pfeil>{{ 'produkt.alle_rezepte' | t }}</a>
+      {%- endif %}
+    </div>
+    <div class="beitraege" id="verwandt-raster">
+      {%- render 'bw-verwandte', themen: themen, anzahl: 3 -%}
+    </div>
+  </div>
+</section>
+
+{% render 'bw-beitraege-daten' %}
+{% render 'bw-produkt-schema', p: product, hub_url: hub_url, hub_name: hub_name %}
+
+<script src="{{ 'produkt.js' | asset_url }}" defer></script>
+<script src="{{ 'wissen.js' | asset_url }}" defer></script>
+<script src="{{ 'beitrag.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWProdukt) BWProdukt.start();
+    if (window.BWBeitrag) BWBeitrag.verwandte('#verwandt-raster', {{ themen | json }}, 3);
+  });
+</script>
+
+{% schema %}
+{ "name": "Kaffee", "settings": [] }
+{% endschema %}

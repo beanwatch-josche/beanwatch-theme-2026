@@ -1,0 +1,82 @@
+{%- comment -%}
+  Preis und Kauf der Kaffeeseite, übertragen aus products/*.html der
+  Werkstatt (Entscheid 06.10.2026: Wahl über dem Knopf).
+
+  Ohne Abo-Pläne gibt es nur den Knopf: heute, bis die App «Shopify
+  Subscriptions» installiert ist, und danach bei Jaguara Summer, der nicht
+  im Abo ist. Mit Plänen erscheinen «Einmal kaufen» und «Im Abo» mit dem
+  Preis aus selling_plan_allocations, dazu das Intervall. produkt.js
+  (kaufwahl) schreibt die Plan-ID ins Feld selling_plan und sperrt es bei
+  «Einmal», damit es nicht mitgeht. bw-theme.js fängt das Absenden ab und
+  öffnet die Schublade. Ohne JavaScript bleibt es beim Einmalkauf.
+
+  Der Abo-Preis kommt aus dem ersten Plan. Laut Entscheid haben alle
+  Intervalle dieselben 10 %; bekämen sie verschiedene Rabatte, müsste die
+  Preiszeile dem gewählten Intervall folgen.
+
+  p   das Produkt
+  Aufruf: {%- render 'bw-kaufwahl', p: product -%}
+{%- endcomment -%}
+{%- liquid
+  assign v = p.selected_or_first_available_variant
+  assign plaene = v.selling_plan_allocations
+  assign mit_abo = false
+  if v.available and plaene.size > 0
+    assign mit_abo = true
+  endif
+  capture grund_einmal
+    render 'bw-grundpreis', preis: v.price, v: v
+  endcapture
+  assign grund_einmal = grund_einmal | strip
+-%}
+<div class="preiszeile">
+  <span class="preis" data-kaufwahl-preis>{{ v.price | money }}</span>
+  {%- if grund_einmal != blank %}
+  <span class="grundpreis" data-kaufwahl-grundpreis>{{ grund_einmal }}</span>
+  {%- endif %}
+</div>
+{%- form 'product', p, id: 'produkt-form', class: 'bw-kaufform' %}
+  <input type="hidden" name="id" value="{{ v.id }}">
+  {%- if mit_abo -%}
+    {%- liquid
+      assign erste = plaene.first
+      capture grund_abo
+        render 'bw-grundpreis', preis: erste.price, v: v
+      endcapture
+      assign grund_abo = grund_abo | strip
+      assign rabatt = ''
+      assign anpassung = erste.selling_plan.price_adjustments.first
+      if anpassung.value_type == 'percentage'
+        assign rabatt = anpassung.value
+      endif
+    -%}
+  <div class="kaufwahl" id="kaufwahl">
+    <label class="kaufwahl-option ist-aktiv" data-grundpreis="{{ grund_einmal }}">
+      <input type="radio" name="kaufart" value="einmal" checked>
+      <span class="kaufwahl-text"><strong>{{ 'produkt.einmal' | t }}</strong></span>
+      <span class="kaufwahl-preis">{{ v.price | money }}</span>
+    </label>
+    <label class="kaufwahl-option" data-grundpreis="{{ grund_abo }}">
+      <input type="radio" name="kaufart" value="abo">
+      <span class="kaufwahl-text"><strong>{{ 'produkt.abo' | t }}</strong><span class="kaufwahl-hinweis">
+        {%- if rabatt != blank -%}{{ 'produkt.abo_hinweis' | t: rabatt: rabatt }}{%- else -%}{{ 'produkt.abo_hinweis_ohne' | t }}{%- endif -%}
+      </span></span>
+      <span class="kaufwahl-preis">{{ erste.price | money }}</span>
+    </label>
+    <div class="kaufwahl-intervall" hidden>
+      <label for="kaufwahl-intervall">{{ 'produkt.intervall' | t }}</label>
+      <select id="kaufwahl-intervall">
+        {%- for a in plaene %}
+        <option value="{{ a.selling_plan.id }}"{% if a.selling_plan.name contains '4 ' %} selected{% endif %}>{{ a.selling_plan.options.first.value | default: a.selling_plan.name }}</option>
+        {%- endfor %}
+      </select>
+    </div>
+    <input type="hidden" name="selling_plan" value="" disabled>
+  </div>
+  {%- endif %}
+  <div class="kaufreihe">
+    <button type="submit" class="btn btn--primaer"{% unless v.available %} disabled{% endunless %} data-pfeil>
+      {%- if v.available -%}{{ 'produkt.in_den_warenkorb' | t }}{%- else -%}{{ 'produkt.ausverkauft' | t }}{%- endif -%}
+    </button>
+  </div>
+{%- endform %}

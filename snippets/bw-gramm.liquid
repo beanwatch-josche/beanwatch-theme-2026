@@ -1,0 +1,16 @@
+{%- comment -%}
+  Inhalt einer Kaffee-Variante in Gramm, als Zahl ohne Einheit: aus der
+  Grundpreis-Angabe der Variante in Shopify, sonst aus einem Variantentitel
+  wie «250 g». Ohne Angabe in Gramm bleibt die Ausgabe leer.
+  Aufruf: {%- capture gramm -%}{%- render 'bw-gramm', v: variante -%}{%- endcapture -%}
+{%- endcomment -%}
+{%- liquid
+  if v.unit_price_measurement.quantity_unit == 'g'
+    echo v.unit_price_measurement.quantity_value | round
+  else
+    assign teile = v.title | split: ' '
+    if teile.size == 2 and teile.last == 'g'
+      echo teile.first | plus: 0
+    endif
+  endif
+-%}
