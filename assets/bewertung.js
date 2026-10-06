@@ -17,6 +17,11 @@
                     geschrieben, wie es das Theme tut.
      Ohne Skript    Es steht der Schnitt aus den Daten da, gebaut von
                     werkzeug/rezepte-bauen.rb.
+     Sprachen       Im Shopify-Theme stehen die Texte übersetzt an der Box:
+                    data-text-keine, -danke, -schon, -lade-fehler,
+                    -speicher-fehler, -ergebnis-eins und -ergebnis-mehr
+                    ({schnitt} und {n} als Platzhalter), -dezimal. Fehlt
+                    eines, gilt der deutsche Wortlaut wie bisher.
    ========================================================================== */
 
 (function () {
@@ -36,9 +41,31 @@
     speicherFehler: 'Bewertung konnte nicht gespeichert werden.'
   };
 
-  const komma = (zahl) => zahl.toFixed(1).replace('.', ',');
-  const ergebnisText = (schnitt, anzahl) =>
-    `${komma(schnitt)} von 5 Sternen bei ${anzahl} ${anzahl === 1 ? 'Bewertung' : 'Bewertungen'}`;
+  const DEUTSCH = {
+    ergebnisEins: '{schnitt} von 5 Sternen bei 1 Bewertung',
+    ergebnisMehr: '{schnitt} von 5 Sternen bei {n} Bewertungen'
+  };
+
+  // Text aus data-text-* an der Box, sonst der deutsche.
+  function texte(box) {
+    const d = box.dataset;
+    return {
+      keine: d.textKeine || TEXT.keine,
+      danke: d.textDanke || TEXT.danke,
+      schon: d.textSchon || TEXT.schon,
+      ladeFehler: d.textLadeFehler || TEXT.ladeFehler,
+      speicherFehler: d.textSpeicherFehler || TEXT.speicherFehler,
+      ergebnisEins: d.textErgebnisEins || DEUTSCH.ergebnisEins,
+      ergebnisMehr: d.textErgebnisMehr || DEUTSCH.ergebnisMehr,
+      dezimal: d.textDezimal || ','
+    };
+  }
+
+  const komma = (zahl, dezimal = ',') => zahl.toFixed(1).replace('.', dezimal);
+  const ergebnisText = (schnitt, anzahl, t) =>
+    (anzahl === 1 ? t.ergebnisEins : t.ergebnisMehr)
+      .replace('{schnitt}', komma(schnitt, t.dezimal))
+      .replace('{n}', anzahl);
 
   function lesen(schluessel) {
     try { return localStorage.getItem(schluessel); } catch (e) { return null; }
@@ -73,6 +100,7 @@
     if (!schluessel) return;
 
     const artikelId = box.dataset.artikelId || null;
+    const t = texte(box);
     const knoepfe = Array.from(box.querySelectorAll('.bewertung-sterne button'));
     const ergebnis = box.querySelector('.bewertung-ergebnis');
     const speicher = 'beanwatch_recipe_rating_' + schluessel;
@@ -91,7 +119,7 @@
 
     function anzeigen() {
       malen(Math.round(schnitt));
-      ergebnis.textContent = anzahl ? ergebnisText(schnitt, anzahl) : TEXT.keine;
+      ergebnis.textContent = anzahl ? ergebnisText(schnitt, anzahl, t) : t.keine;
       kurz.forEach((el) => { el.textContent = anzahl ? `★ ${komma(schnitt)} von 5` : '★ Jetzt bewerten'; });
       eckdaten.forEach((el) => { el.textContent = anzahl ? `★ ${komma(schnitt)} / 5` : 'Noch keine'; });
       const eigene = lesen(speicher);
@@ -115,7 +143,7 @@
       } catch (fehler) {
         console.warn('Bewertungen nicht geladen:', fehler);
         anzeigen();
-        ergebnis.textContent = TEXT.ladeFehler;
+        ergebnis.textContent = t.ladeFehler;
       }
     }
 
@@ -123,7 +151,7 @@
       if (sendet) return;
       if (lesen(speicher)) {
         anzeigen();
-        ergebnis.textContent = TEXT.schon;
+        ergebnis.textContent = t.schon;
         return;
       }
       sendet = true;
@@ -137,11 +165,11 @@
         if (!antwort.ok) throw new Error('HTTP ' + antwort.status);
         schreiben(speicher, String(wert));
         await laden();
-        ergebnis.textContent = TEXT.danke;
+        ergebnis.textContent = t.danke;
       } catch (fehler) {
         console.warn('Bewertung nicht gespeichert:', fehler);
         anzeigen();
-        ergebnis.textContent = TEXT.speicherFehler;
+        ergebnis.textContent = t.speicherFehler;
       } finally {
         sendet = false;
         knoepfe.forEach((knopf) => { knopf.disabled = false; });

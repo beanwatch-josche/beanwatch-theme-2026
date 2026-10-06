@@ -1,0 +1,25 @@
+{%- comment -%}
+  Zahl wie im Portionsrechner: ganze Zahlen ohne Stellen, sonst höchstens
+  zwei Stellen. Mit stellen: 1 immer genau eine Stelle (Nährwerte «6,0 g»).
+  Das Dezimalzeichen kommt aus der Sprachdatei (rezept.dezimal).
+  Aufruf: {%- render 'bw-zahl', wert: 18.0 -%}
+          {%- render 'bw-zahl', wert: 3.9, stellen: 1 -%}
+{%- endcomment -%}
+{%- liquid
+  assign zeichen = 'rezept.dezimal' | t
+  assign z = wert | times: 1.0
+  if stellen == 1
+    assign text = z | round: 1 | append: ''
+    unless text contains '.'
+      assign text = text | append: '.0'
+    endunless
+  else
+    assign ganz = z | round
+    if z == ganz
+      assign text = ganz | append: ''
+    else
+      assign text = z | round: 2 | append: ''
+    endif
+  endif
+  echo text | replace: '.', zeichen
+-%}

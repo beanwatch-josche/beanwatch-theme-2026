@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-rezept",
+      "settings": {}
+    }
+  },
+  "order": [
+    "haupt"
+  ]
+}

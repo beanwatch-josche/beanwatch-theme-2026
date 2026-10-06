@@ -1,0 +1,13 @@
+{%- comment -%}
+  Datum ausgeschrieben in der Sprache der Seite: «4. Juli 2026»,
+  «July 4, 2026», «4 juillet 2026». Shopify übersetzt Monatsnamen im
+  date-Filter nicht, deshalb stehen sie in den Sprachdateien.
+  Aufruf: {%- render 'bw-datum', datum: article.published_at -%}
+{%- endcomment -%}
+{%- liquid
+  assign monate = 'allgemein.monate' | t | split: ','
+  assign m = datum | date: '%m' | minus: 1
+  assign tag = datum | date: '%-d'
+  assign jahr = datum | date: '%Y'
+  echo 'allgemein.datum_lang' | t: tag: tag, monat: monate[m], jahr: jahr
+-%}

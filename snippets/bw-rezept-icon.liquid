@@ -1,0 +1,13 @@
+{%- comment -%}
+  Symbole der Nährwerte, wie ICON in werkzeug/rezepte-bauen.rb.
+  Aufruf: {%- render 'bw-rezept-icon', name: 'koffein' -%}
+{%- endcomment -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- case name -%}
+  {%- when 'koffein' -%}<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>
+  {%- when 'kcal' -%}<path d="M12 21c3.9 0 7-2.9 7-6.6 0-3.6-2.6-5.4-3.7-8.4-1.8 1.6-2.8 3.4-2.8 5.4-1-1-1.7-2.3-1.9-3.9C8.3 9.4 5 12 5 14.4 5 18.1 8.1 21 12 21Z"/>
+  {%- when 'fett' -%}<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11Z"/>
+  {%- when 'kohlenhydrate' -%}<path d="M12 21V9"/><path d="M12 9c-2.5 0-4-2.2-4-5 2.5 0 4 2.2 4 5Zm0 0c2.5 0 4-2.2 4-5-2.5 0-4 2.2-4 5Zm0 6c-2.5 0-4-2.2-4-5 2.5 0 4 2.2 4 5Zm0 0c2.5 0 4-2.2 4-5-2.5 0-4 2.2-4 5Z"/>
+  {%- when 'eiweiss' -%}<path d="M12 3c3.5 0 6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 2.5-10 6-10Z"/>
+{%- endcase -%}
+</svg>

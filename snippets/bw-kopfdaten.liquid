@@ -44,3 +44,10 @@
 <meta property="og:image:height" content="{{ 1200 | divided_by: page_image.aspect_ratio | round }}">
 {%- endif %}
 <meta name="twitter:card" content="summary_large_image">
+{%- comment -%} Wie im bisherigen Shop auf jeder Seite: Website und Organisation. {%- endcomment %}
+<script type="application/ld+json">
+[
+  { "@context": "https://schema.org", "@type": "WebSite", "name": {{ shop.name | json }}, "url": {{ shop.url | json }} },
+  { "@context": "https://schema.org", "@type": "Organization", "name": {{ shop.name | json }}, "url": {{ shop.url | json }} }
+]
+</script>

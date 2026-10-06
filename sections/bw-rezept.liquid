@@ -1,0 +1,462 @@
+{%- comment -%}
+  Rezeptseite, Vorlage article.rezept. Übertrag von werkzeug/rezepte-bauen.rb
+  aus der Werkstatt: gleiches Markup und gleiche Klassen, damit seiten.css
+  ohne Änderung greift.
+
+  Daten: Metafelder custom.* am Artikel und ihre Metaobjekte
+    recipe_base        Portionen, Einheit, Zeit
+    recipe_steps       Liste recipe_step (instruction, step_image,
+                       image_caption, step_ingredients)
+    step_ingredient    Zutat, Menge als Zahl, Einheit, skalierbar,
+                       Zusatzinfo, Produktempfehlung
+    recipe_nutrition   Koffein und Nährwerte
+    recipe_equipment   Überschrift, Text, Liste equipment_item
+    recipe_faqs_list   Liste rezept_faq_item
+    rezept_varianten, rezept_bohne, rezept_zusatz   Rich Text (neu 06.10.2026)
+    recipe_rating_key, rating_average, rating_count   Bewertung (Supabase)
+    bild_des_autoren   fehlt bei 5 der 8 Live-Rezepte (06.10.2026), dann gilt
+                       das Autorenbild aus den Theme-Einstellungen
+  Was fehlt, fällt weg: Ein Rezept ohne Nährwerte zeigt die Bohne weiter
+  oben, wie im Generator.
+
+  Texte aus den Sprachdateien gibt Shopify schon maskiert aus (ausser bei
+  Schlüsseln mit _html), deshalb steht nach | t nie | escape.
+
+  Schritt-Titel gibt es im Shop (noch) nicht. Steht später ein Feld
+  «title» am Metaobjekt recipe_step, erscheint er ohne Änderung hier.
+{%- endcomment -%}
+{%- liquid
+  assign mf = article.metafields.custom
+  assign basis = mf.recipe_base.value
+  assign naehrwerte = mf.recipe_nutrition.value
+  assign equipment = mf.recipe_equipment.value
+  assign schritte = mf.recipe_steps.value
+  assign fragen = mf.recipe_faqs_list.value
+  assign tipp_marke = 'rezept.tipp' | t
+
+  assign iso = basis.iso_total_time.value | default: basis.prep_time_iso.value | default: ''
+  assign rest = iso | remove: 'PT'
+  assign minuten = 0
+  if rest contains 'H'
+    assign teile = rest | split: 'H'
+    assign minuten = teile[0] | times: 60
+    assign rest = teile[1] | default: ''
+  endif
+  assign rest = rest | split: 'M' | first | default: ''
+  assign minuten = minuten | plus: rest
+  if minuten >= 240
+    assign aufwand = 'rezept.aufwand_ziehzeit' | t
+  elsif minuten > 30
+    assign aufwand = 'rezept.aufwand_vorlauf' | t
+  else
+    assign aufwand = 'rezept.aufwand_einfach' | t
+  endif
+
+  if article.tags contains 'Eiskaffee' or article.tags contains 'Cold Coffee'
+    assign kategorie = 'rezept.kategorie_eiskaffee' | t
+  else
+    assign kategorie = 'rezept.kategorie_rezept' | t
+  endif
+
+  assign portionen = basis.base_servings.value | default: 1 | at_least: 1
+  assign einheit = basis.serving_unit.value | default: ''
+  assign einheit_mehrzahl = basis.serving_unit_plural.value | default: einheit
+  assign feminin = 'rezept.feminin' | t | downcase | split: ','
+  assign einheit_klein = einheit | downcase
+  if feminin contains einheit_klein
+    assign titel_eins = 'rezept.zutaten_eins_feminin' | t: einheit: einheit
+  else
+    assign titel_eins = 'rezept.zutaten_eins' | t: einheit: einheit
+  endif
+  assign titel_mehr = 'rezept.zutaten_mehr' | t: anzahl: '{n}', einheit: einheit_mehrzahl
+  if portionen == 1
+    assign zutaten_titel = titel_eins
+    assign original = '1 ' | append: einheit
+  else
+    assign zutaten_titel = titel_mehr | replace: '{n}', portionen
+    assign original = portionen | append: ' ' | append: einheit_mehrzahl
+  endif
+
+  assign produkt = nil
+  for s in schritte
+    for z in s.step_ingredients.value
+      if produkt == nil and z.recommended_product.value != blank
+        assign produkt = z.recommended_product.value
+      endif
+    endfor
+  endfor
+
+  assign schnitt = mf.rating_average.value | default: 0 | times: 1.0
+  assign anzahl = mf.rating_count.value | default: 0 | plus: 0
+  assign voll = schnitt | round
+  assign zeichen = 'rezept.dezimal' | t
+  assign schnitt_text = schnitt | round: 1 | append: ''
+  unless schnitt_text contains '.'
+    assign schnitt_text = schnitt_text | append: '.0'
+  endunless
+  assign schnitt_text = schnitt_text | replace: '.', zeichen
+  assign ergebnis_eins = 'rezept.ergebnis_eins' | t: schnitt: '{schnitt}'
+  assign ergebnis_mehr = 'rezept.ergebnis_mehr' | t: schnitt: '{schnitt}', anzahl: '{n}'
+  if anzahl == 0
+    assign ergebnis = 'rezept.keine_bewertung' | t
+  elsif anzahl == 1
+    assign ergebnis = ergebnis_eins | replace: '{schnitt}', schnitt_text
+  else
+    assign ergebnis = ergebnis_mehr | replace: '{schnitt}', schnitt_text | replace: '{n}', anzahl
+  endif
+
+  assign geaendert = mf.content_updated_at.value | default: article.published_at
+-%}
+
+{%- render 'bw-rezept-schema' -%}
+
+<section class="beitragskopf">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if blogs['kaffeewissen'] != blank %}
+      <a href="{{ blogs['kaffeewissen'].url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- endif %}
+      <a href="{{ blog.url }}">{{ 'rezept.brot_rezepte' | t }}</a><span class="teiler">·</span><span>{{ article.title }}</span>
+    </nav>
+
+    <div class="seitenkopf-raster beitragskopf-raster beitragskopf-raster--rezept">
+      <span class="beitrag-art beitrag-art--rezept">
+        <i class="punkt"></i>{{ 'rezept.art' | t }}
+      </span>
+
+      <div class="beitragskopf-text">
+        <h1 data-split="zeilen">{{ article.title }}</h1>
+
+        {%- if article.content contains '<p' %}
+        {{ article.content | replace_first: '<p>', '<p class="lead">' }}
+        {%- elsif article.content != blank %}
+        <p class="lead">{{ article.content }}</p>
+        {%- endif %}
+
+        <div class="beitragsmeta">
+          <span class="autor">
+            {%- assign autor_bild = mf.bild_des_autoren.value | default: settings.autor_bild -%}
+            {%- if autor_bild != blank -%}
+            {{ autor_bild | image_url: width: 76, height: 76, crop: 'center' | image_tag: width: 38, height: 38, alt: '' }}
+            {%- endif %}
+            {{ article.author }}
+          </span>
+          {%- if mf.recipe_rating_key.value != blank %}
+          <div class="rezept-bewertung rezept-bewertung--kopf" id="bewertung"
+               data-schluessel="{{ mf.recipe_rating_key.value | escape }}" data-artikel-id="{{ article.id }}"
+               data-schnitt="{% if anzahl > 0 %}{{ schnitt }}{% endif %}" data-anzahl="{% if anzahl > 0 %}{{ anzahl }}{% endif %}"
+               data-text-keine="{{ 'rezept.keine_bewertung' | t }}"
+               data-text-danke="{{ 'rezept.danke' | t }}"
+               data-text-schon="{{ 'rezept.schon_bewertet' | t }}"
+               data-text-lade-fehler="{{ 'rezept.lade_fehler' | t }}"
+               data-text-speicher-fehler="{{ 'rezept.speicher_fehler' | t }}"
+               data-text-ergebnis-eins="{{ ergebnis_eins }}"
+               data-text-ergebnis-mehr="{{ ergebnis_mehr }}"
+               data-text-dezimal="{{ zeichen }}">
+            <span class="bewertung-titel">{{ 'rezept.bewerten' | t }}</span>
+            <div class="bewertung-sterne" role="group" aria-label="{{ 'rezept.bewerten_gruppe' | t }}">
+              {%- for i in (1..5) %}
+              <button type="button" data-wert="{{ i }}" aria-label="{{ 'rezept.sterne' | t: wert: i }}"{% if i <= voll and anzahl > 0 %} class="ist-voll"{% endif %}>★</button>
+              {%- endfor %}
+            </div>
+            <p class="bewertung-ergebnis" aria-live="polite">{{ ergebnis }}</p>
+          </div>
+          {%- endif %}
+        </div>
+
+        {%- if geaendert != blank %}
+        {%- capture datum_text -%}<time datetime="{{ geaendert | date: '%Y-%m-%d' }}">{% render 'bw-datum', datum: geaendert %}</time>{%- endcapture %}
+        <p class="aktualisiert">{{ 'rezept.aktualisiert_html' | t: datum: datum_text }}</p>
+        {%- endif %}
+      </div>
+
+      {%- if article.image %}
+      <div class="beitragsbild" data-reveal>
+        {{ article.image | image_url: width: 1600 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '600, 900, 1200, 1600', sizes: '(min-width: 1080px) 62vw, 100vw', alt: article.image.alt }}
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+{%- comment -%} Boxen-Raster: Auf einen Blick, Zutaten, Nährwerte; darunter Equipment über zwei Spalten und die passende Bohne {%- endcomment -%}
+{%- capture block_eckdaten -%}
+<div class="vorb-block">
+  <h3>{{ 'rezept.auf_einen_blick' | t }}</h3>
+  <div class="eckdaten">
+    {%- if basis.prep_time_display.value != blank %}
+    <span><span class="rolle">{{ 'rezept.zeit' | t }}</span><span class="wert">{{ basis.prep_time_display.value }}</span></span>
+    {%- endif %}
+    <span><span class="rolle">{{ 'rezept.aufwand' | t }}</span><span class="wert">{{ aufwand }}</span></span>
+    {%- if naehrwerte.caffeine.value != blank %}
+    <span><span class="rolle">{{ 'rezept.koffein' | t }}</span><span class="wert">{{ naehrwerte.caffeine.value }} mg</span></span>
+    {%- endif %}
+    <span><span class="rolle">{{ 'rezept.kategorie' | t }}</span><span class="wert">{{ kategorie }}</span></span>
+  </div>
+</div>
+{%- endcapture -%}
+
+{%- capture block_zutaten -%}
+{%- if schritte != blank -%}
+<div class="vorb-block vorb-block--zutaten" data-portionen data-basis="{{ portionen }}" data-einheit="{{ einheit | escape }}" data-einheit-mehrzahl="{{ einheit_mehrzahl | escape }}" data-text-titel-eins="{{ titel_eins }}" data-text-titel-mehr="{{ titel_mehr }}">
+  <div class="zutaten-kopf">
+    <h3 aria-live="polite">{{ zutaten_titel }}</h3>
+    <div class="portionen" hidden>
+      <button type="button" data-schritt="-1" aria-label="{{ 'rezept.portion_weniger' | t }}">−</button>
+      <button type="button" data-schritt="1" aria-label="{{ 'rezept.portion_mehr' | t }}">+</button>
+    </div>
+  </div>
+  <div class="zutaten">
+    {%- for s in schritte -%}
+      {%- for z in s.step_ingredients.value %}
+        {%- comment -%}
+          Als Menge gilt die angezeigte Zahl (amount), wie im Prototyp:
+          Das Zahlenfeld amount_number ist im Shop teils leer oder weicht ab
+          (Freddo Cappuccino: Menge 200, Zahl 3). Nur wenn amount fehlt,
+          rechnet die Seite mit amount_number. Ist amount keine reine Zahl
+          («2-3»), steht der Text ohne Umrechnung da.
+        {%- endcomment -%}
+        {%- liquid
+          assign menge_text = z.amount.value | strip
+          assign menge_punkt = menge_text | replace: ',', '.'
+          assign menge_zahl = menge_punkt | plus: 0
+          assign probe = menge_zahl | append: ''
+          assign basis_zahl = nil
+          if menge_text != blank and probe == menge_punkt
+            assign basis_zahl = menge_zahl
+          elsif menge_text == blank and z.amount_number.value != blank
+            assign basis_zahl = z.amount_number.value
+          endif
+        -%}
+    <div class="zutat"><span>{{ z.ingredient_name.value }}{% if z.note.value != blank %} ({{ z.note.value }}){% endif %}</span><span class="menge">
+      {%- if basis_zahl != nil -%}
+        <span class="zahl" data-basis="{{ basis_zahl }}"{% if z.is_scalable.value == false %} data-fest{% endif %}>{% render 'bw-zahl', wert: basis_zahl %}</span>{% if z.unit.value != blank %} {{ z.unit.value }}{% endif %}
+      {%- elsif z.amount.value != blank -%}
+        {{ z.amount.value }}{% if z.unit.value != blank %} {{ z.unit.value }}{% endif %}
+      {%- else -%}
+        {{ 'rezept.nach_bedarf' | t }}
+      {%- endif -%}
+    </span></div>
+      {%- endfor -%}
+    {%- endfor %}
+  </div>
+  <p class="portionen-hinweis" hidden>{{ 'rezept.original' | t: menge: original }}</p>
+</div>
+{%- endif -%}
+{%- endcapture -%}
+
+{%- capture block_equipment -%}
+{%- if equipment != blank -%}
+<div class="vorb-block vorb-block--equipment">
+  <h2 class="vorb-titel">{{ equipment.header.value | default: mf['equipment-section-title'].value }}</h2>
+  <div class="equipment-inhalt">
+    <div class="equipment equipment--fotos">
+      {%- for e in equipment.items.value %}
+      <figure class="equipment-foto">
+        {%- if e.image.value != blank %}
+        {{ e.image.value | image_url: width: 360 | image_tag: loading: 'lazy', alt: e.tool_name.value }}
+        {%- endif %}
+        <figcaption>{{ e.tool_name.value }}</figcaption>
+      </figure>
+      {%- endfor %}
+    </div>
+    {%- if equipment.description.value != blank %}
+    <p class="equipment-text">{{ equipment.description.value }}</p>
+    {%- endif %}
+  </div>
+</div>
+{%- endif -%}
+{%- endcapture -%}
+
+{%- capture block_bohne -%}
+{%- if produkt != nil and produkt.available -%}
+{%- liquid
+  assign pm = produkt.metafields.custom
+  assign noten = ''
+  for i in (1..3)
+    assign schluessel = 'product_icon_' | append: i | append: '_label'
+    assign note = pm[schluessel].value
+    if note != blank
+      if noten != ''
+        assign noten = noten | append: ' · '
+      endif
+      assign noten = noten | append: note
+    endif
+  endfor
+  if noten == ''
+    assign noten = pm.best_for.value | default: produkt.description | strip_html | truncatewords: 18
+  endif
+-%}
+<div class="seitenbox">
+  {%- if produkt.featured_image %}
+  <span class="kaffee-bild">{{ produkt.featured_image | image_url: width: 240 | image_tag: loading: 'lazy', alt: produkt.title }}</span>
+  {%- endif %}
+  <span class="eyebrow">{{ 'rezept.bohne' | t }}</span>
+  <h4>{{ produkt.title }}</h4>
+  <p>{{ noten }}</p>
+  <a class="btn btn--hell" href="{{ produkt.url }}" data-pfeil>{{ 'rezept.zum_kaffee' | t }}</a>
+</div>
+{%- endif -%}
+{%- endcapture -%}
+
+<section class="sektion vorbereitung" id="rezeptur" style="padding-block:clamp(38px,4.6vw,64px)">
+  <div class="wrap wrap--inhalt">
+    <div class="vorbereitung-raster{% if naehrwerte == blank %} vorbereitung-raster--ohne-naehrwerte{% endif %}" data-batch>
+      {{ block_eckdaten }}
+      {{ block_zutaten }}
+      {%- if naehrwerte != blank %}
+      {% render 'bw-rezept-naehrwerte', n: naehrwerte, art: 'box' %}
+      {{ block_equipment }}
+      {{ block_bohne }}
+      {%- else %}
+      {{ block_bohne }}
+      {{ block_equipment }}
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+{%- if schritte != blank %}
+<section class="sektion zubereitung-voll" id="zubereitung">
+  <div class="wrap wrap--inhalt">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'rezept.zubereitung' | t }}</span>
+        <h2 data-split="zeilen">{{ mf.recipe_instruction_heading.value | default: article.title }}</h2>
+      </div>
+    </div>
+
+    <div class="schritte-raster" data-batch>
+      {%- for s in schritte -%}
+        {%- liquid
+          assign nr = forloop.index
+          assign nummer = nr
+          if nr < 10
+            assign nummer = '0' | append: nr
+          endif
+          assign text = s.instruction.value | strip
+          unless text contains '<p'
+            if text contains tipp_marke
+              assign teile = text | split: tipp_marke
+              assign text = '<p>' | append: teile[0] | append: '</p><p>' | append: tipp_marke | append: ' ' | append: teile[1] | append: '</p>'
+            else
+              assign text = '<p>' | append: text | append: '</p>'
+            endif
+          endunless
+          assign marke_alt = '<p>' | append: tipp_marke
+          assign marke_neu = '<p class="tipp"><strong>' | append: tipp_marke | append: '</strong>'
+          assign text = text | replace: marke_alt, marke_neu
+          assign bild = s.step_image.value
+        -%}
+      <article class="schritt-karte" id="schritt-{{ nr }}">
+        <span id="step-{{ nr }}" hidden></span>
+        <div class="schritt-karte-bild">
+          <span class="nummer">{{ nummer }}</span>
+          {%- if bild != blank %}
+          {{ bild | image_url: width: 900 | image_tag: loading: 'lazy', widths: '450, 700, 900', sizes: '(min-width: 900px) 33vw, 100vw', alt: bild.alt }}
+          {%- endif %}
+        </div>
+        <div class="schritt-karte-koerper">
+          {%- if s.title.value != blank %}
+          <h3>{{ s.title.value }}</h3>
+          {%- endif %}
+          {{ text }}
+          {%- if s.image_caption.value != blank %}
+          <p class="fussnote">{{ s.image_caption.value }}</p>
+          {%- endif %}
+        </div>
+      </article>
+      {%- endfor %}
+    </div>
+
+    {%- if mf.rezept_varianten != blank %}
+    <div class="varianten-block" id="varianten">
+      <h2>{{ 'rezept.varianten' | t }}</h2>
+      {{ mf.rezept_varianten | metafield_tag }}
+    </div>
+    {%- endif %}
+  </div>
+</section>
+{%- endif %}
+
+{%- if naehrwerte != blank -%}
+{% render 'bw-rezept-naehrwerte', n: naehrwerte, art: 'mobil' %}
+{%- endif -%}
+
+{%- if mf.rezept_bohne != blank or mf.rezept_zusatz != blank or fragen != blank %}
+<section class="wrap">
+  <div class="beitragslayout beitragslayout--einspaltig">
+    <article class="beitragstext">
+      {%- if mf.rezept_bohne != blank %}
+      <h2 id="bohne">{{ 'rezept.bohne_titel' | t }}</h2>
+      {{ mf.rezept_bohne | metafield_tag }}
+      {%- endif %}
+
+      {%- if mf.rezept_zusatz != blank %}
+      {{ mf.rezept_zusatz | metafield_tag }}
+      {%- endif %}
+
+      {%- if fragen != blank %}
+      <h2 id="fragen">{{ 'rezept.fragen' | t }}</h2>
+      <div class="faq">
+        {%- for f in fragen -%}
+          {%- if f.question.value != blank and f.answer.value != blank %}
+        <details>
+          <summary>{{ f.question.value }}</summary>
+          <div class="antwort">{{ f.answer.value }}</div>
+        </details>
+          {%- endif -%}
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </article>
+  </div>
+</section>
+{%- endif %}
+
+{%- liquid
+  assign verwandt_tags = mf.related_recipe_tags.value
+  if verwandt_tags == blank
+    assign verwandt_tags = article.tags
+  endif
+  assign treffer = 0
+-%}
+{%- capture karten -%}
+  {%- for a in blog.articles -%}
+    {%- if a.id == article.id or treffer >= 3 -%}{%- continue -%}{%- endif -%}
+    {%- assign passt = false -%}
+    {%- for t in verwandt_tags -%}
+      {%- if a.tags contains t -%}{%- assign passt = true -%}{%- break -%}{%- endif -%}
+    {%- endfor -%}
+    {%- if passt -%}
+      {%- assign treffer = treffer | plus: 1 -%}
+      {% render 'bw-rezept-karte', a: a %}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+{%- if treffer > 0 %}
+<section class="sektion verwandt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'rezept.passt_dazu' | t }}</span>
+        {%- assign verwandt_titel = mf['recipe-article-navigation-title'].value -%}
+        {%- if verwandt_titel == blank -%}{%- assign verwandt_titel = 'rezept.mehr_rezepte' | t -%}{%- endif %}
+        <h2 data-split="zeilen">{{ verwandt_titel }}</h2>
+      </div>
+      <a class="btn btn--linie" href="{{ blog.url }}" data-pfeil>{{ 'rezept.alle_rezepte' | t }}</a>
+    </div>
+    <div class="beitraege" id="verwandt-raster">
+      {{ karten }}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<script src="{{ 'bewertung.js' | asset_url }}" defer></script>
+<script src="{{ 'portionen.js' | asset_url }}" defer></script>
+
+{% schema %}
+{ "name": "Rezept", "settings": [] }
+{% endschema %}

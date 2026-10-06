@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Beanwatch 2026",
-    "theme_version": "0.1.0",
+    "theme_version": "0.2.0",
     "theme_author": "Beanwatch Coffee",
     "theme_documentation_url": "https://github.com/beanwatch-josche/beanwatch-theme-2026",
     "theme_support_url": "https://beanwatch.ch"
@@ -15,6 +15,12 @@
         "id": "favicon",
         "label": "Favicon",
         "info": "Leer lassen: Dann steht das Signet in Redorange im Browser-Tab."
+      },
+      {
+        "type": "image_picker",
+        "id": "autor_bild",
+        "label": "Autorenbild",
+        "info": "Steht auf Rezepten und Artikeln neben dem Namen, wenn der Artikel im Metafeld «Bild des Autoren» keins hat. Quadratisch, mindestens 80 px."
       }
     ]
   }

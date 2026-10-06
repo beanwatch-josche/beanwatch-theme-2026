@@ -22,7 +22,9 @@ Das Konzept zum Umzug steht in der Werkstatt: `beanwatch-website-2026/MIGRATION-
 | `layout/theme.liquid` | Grundgerüst jeder Seite: Kopfdaten, Stile, Skripte, Kopf, Inhalt, Fuss, Warenkorb |
 | `sections/bw-kopf.liquid`, `bw-fuss.liquid` | Kopfleiste und Fuss, übertragen aus `shell.js` der Werkstatt. Navigation fest im Code (Entscheid 05.10.2026) |
 | `sections/header-group.json`, `footer-group.json` | Die Gruppen, in denen Kopf und Fuss stehen |
-| `sections/bw-*.liquid` (übrige) | Die Vorlagen der Seitentypen. Heute noch **Rohbau**: echte Inhalte, Preise und Warenkorb, aber noch ohne das Design aus dem Prototyp. Erkennbar an der gelben Marke «Rohbau» |
+| `sections/bw-rezept.liquid` | **Rezeptseite** (Vorlage `article.rezept`, seit 0.2.0), übertragen aus `werkzeug/rezepte-bauen.rb` der Werkstatt. Liest Metafelder und Metaobjekte der Rezepte, siehe Kommentar oben in der Datei |
+| `snippets/bw-rezept-*.liquid`, `bw-zahl`, `bw-datum` | Teile der Rezeptseite: strukturierte Daten (Recipe, Breadcrumb, FAQ), Nährwerte, Rezeptkarte, Symbole, Zahlen und Daten in der Sprache der Seite |
+| `sections/bw-*.liquid` (übrige) | Die Vorlagen der übrigen Seitentypen. Heute noch **Rohbau**: echte Inhalte, Preise und Warenkorb, aber noch ohne das Design aus dem Prototyp. Erkennbar an der gelben Marke «Rohbau» |
 | `sections/bw-warenkorb-seite.liquid` | Warenkorbseite `/cart`, funktioniert auch ohne JavaScript |
 | `snippets/bw-warenkorb.liquid` | Die Warenkorb-Schublade, gefüllt von `bw-theme.js` |
 | `snippets/bw-kopfdaten.liquid` | Titel, Beschreibung, Canonical, Vorschaukarten |
@@ -30,11 +32,15 @@ Das Konzept zum Umzug steht in der Werkstatt: `beanwatch-website-2026/MIGRATION-
 | `snippets/bw-navschluessel.liquid` | Welcher Navigationspunkt aktiv ist |
 | `templates/*.json` | Welche Sektion auf welchem Seitentyp steht |
 | `locales/de.default.json`, `en.json`, `fr.json` | **Alle festen Texte** in drei Sprachen (Entscheid 05.10.2026) |
-| `config/settings_schema.json` | Einstellungen im Theme-Editor (heute: Favicon) |
+| `config/settings_schema.json` | Einstellungen im Theme-Editor: Favicon und Autorenbild (gilt, wenn ein Artikel im Metafeld `custom.bild_des_autoren` keins hat) |
 
 ### Texte ändern ohne Code
 
 Shopify-Admin → Onlineshop → Themes → bei diesem Theme «…» → **Standard-Theme-Inhalte bearbeiten**. Dort stehen alle Texte aus `locales/`, je Sprache. Gespeichert wird wieder als Commit auf `main`.
+
+### Übersetzte Texte in Liquid
+
+Shopify gibt Texte aus `| t` schon maskiert aus, ausser der Schlüssel endet auf `_html` (etwa `rezept.aktualisiert_html` mit dem `<time>`-Element). Nach `| t` deshalb nie `| escape`, sonst steht `&amp;#39;` im Text. Texte für Skripte (Portionen, Bewertung) stehen als `data-text-*` am Element; ohne sie fallen die Skripte auf Deutsch zurück.
 
 ### Start-Modus im Theme
 
@@ -62,6 +68,8 @@ Vor jedem Push:
 - **Vorschau in Shopify:** Onlineshop → Themes → dieses Theme → «Vorschau». Englisch und Französisch über den Sprachwähler oder `/en`, `/fr` in der Adresse.
 
 Das Gerüst 0.1.0 wurde vor dem ersten Push so geprüft (05.10.2026): Theme Check wie oben; alle Seitentypen mit Testdaten gerendert und im Browser bei 1440 und 375 px angesehen (Deutsch, Englisch, Französisch), ohne Skriptfehler; Warenkorb-Schublade gegen eine nachgebildete Cart-API (hinzufügen, plus, minus, entfernen, Fehlerfall, Escape, Französisch mit `/fr`). In echtem Shopify noch nicht geprüft.
+
+Die Rezeptvorlage 0.2.0 wurde so geprüft (06.10.2026): echte Daten von Iced Latte, Espresso Tonic und dem Entwurf Flat White aus der Admin API, gerendert mit einer Nachbildung von Shopify-Liquid (Metafelder mit `.value`, maskierte Übersetzungen, strenge Vergleiche) in Deutsch, Englisch und Französisch, dazu ein Rezept ohne Nährwerte, Equipment, FAQ und Bewertung. JSON-LD Feld für Feld gegen den Prototyp verglichen. Im Browser bei 1440 und 375 px: Portionen, Bewertung gegen ein nachgebildetes Supabase (keine Teststimme in der echten Tabelle), Schema-Nachführung, Anker `#schritt-N` und `#step-N`, verwandte Rezepte.
 
 ### Beim ersten Vorschau-Theme in Shopify prüfen
 

@@ -1,0 +1,87 @@
+{%- comment -%}
+  Koffein und Nährwerte aus dem Metaobjekt recipe_nutrition, wie
+  naehrwertbox und naehrwertblock in werkzeug/rezepte-bauen.rb.
+    art: 'box'    dritte Box im Vorbereitungsraster (Desktop)
+    art: 'mobil'  eigener Abschnitt nach der Zubereitung (bis 900 px)
+  Aufruf: {%- render 'bw-rezept-naehrwerte', n: naehrwerte, art: 'box' -%}
+{%- endcomment -%}
+{%- liquid
+  assign bezug = n.serving_size.value | default: n.nutrition_reference.value | strip
+  assign anfang = bezug | slice: 0, 2
+  if anfang == '1 '
+    assign bezug = bezug | slice: 2, 200
+  endif
+  assign hinweis = n.nutrition_note.value | strip
+  if hinweis != blank
+    assign letztes = hinweis | slice: -1
+    unless '.!?' contains letztes
+      assign hinweis = hinweis | append: '.'
+    endunless
+  endif
+  capture fussnote
+    if bezug != blank
+      echo 'rezept.angaben_pro' | t: bezug: bezug
+    endif
+    if hinweis != blank
+      echo ' ' | append: hinweis
+    endif
+  endcapture
+
+  capture wert_fett
+    render 'bw-zahl', wert: n.fat_content.value, stellen: 1
+  endcapture
+  capture wert_kh
+    render 'bw-zahl', wert: n.carbohydrate_content.value, stellen: 1
+  endcapture
+  capture wert_eiweiss
+    render 'bw-zahl', wert: n.protein_content.value, stellen: 1
+  endcapture
+
+  assign schluessel = 'koffein,kcal,fett,kohlenhydrate,eiweiss' | split: ','
+  capture rollen
+    echo 'rezept.koffein' | t | append: '|'
+    echo 'rezept.energie' | t | append: '|'
+    echo 'rezept.fett' | t | append: '|'
+    echo 'rezept.kohlenhydrate' | t | append: '|'
+    echo 'rezept.eiweiss' | t
+  endcapture
+  assign rollen = rollen | split: '|'
+-%}
+{%- capture werte -%}{{ n.caffeine.value }} mg|{{ n.calories_kcal.value }} kcal|{{ wert_fett }} g|{{ wert_kh }} g|{{ wert_eiweiss }} g{%- endcapture -%}
+{%- assign werte = werte | split: '|' -%}
+{%- if art == 'mobil' -%}
+<section class="sektion naehrwerte naehrwerte--mobil" style="padding-block:clamp(38px,4.6vw,64px)">
+  <div class="wrap wrap--inhalt">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'rezept.pro_portion' | t }}</span>
+        <h2 data-split="zeilen">{{ 'rezept.naehrwerte' | t }}</h2>
+      </div>
+    </div>
+    <div class="naehrwert-raster">
+      {%- for s in schluessel %}
+      <div class="naehrwert">
+        <span class="icon">{% render 'bw-rezept-icon', name: s %}</span>
+        <span class="wert">{{ werte[forloop.index0] }}</span>
+        <span class="rolle">{{ rollen[forloop.index0] }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- if fussnote != blank %}
+    <p class="fussnote">{{ fussnote | strip | escape }}</p>
+    {%- endif %}
+  </div>
+</section>
+{%- else -%}
+<div class="vorb-block vorb-block--naehrwerte">
+  <h3>{{ 'rezept.naehrwerte' | t }}</h3>
+  <div class="naehrwert-liste">
+    {%- for s in schluessel %}
+    <div class="naehrwert-zeile">{% render 'bw-rezept-icon', name: s %}<span class="rolle">{{ rollen[forloop.index0] }}</span><span class="wert">{{ werte[forloop.index0] }}</span></div>
+    {%- endfor %}
+  </div>
+  {%- if fussnote != blank %}
+  <p class="fussnote">{{ fussnote | strip | escape }}</p>
+  {%- endif %}
+</div>
+{%- endif -%}

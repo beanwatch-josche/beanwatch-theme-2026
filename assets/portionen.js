@@ -13,6 +13,10 @@
      Hinweis     Weicht die Anzahl vom Original ab, steht darunter, wofür
                  das Rezept geschrieben wurde.
      Ohne Skript Die Knöpfe bleiben verborgen, es steht die Basisportion da.
+     Sprachen    Im Shopify-Theme stehen die Titel übersetzt im Block:
+                 data-text-titel-eins (ganzer Titel für eine Portion) und
+                 data-text-titel-mehr ({n} für die Anzahl). Fehlen sie, gilt
+                 der deutsche Wortlaut wie bisher.
    ========================================================================== */
 
 (function () {
@@ -28,6 +32,8 @@
     const einzahl = block.dataset.einheit || '';
     const mehrzahl = block.dataset.einheitMehrzahl || einzahl;
     const artikel = block.dataset.artikel || 'ein';
+    const titelEins = block.dataset.textTitelEins || `Zutaten für ${artikel} ${einzahl}`;
+    const titelMehr = block.dataset.textTitelMehr || `Zutaten für {n} ${mehrzahl}`;
 
     const titel = block.querySelector('.zutaten-kopf h3');
     const knoepfe = block.querySelector('.portionen');
@@ -46,9 +52,7 @@
         if (el.hasAttribute('data-fest')) return;
         el.textContent = zahlText(parseFloat(el.dataset.basis) * faktor);
       });
-      titel.textContent = aktuell === 1
-        ? `Zutaten für ${artikel} ${einzahl}`
-        : `Zutaten für ${aktuell} ${mehrzahl}`;
+      titel.textContent = aktuell === 1 ? titelEins : titelMehr.replace('{n}', aktuell);
       weniger.disabled = aktuell <= 1;
       if (hinweis) hinweis.hidden = aktuell === basis;
     }
