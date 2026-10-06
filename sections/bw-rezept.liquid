@@ -22,8 +22,9 @@
   Texte aus den Sprachdateien gibt Shopify schon maskiert aus (ausser bei
   Schlüsseln mit _html), deshalb steht nach | t nie | escape.
 
-  Schritt-Titel gibt es im Shop (noch) nicht. Steht später ein Feld
-  «title» am Metaobjekt recipe_step, erscheint er ohne Änderung hier.
+  Schritt-Titel stehen seit dem 06.10.2026 im Feld «title» am Metaobjekt
+  recipe_step (Titel aus der Werkstatt). Fehlt einer, bleibt die Karte ohne
+  Überschrift und das Schema nennt den Schritt «Schritt N».
 {%- endcomment -%}
 {%- liquid
   assign mf = article.metafields.custom
