@@ -1660,7 +1660,7 @@
 }
 .equipment-foto{margin:0;}
 .equipment-foto img{
-  width:100%;aspect-ratio:1/1;object-fit:cover;
+  width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;
   border-radius:var(--radius-karte);
   border:1px solid var(--linie);
   background:var(--hellorange);
@@ -1920,7 +1920,7 @@
   border-bottom:1px solid var(--linie);
 }
 .vergleichstabelle thead .bildzeile img{
-  width:100%;max-width:104px;
+  width:100%;max-width:104px;height:auto;
   aspect-ratio:1;object-fit:cover;
   border-radius:var(--radius-karte);
   display:block;

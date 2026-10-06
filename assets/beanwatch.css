@@ -63,7 +63,7 @@ body{
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
-img{max-width:100%;display:block;}
+img{max-width:100%;height:auto;display:block;}
 [tabindex="-1"]:focus:not(:focus-visible){outline:none;}
 a{color:inherit;text-decoration:none;}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}

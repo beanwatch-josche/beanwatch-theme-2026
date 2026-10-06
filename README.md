@@ -71,6 +71,8 @@ Das Gerüst 0.1.0 wurde vor dem ersten Push so geprüft (05.10.2026): Theme Chec
 
 Die Rezeptvorlage 0.2.0 wurde so geprüft (06.10.2026): echte Daten von Iced Latte, Espresso Tonic und dem Entwurf Flat White aus der Admin API, gerendert mit einer Nachbildung von Shopify-Liquid (Metafelder mit `.value`, maskierte Übersetzungen, strenge Vergleiche) in Deutsch, Englisch und Französisch, dazu ein Rezept ohne Nährwerte, Equipment, FAQ und Bewertung. JSON-LD Feld für Feld gegen den Prototyp verglichen. Im Browser bei 1440 und 375 px: Portionen, Bewertung gegen ein nachgebildetes Supabase (keine Teststimme in der echten Tabelle), Schema-Nachführung, Anker `#schritt-N` und `#step-N`, verwandte Rezepte.
 
+**Bilder:** Shopify schreibt mit `image_tag` immer `width` und `height` ans Bild. Wo das CSS nur Breite und Seitenverhältnis vorgibt, braucht es `height:auto` (steht seit 06.10.2026 im Grundstil `img` in `beanwatch.css`), sonst wird das Bild verzerrt oder zum Streifen. Die Nachbildung zum Prüfen setzt die Attribute seither genauso und misst jedes Bild gegen den Prototyp.
+
 ### Beim ersten Vorschau-Theme in Shopify prüfen
 
 - Zählt `blogs['brew-guides'].articles_count` nur veröffentlichte Artikel, und fehlen unveröffentlichte in `blogs[…].articles`? Davon hängt der Start-Modus ab (im Quelltext der Seite muss `window.BW_PLAN` je Blog `{}` zeigen, solange kein Guide veröffentlicht ist).
