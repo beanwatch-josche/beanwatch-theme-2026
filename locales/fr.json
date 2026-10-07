@@ -135,7 +135,10 @@
     "autor_rolle": "Écrit par",
     "inhalt_autor": "L’auteur",
     "weiterlesen_titel_html": "À lire<br>avant de commander.",
-    "alles_wissen": "Tous les articles"
+    "alles_wissen": "Tous les articles",
+    "leseprobe_buch": "Extrait du livre",
+    "leseprobe": "Extrait",
+    "kostenlos_lesen": "Lire gratuitement"
   },
   "rohbau": {
     "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",

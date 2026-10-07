@@ -9,7 +9,9 @@
     Kopf          Galerie aus den Produktbildern (bw-galerie), Zeile über
                   dem Titel custom.kopfzeile, custom.kurzbeschrieb, Preis
                   mit custom.preis_zusatz, Knopf custom.weiterlesen (link),
-                  Karte «Passt gut dazu» aus custom.passt_artikel
+                  Karte «Leseprobe aus dem Buch» aus custom.leseprobe (seit
+                  0.6.1, beim Buch das Kapitel zur Kaffeegeschichte), sonst
+                  «Passt gut dazu» aus custom.passt_artikel
     Fakten        custom.fakten (Metaobjekte produktfakt: rolle, wert)
     Geschichte    custom.geschichte_titel, der erste Absatz der
                   Produktbeschreibung im Shop-Wortlaut (beim Buch stehen im
@@ -66,9 +68,24 @@
     endif
   endif
 
-  assign passt = ''
-  if mf.passt_artikel.value != blank
-    assign passt = articles[mf.passt_artikel.value]
+  # Die Karte unter dem Kauf: zuerst eine Leseprobe (ein Artikel, der aus
+  # dem Produkt stammt, Entscheid 07.10.2026), sonst «Passt gut dazu».
+  assign karte = ''
+  assign karte_rolle = 'produkt.partner' | t
+  assign karte_hin = 'produkt.ansehen' | t
+  if mf.leseprobe.value != blank
+    assign karte = articles[mf.leseprobe.value]
+    if ist_buch
+      assign karte_rolle = 'produkt.leseprobe_buch' | t
+    else
+      assign karte_rolle = 'produkt.leseprobe' | t
+    endif
+    assign karte_hin = 'produkt.kostenlos_lesen' | t
+  endif
+  if karte == blank and mf.passt_artikel.value != blank
+    assign karte = articles[mf.passt_artikel.value]
+    assign karte_rolle = 'produkt.partner' | t
+    assign karte_hin = 'produkt.ansehen' | t
   endif
 
   assign hat_geschichte = false
@@ -100,16 +117,16 @@
 
         {% render 'bw-kaufwahl', p: product, zusatz: mf.preis_zusatz.value, link_url: weiter_url, link_text: weiter_text %}
 
-        {%- if passt != blank %}
-        <a class="schwester" href="{{ passt.url }}">
-          {%- if passt.image %}
-          {{ passt.image | image_url: width: 120 | image_tag: loading: 'lazy', alt: '' }}
+        {%- if karte != blank %}
+        <a class="schwester" href="{{ karte.url }}">
+          {%- if karte.image %}
+          {{ karte.image | image_url: width: 120 | image_tag: loading: 'lazy', alt: '' }}
           {%- endif %}
           <span class="text">
-            <span class="rolle">{{ 'produkt.partner' | t }}</span>
-            <h4>{{ passt.metafields.custom.kurztitel.value | default: passt.title }}</h4>
+            <span class="rolle">{{ karte_rolle }}</span>
+            <h4>{{ karte.metafields.custom.kurztitel.value | default: karte.title }}</h4>
           </span>
-          <span class="hin">{{ 'produkt.ansehen' | t }}
+          <span class="hin">{{ karte_hin }}
             <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </span>
         </a>

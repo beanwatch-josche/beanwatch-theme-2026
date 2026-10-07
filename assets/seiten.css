@@ -1116,7 +1116,7 @@
   font-weight:700;text-transform:uppercase;letter-spacing:.13em;
   font-size:.64rem;color:var(--dragonfruit);
 }
-.schwester h4{margin:4px 0 0;font-size:.98rem;font-weight:700;letter-spacing:-.01em;}
+.schwester h4{margin:4px 0 0;font-size:.98rem;font-weight:700;letter-spacing:-.01em;overflow-wrap:break-word;hyphens:auto;}
 .schwester .hin{
   font-weight:600;font-size:.84rem;color:var(--redorange);
   display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
@@ -3477,4 +3477,14 @@
 }
 @media (max-width:1080px) and (min-width:621px){
   .fakt:last-child:nth-child(odd){grid-column:span 2;}
+}
+
+/* Karte unter dem Kauf (Schwesterprodukt, Leseprobe) am Handy: «Ansehen»
+   bzw. «Kostenlos lesen» rutscht unter den Titel. Sonst drückten lange
+   Titel wie «… 400 Jahre Kaffeegeschichte» die Spalte über den Rand
+   (07.10.2026). */
+@media (max-width:620px){
+  .schwester{flex-wrap:wrap;row-gap:8px;}
+  .schwester .text{flex:1 1 calc(100% - 76px);}
+  .schwester .hin{margin-left:76px;}
 }

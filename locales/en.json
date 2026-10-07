@@ -135,7 +135,10 @@
     "autor_rolle": "Written by",
     "inhalt_autor": "The author",
     "weiterlesen_titel_html": "Read on<br>before you order.",
-    "alles_wissen": "All articles"
+    "alles_wissen": "All articles",
+    "leseprobe_buch": "Excerpt from the book",
+    "leseprobe": "Excerpt",
+    "kostenlos_lesen": "Read for free"
   },
   "rohbau": {
     "hinweis": "Under construction: this page gets its final design before launch. Content, prices and cart are already live data.",
