@@ -1,0 +1,13 @@
+{%- comment -%}
+  Der Seiteninhalt eines Rechners (seit 0.11.0, Koffeinrechner und
+  Wasserhärte), aufbereitet wie die Erklärung im Prototyp: Die erste
+  Überschrift bekommt die Zeilen-Animation, ein Zitat im Shop (<blockquote>)
+  wird zum Merksatz. Den Text pflegt Joscha im Shop unter Seiten, die
+  Übersetzung über Translate & Adapt.
+  Aufruf: {%- render 'bw-tool-inhalt', inhalt: page.content -%}
+{%- endcomment -%}
+{%- liquid
+  assign h2_neu = '<h2 data-split="zeilen" style="margin-top:14px">'
+  assign merksatz = '<div class="merksatz">'
+  echo inhalt | replace_first: '<h2>', h2_neu | replace: '<blockquote><p>', merksatz | replace: '</p></blockquote>', '</div>' | replace: '<blockquote>', merksatz | replace: '</blockquote>', '</div>'
+-%}

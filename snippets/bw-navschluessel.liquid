@@ -15,10 +15,15 @@
     when 'index'
       echo 'start'
     when 'page'
+      assign wissen_seiten = 'welche-espressomaschine,welche-filtermethode,tools,koffeinrechner,wasserhaerte' | split: ','
       if page.template_suffix == 'espresso'
         echo 'espresso'
       elsif page.template_suffix == 'filterkaffee'
         echo 'filterkaffee'
+      elsif page.template_suffix == 'welcher-kaffee'
+        echo 'shop'
+      elsif wissen_seiten contains page.template_suffix
+        echo 'wissen'
       endif
     when 'collection'
       if collection.id == id_decaf

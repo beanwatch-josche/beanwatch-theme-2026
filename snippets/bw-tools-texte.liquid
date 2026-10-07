@@ -1,0 +1,104 @@
+{%- comment -%}
+  Datenblock #bw-tools-texte (seit 0.11.0) für tools.js aus der Werkstatt:
+  die Texte, die der Koffeinrechner, das Teilen-Fenster, der Wasserrechner
+  und der Brüh-Timer zur Laufzeit schreiben, die zwölf Getränke, das
+  Dezimalzeichen der Sprache und die Adresse der Rechnerseite (für das
+  geteilte Bild und den Teiltext). Ohne den Block schreibt tools.js den
+  deutschen Wortlaut des Prototyps. Texte in locales/ unter tools.*.
+  Gehört auf jede Seite, die tools.js lädt.
+  Aufruf: {%- render 'bw-tools-texte' -%}
+{%- endcomment -%}
+{%- liquid
+  assign seite_koffein = pages['koffeinrechner']
+  assign host = request.host | default: shop.domain | remove_first: 'www.'
+  assign adresse = host
+  assign adresse_url = request.origin | append: routes.root_url
+  if seite_koffein != blank
+    assign adresse = host | append: seite_koffein.url
+    assign adresse_url = request.origin | append: seite_koffein.url
+  endif
+-%}
+<script type="application/json" id="bw-tools-texte">
+{
+  "dezimal": {{ 'rezept.dezimal' | t | json }},
+  "adresse": {{ adresse | json }},
+  "adresse_url": {{ adresse_url | json }},
+  "urteil_leer": {{ 'tools.urteil_leer' | t | json }},
+  "urteil_viel": {{ 'tools.urteil_viel' | t | json }},
+  "urteil_mittel": {{ 'tools.urteil_mittel' | t | json }},
+  "urteil_wenig": {{ 'tools.urteil_wenig' | t | json }},
+  "tagesmenge": {{ 'tools.tagesmenge' | t | json }},
+  "liste_leer": {{ 'tools.liste_leer' | t | json }},
+  "entfernen": {{ 'tools.entfernen' | t | json }},
+  "option_menge": {{ 'tools.option_menge' | t | json }},
+  "menge_kaffee": {{ 'tools.menge_kaffee' | t | json }},
+  "menge_getraenk": {{ 'tools.menge_getraenk' | t | json }},
+  "bild_wird_gebaut": {{ 'tools.bild_wird_gebaut' | t | json }},
+  "bild_kopf": {{ 'tools.bild_kopf' | t | json }},
+  "bild_schlaf": {{ 'tools.bild_schlaf' | t | json }},
+  "bild_insgesamt": {{ 'tools.bild_insgesamt' | t | json }},
+  "bild_grenze": {{ 'tools.bild_grenze' | t | json }},
+  "bild_schlafenszeit": {{ 'tools.bild_schlafenszeit' | t | json }},
+  "bild_mein_tag": {{ 'tools.bild_mein_tag' | t | json }},
+  "bild_weitere": {{ 'tools.bild_weitere' | t | json }},
+  "bild_frage_1": {{ 'tools.bild_frage_1' | t | json }},
+  "bild_frage_2": {{ 'tools.bild_frage_2' | t | json }},
+  "teiltext": {{ 'tools.teiltext' | t | json }},
+  "teilen_aria": {{ 'tools.teilen_aria' | t | json }},
+  "schliessen": {{ 'tools.schliessen' | t | json }},
+  "teilen_eyebrow": {{ 'tools.teilen_eyebrow' | t | json }},
+  "teilen_titel": {{ 'tools.teilen_titel' | t | json }},
+  "bild_teilen": {{ 'tools.bild_teilen' | t | json }},
+  "nativ_erklaerung": {{ 'tools.nativ_erklaerung' | t | json }},
+  "ablage_erklaerung": {{ 'tools.ablage_erklaerung' | t | json }},
+  "taste_strg": {{ 'tools.taste_strg' | t | json }},
+  "speichern_erklaerung": {{ 'tools.speichern_erklaerung' | t | json }},
+  "nur_speichern": {{ 'tools.nur_speichern' | t | json }},
+  "vorschau_alt": {{ 'tools.vorschau_alt' | t | json }},
+  "gespeichert": {{ 'tools.gespeichert' | t | json }},
+  "teilen_fehler": {{ 'tools.teilen_fehler' | t | json }},
+  "in_ablage": {{ 'tools.in_ablage' | t | json }},
+  "nur_gespeichert": {{ 'tools.nur_gespeichert' | t | json }},
+  "ziel_filter": {{ 'tools.ziel_filter' | t | json }},
+  "ziel_espresso": {{ 'tools.ziel_espresso' | t | json }},
+  "vorlage_horgen": {{ 'tools.vorlage_horgen' | t | json }},
+  "vorlage_zuerich": {{ 'tools.vorlage_zuerich' | t | json }},
+  "im_zielbereich": {{ 'tools.im_zielbereich' | t | json }},
+  "ausserhalb": {{ 'tools.ausserhalb' | t | json }},
+  "wasser_urteil_beides": {{ 'tools.wasser_urteil_beides' | t | json }},
+  "wasser_rat_beides": {{ 'tools.wasser_rat_beides' | t | json }},
+  "wasser_urteil_filter": {{ 'tools.wasser_urteil_filter' | t | json }},
+  "wasser_rat_filter": {{ 'tools.wasser_rat_filter' | t | json }},
+  "wasser_urteil_espresso": {{ 'tools.wasser_urteil_espresso' | t | json }},
+  "wasser_rat_espresso": {{ 'tools.wasser_rat_espresso' | t | json }},
+  "wasser_urteil_kh_hoch": {{ 'tools.wasser_urteil_kh_hoch' | t | json }},
+  "wasser_rat_kh_hoch": {{ 'tools.wasser_rat_kh_hoch' | t | json }},
+  "wasser_urteil_mineralarm": {{ 'tools.wasser_urteil_mineralarm' | t | json }},
+  "wasser_rat_mineralarm": {{ 'tools.wasser_rat_mineralarm' | t | json }},
+  "wasser_urteil_sonst": {{ 'tools.wasser_urteil_sonst' | t | json }},
+  "wasser_rat_sonst": {{ 'tools.wasser_rat_sonst' | t | json }},
+  "eigene_werte": {{ 'tools.eigene_werte' | t | json }},
+  "achse_kh": {{ 'tools.achse_kh' | t | json }},
+  "achse_gh": {{ 'tools.achse_gh' | t | json }},
+  "timer_ende": {{ 'tools.timer_ende' | t | json }},
+  "timer_nochmal": {{ 'tools.timer_nochmal' | t | json }},
+  "timer_fertig": {{ 'tools.timer_fertig' | t | json }},
+  "timer_pause": {{ 'tools.timer_pause' | t | json }},
+  "timer_weiter": {{ 'tools.timer_weiter' | t | json }},
+  "timer_start": {{ 'tools.timer_start' | t | json }},
+  "getraenke": [
+    { "name": {{ 'tools.getraenk_1_name' | t | json }}, "kurz": {{ 'tools.getraenk_1_kurz' | t | json }}, "liste": {{ 'tools.getraenk_1_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_1_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_2_name' | t | json }}, "kurz": {{ 'tools.getraenk_2_kurz' | t | json }}, "liste": {{ 'tools.getraenk_2_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_2_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_3_name' | t | json }}, "kurz": {{ 'tools.getraenk_3_kurz' | t | json }}, "liste": {{ 'tools.getraenk_3_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_3_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_4_name' | t | json }}, "kurz": {{ 'tools.getraenk_4_kurz' | t | json }}, "liste": {{ 'tools.getraenk_4_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_4_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_5_name' | t | json }}, "kurz": {{ 'tools.getraenk_5_kurz' | t | json }}, "liste": {{ 'tools.getraenk_5_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_5_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_6_name' | t | json }}, "kurz": {{ 'tools.getraenk_6_kurz' | t | json }}, "liste": {{ 'tools.getraenk_6_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_6_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_7_name' | t | json }}, "kurz": {{ 'tools.getraenk_7_kurz' | t | json }}, "liste": {{ 'tools.getraenk_7_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_7_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_8_name' | t | json }}, "kurz": {{ 'tools.getraenk_8_kurz' | t | json }}, "liste": {{ 'tools.getraenk_8_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_8_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_9_name' | t | json }}, "kurz": {{ 'tools.getraenk_9_kurz' | t | json }}, "liste": {{ 'tools.getraenk_9_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_9_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_10_name' | t | json }}, "kurz": {{ 'tools.getraenk_10_kurz' | t | json }}, "liste": {{ 'tools.getraenk_10_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_10_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_11_name' | t | json }}, "kurz": {{ 'tools.getraenk_11_kurz' | t | json }}, "liste": {{ 'tools.getraenk_11_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_11_hinweis' | t | json }} },
+    { "name": {{ 'tools.getraenk_12_name' | t | json }}, "kurz": {{ 'tools.getraenk_12_kurz' | t | json }}, "liste": {{ 'tools.getraenk_12_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_12_hinweis' | t | json }} }
+  ]
+}
+</script>

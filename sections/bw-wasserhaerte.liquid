@@ -1,0 +1,204 @@
+{%- comment -%}
+  Der Wasserhärte-Rechner (seit 0.11.0), Vorlage page.wasserhaerte,
+  übertragen aus tool-wasserhaerte.html der Werkstatt: Markup, Klassen und
+  IDs wie dort, denn tools.js (wasserrechner()) zeichnet in das Diagramm.
+
+  Woher die Inhalte kommen:
+    Kopf, Rechner, Box rechts, Hinweis   Sprachdateien (tools); was
+                   tools.js zur Laufzeit schreibt (Vorlagen, Urteil, Rat,
+                   Achsen), aus dem Datenblock bw-tools-texte
+    Erklärung      der Seiteninhalt im Shop (bw-tool-inhalt), mit den
+                   Ankern #gh, #kh, #warum-zwei, #quellen, #umrechnung
+  Ohne Inhaltsverzeichnis aus beitrag.js: Das schreibt der Prototyp in
+  #inhalt, im Theme ist das das <main> der Seite.
+{%- endcomment -%}
+{%- liquid
+  # Platzhalter für die Achsentitel, siehe bw-kaffeefinder.
+  assign platz_einheit = '{einheit}'
+  assign seite_tools = pages['tools']
+  assign seite_koffein = pages['koffeinrechner']
+  assign seite_methoden = pages['welche-filtermethode']
+  assign hub_filter = pages['filterkaffee']
+  assign blog_wissen = blogs['kaffeewissen']
+  assign url_filter = collections['filterkaffee'].url
+  if hub_filter != blank
+    assign url_filter = hub_filter.url
+  endif
+  assign hat_brew = false
+  if blogs['brew-guides'] != blank
+    assign n = blogs['brew-guides'].articles_count | plus: 0
+    if n > 0 and hub_filter != blank
+      assign hat_brew = true
+    endif
+  endif
+-%}
+
+<section class="seitenkopf seitenkopf--hell" style="padding-bottom:clamp(30px,4vw,52px)">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if blog_wissen != blank %}
+      <a href="{{ blog_wissen.url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- endif %}
+      {%- if seite_tools != blank %}
+      <a href="{{ seite_tools.url }}">{{ 'tools.brot_tools' | t }}</a><span class="teiler">·</span>
+      {%- endif -%}
+      <span>{{ 'tools.wasser_brot' | t }}</span>
+    </nav>
+    {%- comment -%} H1 trägt das Suchwort, die grosse Aussage steht darunter als Display. {%- endcomment %}
+    <h1 class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'tools.wasser_titel' | t }}</h1>
+    <p class="display" data-split="zeilen"
+       style="font-size:clamp(2.4rem,5.2vw,4.6rem);margin-top:18px;max-width:22ch">{{ 'tools.wasser_display' | t }}</p>
+    <p class="lead">{{ 'tools.wasser_lead' | t }}</p>
+  </div>
+</section>
+
+<section class="sektion" style="padding-top:clamp(28px,3.5vw,48px)">
+  <div class="wrap">
+    <div class="rechner">
+
+      <div>
+        <div class="rechner-feld">
+          <label for="wasser-vorlage">{{ 'tools.vorlage_label' | t }} <span class="hinweis">{{ 'tools.vorlage_hinweis' | t }}</span></label>
+          <select id="wasser-vorlage"></select>
+        </div>
+
+        <div class="rechner-feld">
+          <label for="haerte-einheit">{{ 'tools.einheit_label' | t }}</label>
+          <select id="haerte-einheit">
+            <option value="dh">{{ 'tools.einheit_dh' | t }}</option>
+            <option value="fh">{{ 'tools.einheit_fh' | t }}</option>
+          </select>
+        </div>
+
+        <div class="rechner-feld">
+          <label for="wert-calcium">{{ 'tools.calcium' | t }} <span class="hinweis">{{ 'tools.mg_pro_liter' | t }}</span></label>
+          <input type="number" id="wert-calcium" value="78" min="0" max="600" step="1">
+        </div>
+
+        <div class="rechner-feld">
+          <label for="wert-magnesium">{{ 'tools.magnesium' | t }} <span class="hinweis">{{ 'tools.mg_pro_liter' | t }}</span></label>
+          <input type="number" id="wert-magnesium" value="12" min="0" max="200" step="1">
+        </div>
+
+        <div class="rechner-feld">
+          <label for="wert-hydrogencarbonat">{{ 'tools.hydrogencarbonat' | t }} <span class="hinweis">{{ 'tools.mg_pro_liter' | t }}</span></label>
+          <input type="number" id="wert-hydrogencarbonat" value="250" min="0" max="800" step="1">
+        </div>
+
+        <div class="merksatz" style="margin-top:26px">{{ 'tools.werte_finden_html' | t }}</div>
+      </div>
+
+      <div class="rechner-ergebnis">
+        <span class="eyebrow">{{ 'tools.dein_wasser' | t }}</span>
+
+        <div class="rechner-zeilen" style="margin-top:18px">
+          <div class="rechner-zeile">
+            <span>{{ 'tools.gh' | t }}</span><span class="wert" id="anzeige-gh">–</span>
+          </div>
+          <div class="rechner-zeile">
+            <span>{{ 'tools.kh' | t }}</span><span class="wert" id="anzeige-kh">–</span>
+          </div>
+          <div class="rechner-zeile">
+            <span>{{ 'tools.ppm' | t }}</span><span class="wert" id="anzeige-ppm">–</span>
+          </div>
+        </div>
+
+        {%- comment -%} Diagramm: Karbonathärte gegen Gesamthärte {%- endcomment %}
+        <svg id="wasser-diagramm" viewBox="0 0 480 360" style="width:100%;height:auto;margin-top:24px;overflow:visible"
+             role="img" aria-label="{{ 'tools.diagramm_aria' | t }}">
+          <g id="raster" stroke="rgba(255,243,232,.16)" stroke-width="1"></g>
+          <g class="zielbereiche"></g>
+          <g stroke="rgba(255,243,232,.5)" stroke-width="2">
+            <line x1="60" y1="40" x2="60" y2="300"/>
+            <line x1="60" y1="300" x2="440" y2="300"/>
+          </g>
+          <g id="achse-x" fill="rgba(255,243,232,.62)" style="font:500 12px Gabarito,sans-serif" text-anchor="middle"></g>
+          <text id="achse-x-titel" x="250" y="344" text-anchor="middle" style="font:700 12px Gabarito,sans-serif" fill="rgba(255,243,232,.8)">{{ 'tools.achse_kh' | t | replace: platz_einheit, '°dH' }}</text>
+          <g id="achse-y" fill="rgba(255,243,232,.62)" style="font:500 12px Gabarito,sans-serif" text-anchor="end"></g>
+          <text id="achse-y-titel" x="-170" y="18" transform="rotate(-90)" text-anchor="middle" fill="rgba(255,243,232,.8)" style="font:700 12px Gabarito,sans-serif">{{ 'tools.achse_gh' | t | replace: platz_einheit, '°dH' }}</text>
+          <circle class="eigenes-wasser" cx="60" cy="300" r="9"
+                  fill="#FFF3E8" stroke="#211F1D" stroke-width="3"/>
+          <text class="eigenes-wasser-text" x="76" y="292" fill="#FFF3E8"
+                style="font:700 13px Gabarito,sans-serif">{{ 'tools.dein_wasser' | t }}</text>
+        </svg>
+
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:20px">
+          <span class="pill" id="treffer-filter">–</span>
+          <span class="pill" id="treffer-espresso">–</span>
+        </div>
+
+        <p class="unterzeile" id="wasser-urteil" style="margin-top:18px"></p>
+        <div class="rechner-warnung" id="wasser-rat"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
+  <div class="wrap">
+    <div class="beitragslayout" style="padding-block:0">
+      <div class="beitragstext">
+        <span class="eyebrow" style="color:var(--redorange)">{{ 'tools.wasser_erklaer_eyebrow' | t }}</span>
+        {% render 'bw-tool-inhalt', inhalt: page.content %}
+      </div>
+
+      <aside class="beitragsseite">
+        {%- if url_filter != blank %}
+        <div class="seitenbox">
+          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+          <h4>{{ 'tools.wasser_box_titel' | t }}</h4>
+          <p>{{ 'tools.wasser_box_text' | t }}</p>
+          <a class="btn btn--hell" href="{{ url_filter }}" data-pfeil>{{ 'tools.wasser_box_knopf' | t }}</a>
+        </div>
+        {%- endif %}
+
+        {%- if seite_koffein != blank or seite_tools != blank or hat_brew or seite_methoden != blank %}
+        <div class="inhaltsverzeichnis">
+          <h4>{{ 'tools.weitere_tools' | t }}</h4>
+          {%- if seite_koffein != blank %}
+          <a href="{{ seite_koffein.url }}">{{ 'tools.koffein_titel' | t }}</a>
+          {%- endif %}
+          {%- if seite_tools != blank %}
+          <a href="{{ seite_tools.url }}">{{ 'start.alle_tools' | t }}</a>
+          {%- endif %}
+          {%- if hat_brew %}
+          <a href="{{ hub_filter.url }}#brewguides">{{ 'tools.brew_guides' | t }}</a>
+          {%- elsif seite_methoden != blank %}
+          <a href="{{ seite_methoden.url }}">{{ 'finder.methoden_eyebrow' | t }}</a>
+          {%- endif %}
+        </div>
+        {%- endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <p style="font-size:.84rem;opacity:.62;max-width:80ch">{{ 'tools.wasser_hinweis' | t }}</p>
+  </div>
+</section>
+
+{%- liquid
+  assign wissen_name = 'rezept.brot_wissen' | t
+  assign tools_name = 'tools.brot_tools' | t
+  assign wissen_url = blog_wissen.url
+  assign tools_url = seite_tools.url
+-%}
+{% render 'bw-brot-schema', name_1: wissen_name, url_1: wissen_url, name_2: tools_name, url_2: tools_url %}
+{% render 'bw-tools-texte' %}
+
+<script src="{{ 'tools.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWTools) BWTools.wasserrechner();
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Wasserhärte-Rechner",
+  "settings": []
+}
+{% endschema %}

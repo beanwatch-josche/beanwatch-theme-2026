@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-finder",
+      "settings": { "art": "methoden" }
+    }
+  },
+  "order": ["haupt"]
+}

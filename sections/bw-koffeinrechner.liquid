@@ -1,0 +1,115 @@
+{%- comment -%}
+  Der Koffeinrechner (seit 0.11.0), Vorlage page.koffeinrechner, übertragen
+  aus tool-koffeinrechner.html der Werkstatt.
+
+  Woher die Inhalte kommen:
+    Kopf, Box rechts, Hinweis   Sprachdateien (tools)
+    Rechner        snippets/koffeinrechner, aus der Werkstatt exportiert
+                   (werkzeug/vorlagen/koffeinrechner.html), dreisprachig;
+                   was tools.js zur Laufzeit schreibt, kommt aus dem
+                   Datenblock bw-tools-texte
+    Erklärung      der Seiteninhalt im Shop (bw-tool-inhalt), Entscheid
+                   07.10.2026
+  Links zu Decaf führen zum Abschnitt #decaf der Shop-Seite, wie im
+  Prototyp; zu Tools und Artikeln nur, wenn es sie gibt.
+{%- endcomment -%}
+{%- liquid
+  assign url_decaf = routes.collections_url | append: '#decaf'
+  assign seite_tools = pages['tools']
+  assign seite_wasser = pages['wasserhaerte']
+  assign artikel_koffein = articles['kaffeewissen/koffein-im-kaffee-wie-viel-steckt-drin-wie-wirkt-es-und-wie-lange-halt-es-an']
+  assign blog_wissen = blogs['kaffeewissen']
+-%}
+
+<section class="seitenkopf seitenkopf--hell" style="padding-bottom:clamp(30px,4vw,52px)">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if blog_wissen != blank %}
+      <a href="{{ blog_wissen.url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- endif %}
+      {%- if seite_tools != blank %}
+      <a href="{{ seite_tools.url }}">{{ 'tools.brot_tools' | t }}</a><span class="teiler">·</span>
+      {%- endif -%}
+      <span>{{ 'tools.koffein_titel' | t }}</span>
+    </nav>
+    {%- comment -%} H1 trägt das Suchwort, die grosse Aussage steht darunter als Display. {%- endcomment %}
+    <h1 class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'tools.koffein_titel' | t }}</h1>
+    <p class="display" data-split="zeilen"
+       style="font-size:clamp(2.4rem,5.2vw,4.6rem);margin-top:18px;max-width:20ch">{{ 'tools.koffein_display' | t }}</p>
+    <p class="lead">{{ 'tools.koffein_lead' | t }}</p>
+  </div>
+</section>
+
+<section class="sektion" style="padding-top:clamp(28px,3.5vw,48px)">
+  <div class="wrap">
+    {% render 'koffeinrechner' %}
+  </div>
+</section>
+
+<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
+  <div class="wrap">
+    <div class="beitragslayout" style="padding-block:0">
+      <div class="beitragstext">
+        <span class="eyebrow" style="color:var(--redorange)">{{ 'tools.koffein_erklaer_eyebrow' | t }}</span>
+        {% render 'bw-tool-inhalt', inhalt: page.content %}
+        <p style="margin-top:26px">
+          <a class="btn btn--primaer" href="{{ url_decaf }}" data-pfeil>{{ 'tools.decaf_knopf' | t }}</a>
+        </p>
+      </div>
+
+      <aside class="beitragsseite">
+        <div class="seitenbox">
+          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+          <h4>{{ 'tools.koffein_box_titel' | t }}</h4>
+          <p>{{ 'tools.koffein_box_text' | t }}</p>
+          <a class="btn btn--hell" href="{{ url_decaf }}" data-pfeil>{{ 'tools.ansehen' | t }}</a>
+        </div>
+
+        {%- if seite_wasser != blank or seite_tools != blank or artikel_koffein != blank %}
+        <div class="inhaltsverzeichnis">
+          <h4>{{ 'tools.weitere_tools' | t }}</h4>
+          {%- if seite_wasser != blank %}
+          <a href="{{ seite_wasser.url }}">{{ 'tools.wasser_karte_titel' | t }}</a>
+          {%- endif %}
+          {%- if seite_tools != blank %}
+          <a href="{{ seite_tools.url }}">{{ 'start.alle_tools' | t }}</a>
+          {%- endif %}
+          {%- if artikel_koffein != blank %}
+          <a href="{{ artikel_koffein.url }}">{{ 'tools.artikel_koffein' | t }}</a>
+          {%- endif %}
+        </div>
+        {%- endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <p style="font-size:.84rem;opacity:.62;max-width:80ch">{{ 'tools.koffein_hinweis' | t }}</p>
+  </div>
+</section>
+
+{%- liquid
+  assign wissen_name = 'rezept.brot_wissen' | t
+  assign tools_name = 'tools.brot_tools' | t
+  assign wissen_url = blog_wissen.url
+  assign tools_url = seite_tools.url
+-%}
+{% render 'bw-brot-schema', name_1: wissen_name, url_1: wissen_url, name_2: tools_name, url_2: tools_url %}
+{% render 'bw-tools-texte' %}
+
+<script src="{{ 'tools.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWTools) BWTools.koffeinrechner();
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Koffeinrechner",
+  "settings": []
+}
+{% endschema %}

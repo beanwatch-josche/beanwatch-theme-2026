@@ -58,6 +58,26 @@
 <meta name="description" content="{{ beschreibung | escape }}">
 {%- endif %}
 <link rel="canonical" href="{{ kanonisch }}">
+{%- comment -%}
+  Vor Suchmaschinen versteckt (seit 0.11.0): Seiten, Artikel, Produkte und
+  Kollektionen mit dem Feld seo.hidden = 1, etwa die Finder- und Tool-Seiten
+  bis zum Start. Shopify nimmt sie dann auch aus der Sitemap.
+{%- endcomment -%}
+{%- liquid
+  case request.page_type
+    when 'page'
+      assign versteckt = page.metafields.seo.hidden.value
+    when 'article'
+      assign versteckt = article.metafields.seo.hidden.value
+    when 'product'
+      assign versteckt = product.metafields.seo.hidden.value
+    when 'collection'
+      assign versteckt = collection.metafields.seo.hidden.value
+  endcase
+-%}
+{%- if versteckt == 1 %}
+<meta name="robots" content="noindex">
+{%- endif %}
 {%- if settings.favicon != blank %}
 <link rel="icon" href="{{ settings.favicon | image_url: width: 64 }}">
 {%- else %}

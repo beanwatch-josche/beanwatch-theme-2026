@@ -1,0 +1,175 @@
+{%- comment -%}
+  Datenblock #bw-finder-texte (seit 0.11.0) für die Finder aus der Werkstatt:
+  übersetzte Fragen, Antworten und Labels, dazu Ziele, die es im Shop gibt.
+  Ohne diesen Block zeigen kaffeefinder.js und hubs.js den deutschen
+  Wortlaut und die Pfade des Prototyps. Texte in locales/ unter finder.*.
+
+  art   'kaffee'     Kaffeefinder (kaffeefinder.js): Fragen und Anleitungen.
+                     Eine Anleitung erscheint nur, wenn ihr Ziel
+                     veröffentlicht ist; beim V60 sonst das Grundrezept
+                     Filterkaffee, wie im Start-Modus des Prototyps.
+        'maschinen'  Maschinen- und Methodenfinder (hubs.js, finderTexte()):
+        'methoden'   Fragen, Begründungen, Guide-Karten und Ersatzziele.
+                     Ein Guide bekommt seine Adresse nur, wenn der Artikel
+                     im Shop veröffentlicht ist; sonst führt die Karte zum
+                     Ersatz (hubs.js weg()).
+
+  Die Handles der Guides sind die des Prototyps (start.js, Dateinamen).
+  Für Chemex, French Press, AeroPress und Cold Brew gibt es noch keine
+  Artikel; die Handles hier sind eine Annahme, bis sie geschrieben sind.
+
+  Aufruf: {%- render 'bw-finder-texte', art: 'kaffee' -%}
+{%- endcomment -%}
+{%- liquid
+  assign zum_grundrezept = 'hub.zum_grundrezept' | t
+  assign url_filter = routes.root_url
+  if pages['filterkaffee'] != blank
+    assign url_filter = pages['filterkaffee'].url | append: '#rezeptur'
+  endif
+-%}
+{%- if art == 'kaffee' -%}
+{%- liquid
+  assign a_vollautomat = articles['barista-guides/kaffeevollautomat']
+  assign a_bialetti = articles['barista-guides/bialetti']
+  assign a_v60 = articles['brew-guides/hario-v60']
+  assign a_coldbrew = articles['kaffeerezepte/cold-brew']
+  assign a_creme = articles['kaffeerezepte/cafe-creme-rezept']
+  assign a_cappuccino = articles['kaffeerezepte/cappuccino-rezept']
+-%}
+<script type="application/json" id="bw-finder-texte">
+{
+  "frage": {{ 'finder.frage' | t | json }},
+  "fragen": {
+    "setup": { "titel": {{ 'finder.f_setup_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_setup_1' | t | json }} },
+      { "text": {{ 'finder.f_setup_2' | t | json }} },
+      { "text": {{ 'finder.f_setup_3' | t | json }} },
+      { "text": {{ 'finder.f_setup_4' | t | json }} },
+      { "text": {{ 'finder.f_setup_5' | t | json }} }
+    ] },
+    "getraenk": { "titel": {{ 'finder.f_getraenk_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_getraenk_1' | t | json }} },
+      { "text": {{ 'finder.f_getraenk_2' | t | json }}, "zusatz": {{ 'finder.f_getraenk_2_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_getraenk_3' | t | json }} }
+    ] },
+    "stil": { "titel": {{ 'finder.f_stil_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_stil_1' | t | json }}, "zusatz": {{ 'finder.f_stil_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_stil_2' | t | json }}, "zusatz": {{ 'finder.f_stil_2_zusatz' | t | json }} }
+    ] }
+  },
+  "anleitungen": {
+    "vollautomat": {% if a_vollautomat != blank %}{ "text": {{ 'finder.a_vollautomat' | t | json }}, "href": {{ a_vollautomat.url | json }} }{% else %}null{% endif %},
+    "bialetti": {% if a_bialetti != blank %}{ "text": {{ 'finder.a_bialetti' | t | json }}, "href": {{ a_bialetti.url | json }} }{% else %}null{% endif %},
+    "v60": {% if a_v60 != blank %}{ "text": {{ 'finder.a_v60' | t | json }}, "href": {{ a_v60.url | json }} }{% elsif pages['filterkaffee'] != blank %}{ "text": {{ 'finder.a_filter_grundrezept' | t | json }}, "href": {{ url_filter | json }} }{% else %}null{% endif %},
+    "coldbrew": {% if a_coldbrew != blank %}{ "text": {{ 'finder.a_coldbrew' | t | json }}, "href": {{ a_coldbrew.url | json }} }{% else %}null{% endif %},
+    "creme": {% if a_creme != blank %}{ "text": {{ 'finder.a_creme' | t | json }}, "href": {{ a_creme.url | json }} }{% else %}null{% endif %},
+    "cappuccino": {% if a_cappuccino != blank %}{ "text": {{ 'finder.a_cappuccino' | t | json }}, "href": {{ a_cappuccino.url | json }} }{% else %}null{% endif %}
+  }
+}
+</script>
+{%- else -%}
+{%- liquid
+  assign url_espresso = routes.root_url
+  assign url_rezepte = routes.root_url
+  if pages['espresso'] != blank
+    assign url_espresso = pages['espresso'].url | append: '#rezeptur'
+    assign url_rezepte = pages['espresso'].url | append: '#getraenke'
+  endif
+  assign url_bohnen = routes.collections_url
+  if pages['welcher-kaffee'] != blank
+    assign url_bohnen = pages['welcher-kaffee'].url | append: '#klassisch'
+  elsif collections['espresso'] != blank
+    assign url_bohnen = collections['espresso'].url
+  endif
+  assign a_v60 = articles['brew-guides/hario-v60']
+  assign a_coldbrew = articles['kaffeerezepte/cold-brew']
+  assign g_einkreiser = articles['barista-guides/einkreiser']
+  assign g_zweikreiser = articles['barista-guides/zweikreiser']
+  assign g_thermoblock = articles['barista-guides/thermoblock']
+  assign g_vollautomat = articles['barista-guides/kaffeevollautomat']
+  assign g_kapsel = articles['barista-guides/kapselmaschine']
+  assign g_bialetti = articles['barista-guides/bialetti']
+  assign g_v60 = articles['brew-guides/hario-v60']
+  assign g_chemex = articles['brew-guides/chemex']
+  assign g_frenchpress = articles['brew-guides/french-press']
+  assign g_aeropress = articles['brew-guides/aeropress']
+  assign g_coldbrew = articles['brew-guides/cold-brew']
+-%}
+<script type="application/json" id="bw-finder-texte">
+{
+  "frage": {{ 'finder.frage' | t | json }},
+  "deine_bauart": {{ 'finder.deine_bauart' | t | json }},
+  "deine_methode": {{ 'finder.deine_methode' | t | json }},
+  "zum_guide": {{ 'finder.zum_guide' | t | json }},
+  "fragen": {
+    "aufwand": { "titel": {{ 'finder.f_aufwand_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_aufwand_1' | t | json }}, "zusatz": {{ 'finder.f_aufwand_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_aufwand_2' | t | json }}, "zusatz": {{ 'finder.f_aufwand_2_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_aufwand_3' | t | json }}, "zusatz": {{ 'finder.f_aufwand_3_zusatz' | t | json }} }
+    ] },
+    "bereit": { "titel": {{ 'finder.f_bereit_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_bereit_1' | t | json }}, "zusatz": {{ 'finder.f_bereit_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_bereit_2' | t | json }}, "zusatz": {{ 'finder.f_bereit_2_zusatz' | t | json }} }
+    ] },
+    "milch": { "titel": {{ 'finder.f_milch_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_milch_1' | t | json }}, "zusatz": {{ 'finder.f_milch_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_milch_2' | t | json }}, "zusatz": {{ 'finder.f_milch_2_zusatz' | t | json }} }
+    ] },
+    "bohnen": { "titel": {{ 'finder.f_bohnen_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_bohnen_1' | t | json }}, "zusatz": {{ 'finder.f_bohnen_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_bohnen_2' | t | json }}, "zusatz": {{ 'finder.f_bohnen_2_zusatz' | t | json }} }
+    ] },
+    "temperatur": { "titel": {{ 'finder.f_temperatur_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_temperatur_1' | t | json }}, "zusatz": {{ 'finder.f_temperatur_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_temperatur_2' | t | json }}, "zusatz": {{ 'finder.f_temperatur_2_zusatz' | t | json }} }
+    ] },
+    "tassen": { "titel": {{ 'finder.f_tassen_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_tassen_1' | t | json }}, "zusatz": {{ 'finder.f_tassen_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_tassen_2' | t | json }}, "zusatz": {{ 'finder.f_tassen_2_zusatz' | t | json }} }
+    ] },
+    "tempo": { "titel": {{ 'finder.f_tempo_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_tempo_1' | t | json }}, "zusatz": {{ 'finder.f_tempo_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_tempo_2' | t | json }}, "zusatz": {{ 'finder.f_tempo_2_zusatz' | t | json }} }
+    ] },
+    "koerper": { "titel": {{ 'finder.f_koerper_titel' | t | json }}, "antworten": [
+      { "text": {{ 'finder.f_koerper_1' | t | json }}, "zusatz": {{ 'finder.f_koerper_1_zusatz' | t | json }} },
+      { "text": {{ 'finder.f_koerper_2' | t | json }}, "zusatz": {{ 'finder.f_koerper_2_zusatz' | t | json }} }
+    ] }
+  },
+  "grund": {
+    "einkreiser": {{ 'finder.grund_einkreiser' | t | json }},
+    "zweikreiser": {{ 'finder.grund_zweikreiser' | t | json }},
+    "thermoblock": {{ 'finder.grund_thermoblock' | t | json }},
+    "vollautomat": {{ 'finder.grund_vollautomat' | t | json }},
+    "kapsel": {{ 'finder.grund_kapsel' | t | json }},
+    "bialetti": {{ 'finder.grund_bialetti' | t | json }},
+    "v60": {{ 'finder.grund_v60' | t | json }},
+    "chemex": {{ 'finder.grund_chemex' | t | json }},
+    "frenchpress": {{ 'finder.grund_frenchpress' | t | json }},
+    "aeropress": {{ 'finder.grund_aeropress' | t | json }},
+    "coldbrew": {{ 'finder.grund_coldbrew' | t | json }}
+  },
+  "guides": {
+    "einkreiser": { "name": {{ 'finder.g_einkreiser_name' | t | json }}, "text": {{ 'finder.g_einkreiser_text' | t | json }}, "alt": {{ 'finder.g_einkreiser_alt' | t | json }}, "werte": [{{ 'finder.g_einkreiser_wert_1' | t | json }}, {{ 'finder.g_einkreiser_wert_2' | t | json }}, {{ 'finder.g_einkreiser_wert_3' | t | json }}, {{ 'finder.g_einkreiser_wert_4' | t | json }}]{% if g_einkreiser != blank %}, "datei": {{ g_einkreiser.url | json }}, "stand": "live"{% endif %} },
+    "zweikreiser": { "name": {{ 'finder.g_zweikreiser_name' | t | json }}, "text": {{ 'finder.g_zweikreiser_text' | t | json }}, "werte": [{{ 'finder.g_zweikreiser_wert_1' | t | json }}, {{ 'finder.g_zweikreiser_wert_2' | t | json }}, {{ 'finder.g_zweikreiser_wert_3' | t | json }}, {{ 'finder.g_zweikreiser_wert_4' | t | json }}]{% if g_zweikreiser != blank %}, "datei": {{ g_zweikreiser.url | json }}, "stand": "live"{% endif %} },
+    "thermoblock": { "name": {{ 'finder.g_thermoblock_name' | t | json }}, "text": {{ 'finder.g_thermoblock_text' | t | json }}, "alt": {{ 'finder.g_thermoblock_alt' | t | json }}, "werte": [{{ 'finder.g_thermoblock_wert_1' | t | json }}, {{ 'finder.g_thermoblock_wert_2' | t | json }}, {{ 'finder.g_thermoblock_wert_3' | t | json }}, {{ 'finder.g_thermoblock_wert_4' | t | json }}]{% if g_thermoblock != blank %}, "datei": {{ g_thermoblock.url | json }}, "stand": "live"{% endif %} },
+    "vollautomat": { "name": {{ 'finder.g_vollautomat_name' | t | json }}, "text": {{ 'finder.g_vollautomat_text' | t | json }}, "alt": {{ 'finder.g_vollautomat_alt' | t | json }}, "werte": [{{ 'finder.g_vollautomat_wert_1' | t | json }}, {{ 'finder.g_vollautomat_wert_2' | t | json }}, {{ 'finder.g_vollautomat_wert_3' | t | json }}, {{ 'finder.g_vollautomat_wert_4' | t | json }}]{% if g_vollautomat != blank %}, "datei": {{ g_vollautomat.url | json }}, "stand": "live"{% endif %} },
+    "kapsel": { "name": {{ 'finder.g_kapsel_name' | t | json }}, "text": {{ 'finder.g_kapsel_text' | t | json }}, "alt": {{ 'finder.g_kapsel_alt' | t | json }}, "werte": [{{ 'finder.g_kapsel_wert_1' | t | json }}, {{ 'finder.g_kapsel_wert_2' | t | json }}, {{ 'finder.g_kapsel_wert_3' | t | json }}, {{ 'finder.g_kapsel_wert_4' | t | json }}]{% if g_kapsel != blank %}, "datei": {{ g_kapsel.url | json }}, "stand": "live"{% endif %} },
+    "bialetti": { "name": {{ 'finder.g_bialetti_name' | t | json }}, "text": {{ 'finder.g_bialetti_text' | t | json }}, "alt": {{ 'finder.g_bialetti_alt' | t | json }}, "werte": [{{ 'finder.g_bialetti_wert_1' | t | json }}, {{ 'finder.g_bialetti_wert_2' | t | json }}, {{ 'finder.g_bialetti_wert_3' | t | json }}, {{ 'finder.g_bialetti_wert_4' | t | json }}]{% if g_bialetti != blank %}, "datei": {{ g_bialetti.url | json }}, "stand": "live"{% endif %} },
+    "v60": { "name": {{ 'finder.g_v60_name' | t | json }}, "text": {{ 'finder.g_v60_text' | t | json }}, "werte": [{{ 'finder.g_v60_wert_1' | t | json }}, {{ 'finder.g_v60_wert_2' | t | json }}, {{ 'finder.g_v60_wert_3' | t | json }}, {{ 'finder.g_v60_wert_4' | t | json }}]{% if g_v60 != blank %}, "datei": {{ g_v60.url | json }}, "stand": "live"{% endif %} },
+    "chemex": { "name": {{ 'finder.g_chemex_name' | t | json }}, "text": {{ 'finder.g_chemex_text' | t | json }}, "werte": [{{ 'finder.g_chemex_wert_1' | t | json }}, {{ 'finder.g_chemex_wert_2' | t | json }}, {{ 'finder.g_chemex_wert_3' | t | json }}, {{ 'finder.g_chemex_wert_4' | t | json }}]{% if g_chemex != blank %}, "datei": {{ g_chemex.url | json }}, "stand": "live"{% endif %} },
+    "frenchpress": { "name": {{ 'finder.g_frenchpress_name' | t | json }}, "text": {{ 'finder.g_frenchpress_text' | t | json }}, "werte": [{{ 'finder.g_frenchpress_wert_1' | t | json }}, {{ 'finder.g_frenchpress_wert_2' | t | json }}, {{ 'finder.g_frenchpress_wert_3' | t | json }}, {{ 'finder.g_frenchpress_wert_4' | t | json }}]{% if g_frenchpress != blank %}, "datei": {{ g_frenchpress.url | json }}, "stand": "live"{% endif %} },
+    "aeropress": { "name": {{ 'finder.g_aeropress_name' | t | json }}, "text": {{ 'finder.g_aeropress_text' | t | json }}, "werte": [{{ 'finder.g_aeropress_wert_1' | t | json }}, {{ 'finder.g_aeropress_wert_2' | t | json }}, {{ 'finder.g_aeropress_wert_3' | t | json }}, {{ 'finder.g_aeropress_wert_4' | t | json }}]{% if g_aeropress != blank %}, "datei": {{ g_aeropress.url | json }}, "stand": "live"{% endif %} },
+    "coldbrew": { "name": {{ 'finder.g_coldbrew_name' | t | json }}, "text": {{ 'finder.g_coldbrew_text' | t | json }}, "werte": [{{ 'finder.g_coldbrew_wert_1' | t | json }}, {{ 'finder.g_coldbrew_wert_2' | t | json }}, {{ 'finder.g_coldbrew_wert_3' | t | json }}, {{ 'finder.g_coldbrew_wert_4' | t | json }}]{% if g_coldbrew != blank %}, "datei": {{ g_coldbrew.url | json }}, "stand": "live"{% endif %} }
+  },
+  "ziele": {
+    "ersatz_v60": { "knopf": {{ 'finder.z_v60_knopf' | t | json }}, "wort": {{ 'finder.z_v60_wort' | t | json }}{% if a_v60 != blank %}, "datei": {{ a_v60.url | json }}{% endif %} },
+    "ersatz_coldbrew": {% if a_coldbrew != blank %}{ "datei": {{ a_coldbrew.url | json }}, "knopf": {{ 'finder.z_coldbrew_knopf' | t | json }}, "wort": {{ 'finder.z_coldbrew_wort' | t | json }} }{% else %}{ "datei": {{ url_filter | json }}, "knopf": {{ zum_grundrezept | json }}, "wort": {{ 'finder.z_grundrezept_wort' | t | json }} }{% endif %},
+    "grundrezept_filter": { "datei": {{ url_filter | json }}, "knopf": {{ zum_grundrezept | json }}, "wort": {{ 'finder.z_grundrezept_wort' | t | json }} },
+    "grundrezept_espresso": { "datei": {{ url_espresso | json }}, "knopf": {{ zum_grundrezept | json }}, "wort": {{ 'finder.z_grundrezept_wort' | t | json }} },
+    "bohnen_klassisch": { "datei": {{ url_bohnen | json }}, "knopf": {{ 'finder.z_bohnen_knopf' | t | json }}, "wort": {{ 'finder.z_bohnen_wort' | t | json }} },
+    "espresso_rezepte": { "datei": {{ url_rezepte | json }}, "knopf": {{ 'finder.z_rezepte_knopf' | t | json }}, "wort": {{ 'finder.z_rezepte_wort' | t | json }} }
+  }
+}
+</script>
+{%- endif -%}

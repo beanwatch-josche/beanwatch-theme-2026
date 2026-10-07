@@ -1,0 +1,154 @@
+{%- comment -%}
+  Übersicht der Tools (seit 0.11.0), Vorlage page.tools, übertragen aus
+  tools.html der Werkstatt. Eine Karte erscheint nur, wenn ihre Seite im
+  Shop existiert (welche-espressomaschine, welcher-kaffee,
+  welche-filtermethode, koffeinrechner, wasserhaerte); die Überschrift zählt
+  mit («Fünf stehen schon.»). Geplante Tools («Auf der Liste», Brew-Ratio-
+  Rechner) zeigt der Prototyp nur in der Entwurfsansicht, hier fehlen sie.
+  Die Sätze über Guides erscheinen, sobald der Guide-Blog Artikel hat.
+{%- endcomment -%}
+{%- liquid
+  assign handles = 'welche-espressomaschine,welcher-kaffee,welche-filtermethode,koffeinrechner,wasserhaerte' | split: ','
+  assign n_tools = 0
+  for h in handles
+    if pages[h] != blank
+      assign n_tools = n_tools | plus: 1
+    endif
+  endfor
+  assign hat_barista = false
+  if blogs['barista-guides'] != blank
+    assign n = blogs['barista-guides'].articles_count | plus: 0
+    if n > 0
+      assign hat_barista = true
+    endif
+  endif
+  assign hat_brew = false
+  if blogs['brew-guides'] != blank
+    assign n = blogs['brew-guides'].articles_count | plus: 0
+    if n > 0
+      assign hat_brew = true
+    endif
+  endif
+-%}
+{%- capture wort -%}{%- render 'bw-zahlwort', n: n_tools -%}{%- endcapture -%}
+{%- liquid
+  assign wort = wort | strip | capitalize
+  if n_tools == 1
+    assign ueberschrift = 'tools.fertig_titel_eins' | t: anzahl: wort
+  else
+    assign ueberschrift = 'tools.fertig_titel' | t: anzahl: wort
+  endif
+-%}
+
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if blogs['kaffeewissen'] != blank %}
+      <a href="{{ blogs['kaffeewissen'].url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- endif -%}
+      <span>{{ 'tools.brot_tools' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'tools.seite_eyebrow' | t }}</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'tools.seite_titel' | t }}</h1>
+    <p class="lead">{{ 'tools.seite_lead' | t }}</p>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+{%- if n_tools > 0 %}
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'tools.fertig_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ ueberschrift }}</h2>
+      </div>
+    </div>
+
+    <div class="tool-karten" data-batch>
+      {%- if pages['welche-espressomaschine'] != blank %}
+      <a class="tool-karte" href="{{ pages['welche-espressomaschine'].url }}">
+        <span class="icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <g transform="translate(.6 0)"><path d="M4 20.5V4.5A1.5 1.5 0 0 1 5.5 3h9A1.5 1.5 0 0 1 16 4.5v6H5.8v10"/><path d="M2.8 20.5h14.4"/><circle cx="10" cy="6.7" r="1.9"/><path d="M8 12.4h4l-.5 1.5h-3Z"/><path d="M14.2 13.1h5.3" stroke-width="2.6"/><path d="M8 16.8h4v1.6a1.6 1.6 0 0 1-1.6 1.6h-.8A1.6 1.6 0 0 1 8 18.4Z"/></g>
+        </svg>
+        </span>
+        <h3>{{ 'finder.maschinen_eyebrow' | t }}</h3>
+        <p>{%- if hat_barista %}{{ 'tools.karte_maschinen_text_guides' | t }}{% else %}{{ 'tools.karte_maschinen_text' | t }}{% endif -%}</p>
+        <span class="mehr">{{ 'tools.finden' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if pages['welcher-kaffee'] != blank %}
+      <a class="tool-karte" href="{{ pages['welcher-kaffee'].url }}">
+        <span class="icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <g transform="translate(12 12) rotate(25)"><ellipse rx="6" ry="8.5"/><path d="M0-8.5c-3 4 3 13 0 17"/></g>
+        </svg>
+        </span>
+        <h3>{{ 'finder.kaffee_eyebrow' | t }}</h3>
+        <p>{{ 'tools.karte_kaffee_text' | t }}</p>
+        <span class="mehr">{{ 'tools.finden' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if pages['welche-filtermethode'] != blank %}
+      <a class="tool-karte" href="{{ pages['welche-filtermethode'].url }}">
+        <span class="icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9.7 8.4c-.4.5-.6 1-.6 1.7 0 .4.2.6.2.9 0 .5-.7 1-.7 1.7 0 .4.2.6.2.9 0 .6-.7 1.1-.7 1.9 0 .8-.3 1.4-.3 2h10.1c0-.6-.3-1.2-.3-2 0-.8-.7-1.3-.7-1.9 0-.3.2-.5.2-.9 0-.7-.7-1.2-.7-1.7 0-.3.2-.5.2-.9 0-.7-.2-1.2-.6-1.7Z"/><path d="M7.4 18.3h10.9"/><path d="M9.4 8.6c.2-.9 1.6-1.2 3.4-1.2s3.2.3 3.4 1.2"/><path d="M11.3 6.5c0-.8.7-1.3 1.55-1.3s1.55.5 1.55 1.3ZM12.85 6.5v.9"/><path d="M16.2 8.6l.8-1.1c.5-.5 1.1-.3 1.6.2"/><path d="M18.6 7.7c.24.32.18.74.42 1.06.24.32.9.2 1.14.52.24.32-.06.92.18 1.24.24.32.9.2 1.14.52.24.32-.06.92.18 1.24.24.32.66.38.9.7" stroke-width="2.4"/><path d="M8 15c-1.4 0-2.8-.8-3.15-2.35-.35-1.55-.25-2.65-.45-3.75-.2-1.1-1.6-2-3.2-2" stroke-width="1.5"/>
+        </svg>
+        </span>
+        <h3>{{ 'finder.methoden_eyebrow' | t }}</h3>
+        <p>{%- if hat_brew %}{{ 'tools.karte_methoden_text_guides' | t }}{% else %}{{ 'tools.karte_methoden_text' | t }}{% endif -%}</p>
+        <span class="mehr">{{ 'tools.finden' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if pages['koffeinrechner'] != blank %}
+      <a class="tool-karte" href="{{ pages['koffeinrechner'].url }}">
+        <span class="icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z"/><path d="M17 9h2.5a2.5 2.5 0 0 1 0 5H17"/>
+        <path d="M7 4V2M11 4V2M15 4V2"/>
+        </svg>
+        </span>
+        <h3>{{ 'tools.koffein_titel' | t }}</h3>
+        <p>{{ 'tools.karte_koffein_text' | t }}</p>
+        <span class="mehr">{{ 'tools.rechnen' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if pages['wasserhaerte'] != blank %}
+      <a class="tool-karte" href="{{ pages['wasserhaerte'].url }}">
+        <span class="icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11Z"/>
+        </svg>
+        </span>
+        <h3>{{ 'tools.wasser_karte_titel' | t }}</h3>
+        <p>{{ 'tools.karte_wasser_text' | t }}</p>
+        <span class="mehr">{{ 'tools.rechnen' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- assign wissen_name = 'rezept.brot_wissen' | t -%}
+{%- if blogs['kaffeewissen'] != blank -%}
+  {% render 'bw-brot-schema', name_1: wissen_name, url_1: blogs['kaffeewissen'].url %}
+{%- else -%}
+  {% render 'bw-brot-schema' %}
+{%- endif %}
+
+{% schema %}
+{
+  "name": "Tools",
+  "settings": []
+}
+{% endschema %}

@@ -141,7 +141,7 @@ window.BWHub = (function () {
   // ist, sonst zum ersten sichtbaren Ersatz, zuletzt zum Grundrezept.
   function weg(g, grund) {
     if (g.stand !== 'geplant' && zeigen(g.datei)) {
-      return { datei: g.datei, knopf: 'Zum Guide', guide: true };
+      return { datei: g.datei, knopf: (FT && FT.zum_guide) || 'Zum Guide', guide: true };
     }
     return [g.ersatz, grund].find(e => e && zeigen(e.datei)) || grund;
   }
@@ -1204,6 +1204,7 @@ window.BWHub = (function () {
 
   function maschinenfinder() {
     if (!document.getElementById("maschinenfinder")) return;
+    finderTexte();
 
     // Die sechs Ergebnisse jetzt bauen, nicht erst beim Klick: So erwischt
     // feinschliff() aus basis.js die Karten beim Start und hängt Anheben
@@ -1215,7 +1216,7 @@ window.BWHub = (function () {
       treffer: BARISTA_GUIDES.map((g) => { const w = weg(g, GRUNDREZEPT_ESPRESSO); return `
             <article class="finder-treffer maschinen-treffer" data-ergebnis="${g.maschine}" hidden>
               <div>
-                <span class="eyebrow">Deine Bauart</span>
+                <span class="eyebrow">${(FT && FT.deine_bauart) || "Deine Bauart"}</span>
                 <h2 tabindex="-1">${g.name}</h2>
                 <p>${MASCHINEN_GRUND[g.maschine]}</p>
               </div>
@@ -1248,6 +1249,68 @@ window.BWHub = (function () {
                   weiter zur nächsten Frage oder mit ergebnis zum Treffer
        o.treffer  HTML aller Treffer, je mit data-ergebnis und hidden
      ====================================================================== */
+  /* Texte der Finder im Theme
+     Steht ein Datenblock #bw-finder-texte in der Seite (Maschinen- und
+     Methodenfinder im Shopify-Theme), legt finderTexte() dessen übersetzte
+     Fragen, Antworten, Begründungen, Guide-Daten, Ersatzziele und Labels
+     über die deutschen Daten hier. Guide-Adressen kommen nur für Guides, die
+     im Shop veröffentlicht sind; Ersatzziele zeigen auf echte Seiten. Ohne
+     Block bleibt alles wie im Prototyp. Shopify maskiert übersetzte Texte,
+     deshalb werden sie einmal zurückgewandelt. */
+  let FT = null;
+  let finderTexteGelesen = false;
+  function entschluesseln(w) {
+    if (typeof w === "string") {
+      const t = document.createElement("textarea");
+      t.innerHTML = w;
+      return t.value;
+    }
+    if (Array.isArray(w)) return w.map(entschluesseln);
+    if (w && typeof w === "object") {
+      const o = {};
+      Object.keys(w).forEach((k) => { o[k] = entschluesseln(w[k]); });
+      return o;
+    }
+    return w;
+  }
+  function finderTexte() {
+    if (finderTexteGelesen) return FT;
+    finderTexteGelesen = true;
+    const el = document.getElementById("bw-finder-texte");
+    if (!el) return null;
+    try { FT = entschluesseln(JSON.parse(el.textContent)); } catch (e) { FT = null; return null; }
+    const fragenSetzen = (fragen) => Object.keys(fragen).forEach((k) => {
+      const t = FT.fragen && FT.fragen[k];
+      if (!t) return;
+      if (t.titel) fragen[k].titel = t.titel;
+      (t.antworten || []).forEach((a, i) => {
+        const ziel = fragen[k].antworten[i];
+        if (!ziel || !a) return;
+        if (a.text) ziel.text = a.text;
+        if ("zusatz" in a) ziel.zusatz = a.zusatz;
+      });
+    });
+    fragenSetzen(MASCHINEN_FRAGEN);
+    fragenSetzen(METHODEN_FRAGEN);
+    if (FT.grund) {
+      Object.keys(MASCHINEN_GRUND).forEach((k) => { if (FT.grund[k]) MASCHINEN_GRUND[k] = FT.grund[k]; });
+      Object.keys(METHODEN_GRUND).forEach((k) => { if (FT.grund[k]) METHODEN_GRUND[k] = FT.grund[k]; });
+    }
+    if (FT.guides) {
+      BARISTA_GUIDES.concat(GUIDES).forEach((g) => {
+        const t = FT.guides[g.maschine || g.geraet];
+        if (t) Object.assign(g, t);
+      });
+    }
+    if (FT.ziele) {
+      const ziele = { ersatz_v60: ERSATZ_V60, ersatz_coldbrew: ERSATZ_COLDBREW,
+        grundrezept_filter: GRUNDREZEPT_FILTER, grundrezept_espresso: GRUNDREZEPT_ESPRESSO,
+        bohnen_klassisch: BOHNEN_KLASSISCH, espresso_rezepte: ESPRESSO_REZEPTE };
+      Object.keys(ziele).forEach((k) => { if (FT.ziele[k]) Object.assign(ziele[k], FT.ziele[k]); });
+    }
+    return FT;
+  }
+
   function fragebogen(o) {
     const id = (name) => document.getElementById(o.praefix + "-" + name);
     const frageEl = id("frage");
@@ -1294,7 +1357,7 @@ window.BWHub = (function () {
       const fr = o.fragen[schluessel];
       ergebnisEl.hidden = true;
       frageEl.hidden = false;
-      schrittEl.textContent = "Frage " + (verlauf.length + 1);
+      schrittEl.textContent = ((FT && FT.frage) || "Frage {n}").replace("{n}", verlauf.length + 1);
       zurueckEl.hidden = verlauf.length === 0;
       titelEl.textContent = fr.titel;
       antwortenEl.dataset.frage = schluessel;
@@ -1386,6 +1449,7 @@ window.BWHub = (function () {
 
   function methodenfinder() {
     if (!document.getElementById("methodenfinder")) return;
+    finderTexte();
 
     // Die Klasse maschinen-treffer bleibt bewusst: Das zweispaltige Layout
     // der Treffer hängt daran, und es passt hier genauso.
@@ -1396,7 +1460,7 @@ window.BWHub = (function () {
       treffer: GUIDES.map((g) => `
         <article class="finder-treffer maschinen-treffer" data-ergebnis="${g.geraet}" hidden>
           <div>
-            <span class="eyebrow">Deine Methode</span>
+            <span class="eyebrow">${(FT && FT.deine_methode) || "Deine Methode"}</span>
             <h2 tabindex="-1">${g.name}</h2>
             <p>${METHODEN_GRUND[g.geraet]}</p>
             ${g.stand === "geplant" && vorschau ? `<p class="finder-anleitung"><strong>Der Guide folgt.</strong> Bis dahin ist ${weg(g, GRUNDREZEPT_FILTER).wort} Dein Startpunkt.</p>` : ""}

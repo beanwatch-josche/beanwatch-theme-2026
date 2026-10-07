@@ -1,0 +1,183 @@
+{%- comment -%}
+  Maschinen- und Methodenfinder (seit 0.11.0), Vorlagen
+  page.welche-espressomaschine und page.welche-filtermethode, übertragen aus
+  welche-espressomaschine.html und welche-filtermethode.html der Werkstatt:
+  Markup, Klassen und IDs wie dort, denn hubs.js (fragebogen()) und
+  seiten.css brauchen sie. Welcher Finder es ist, sagt die Einstellung
+  «art» der Sektion in der Vorlage.
+
+  Woher die Inhalte kommen:
+    Kopf, Band    Sprachdateien (finder); Brotkrumen über den Hub, wenn es
+                  die Seite espresso bzw. filterkaffee gibt
+    Fragebogen    hubs.js baut Fragen und Treffer; Texte, Guide-Daten und
+                  Ersatzziele aus dem Datenblock bw-finder-texte
+    Alle Bauarten bzw. Alle Methoden: nur, wenn der Guide-Blog
+                  (barista-guides bzw. brew-guides) veröffentlichte Artikel
+                  hat; die Karten hängt hubs.js an (BW_PLAN)
+{%- endcomment -%}
+{%- liquid
+  # Platzhalter für «Frage {n}», siehe bw-kaffeefinder.
+  assign platz_n = '{n}'
+  assign art = section.settings.art | default: 'maschinen'
+  if art == 'methoden'
+    assign hub = pages['filterkaffee']
+    assign hub_name = 'kopf.filterkaffee' | t
+    assign guide_blog = blogs['brew-guides']
+  else
+    assign art = 'maschinen'
+    assign hub = pages['espresso']
+    assign hub_name = 'kopf.espresso' | t
+    assign guide_blog = blogs['barista-guides']
+  endif
+  assign hat_guides = false
+  if guide_blog != blank
+    assign n_guides = guide_blog.articles_count | plus: 0
+    if n_guides > 0
+      assign hat_guides = true
+    endif
+  endif
+  assign url_grundrezept = routes.root_url
+  if hub != blank
+    assign url_grundrezept = hub.url | append: '#rezeptur'
+  endif
+  assign t_eyebrow = 'finder.' | append: art | append: '_eyebrow'
+  assign t_titel = 'finder.' | append: art | append: '_titel'
+  assign t_lead = 'finder.' | append: art | append: '_lead'
+  if hat_guides
+    assign t_lead = t_lead | append: '_guides'
+  endif
+-%}
+
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if hub != blank %}
+      <a href="{{ hub.url }}">{{ hub_name }}</a><span class="teiler">·</span>
+      {%- endif -%}
+      <span>{{ t_eyebrow | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ t_eyebrow | t }}</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ t_titel | t }}</h1>
+    <p class="lead">{{ t_lead | t }}</p>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+{%- comment -%}
+  Der Fragebogen: dieselbe Mechanik wie der Kaffeefinder, die Ergebnisse
+  baut BWHub.maschinenfinder() bzw. methodenfinder() beim Start, damit
+  feinschliff() sie erwischt. Bewusst ohne Hash in der Adresse.
+{%- endcomment %}
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <div class="finder" id="{{ art }}finder">
+      <noscript>
+        <p class="finder-ohne-js">{{ 'finder.hub_ohne_js_html' | t: url: url_grundrezept }}</p>
+      </noscript>
+
+      <div class="finder-frage" id="{{ art }}-frage" hidden>
+        <div class="finder-leiste">
+          <span class="finder-schritt eyebrow" id="{{ art }}-schritt">{{ 'finder.frage' | t | replace: platz_n, '1' }}</span>
+          <button class="finder-zurueck" id="{{ art }}-zurueck" type="button" hidden>{{ 'finder.zurueck' | t }}</button>
+        </div>
+        <h2 class="finder-titel" id="{{ art }}-titel" tabindex="-1"></h2>
+        <div class="mahlgrad-optionen finder-antworten" id="{{ art }}-antworten"
+             role="group" aria-labelledby="{{ art }}-titel"></div>
+      </div>
+
+      <div class="finder-ergebnis" id="{{ art }}-ergebnis" hidden>
+        <div id="{{ art }}-treffer"></div>
+        <div class="finder-aktionen">
+          <button class="btn btn--linie" id="{{ art }}-neu" type="button">{{ 'finder.neu_starten' | t }}</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{%- if hat_guides %}
+{%- comment -%} Alle Bauarten bzw. Methoden: die Überschrift nennt keine Zahl, die Guides kommen einzeln. {%- endcomment %}
+<section class="sektion" style="padding-top:clamp(40px,5vw,70px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        {%- if art == 'methoden' %}
+        <span class="eyebrow">{{ 'finder.methoden_alle_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'finder.methoden_alle_titel' | t }}</h2>
+        <p>{{ 'hub_filter.methoden_text_guides' | t }}</p>
+        {%- else %}
+        <span class="eyebrow">{{ 'finder.bauarten_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'finder.bauarten_titel' | t }}</h2>
+        <p>{{ 'finder.bauarten_text' | t }}</p>
+        {%- endif %}
+      </div>
+    </div>
+
+    <div class="brewguides{% if art == 'methoden' %} brewguides--paar{% endif %}" id="guide-raster" data-batch></div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hub != blank %}
+{%- assign t_band = 'finder.' | append: art | append: '_band' -%}
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <div class="hub-band" data-reveal>
+      <div>
+        <span class="eyebrow">{{ t_band | append: '_eyebrow' | t }}</span>
+        <h2>{{ t_band | append: '_titel_html' | t }}</h2>
+        <p>{{ t_band | append: '_text' | t }}</p>
+      </div>
+      <a class="btn btn--hell" href="{{ url_grundrezept }}" data-pfeil>{{ 'hub.zum_grundrezept' | t }}</a>
+      <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{% render 'bw-finder-texte', art: art %}
+{%- if hub != blank -%}
+  {% render 'bw-brot-schema', name_1: hub_name, url_1: hub.url %}
+{%- else -%}
+  {% render 'bw-brot-schema' %}
+{%- endif %}
+
+<script src="{{ 'hubs.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.BWHub) return;
+    {%- if art == 'methoden' %}
+    BWHub.methodenfinder();
+    {%- if hat_guides %}
+    BWHub.guideRaster('#guide-raster');
+    {%- endif %}
+    {%- else %}
+    BWHub.maschinenfinder();
+    {%- if hat_guides %}
+    BWHub.baristaRaster('#guide-raster');
+    {%- endif %}
+    {%- endif %}
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Finder",
+  "settings": [
+    {
+      "type": "select",
+      "id": "art",
+      "label": "Welcher Finder",
+      "options": [
+        { "value": "maschinen", "label": "Maschinenfinder (Espresso)" },
+        { "value": "methoden", "label": "Methodenfinder (Filterkaffee)" }
+      ],
+      "default": "maschinen"
+    }
+  ]
+}
+{% endschema %}

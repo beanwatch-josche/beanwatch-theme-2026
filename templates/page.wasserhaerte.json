@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-wasserhaerte",
+      "settings": {}
+    }
+  },
+  "order": ["haupt"]
+}

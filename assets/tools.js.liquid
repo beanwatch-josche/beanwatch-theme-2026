@@ -3,12 +3,49 @@
    Zwei Rechner, die tatsächlich rechnen: Koffein über den Tag und
    Wasserhärte. Beide laufen komplett im Browser, ohne Anmeldung und ohne
    dass Daten irgendwohin gehen.
+
+   Im Theme steht ein Datenblock #bw-tools-texte in der Seite: übersetzte
+   Texte, Dezimalzeichen und die Adresse der Rechnerseite. tx() nimmt den
+   Text von dort, sonst den deutschen Wortlaut hier; Platzhalter in
+   geschweiften Klammern ({mg}, {uhr}) werden ersetzt. Ohne Block bleibt
+   alles wie im Prototyp.
    ========================================================================== */
 
 window.BWTools = (function () {
   'use strict';
 
   const ruhig = window.BW && window.BW.wenigerBewegung;
+
+  // Shopify maskiert übersetzte Texte (&#39; usw.), deshalb einmal
+  // zurückwandeln. Texte mit Fettdruck (strong) gehen danach per innerHTML hinein.
+  function entschluesseln(w) {
+    if (typeof w === 'string') {
+      const t = document.createElement('textarea');
+      t.innerHTML = w;
+      return t.value;
+    }
+    if (Array.isArray(w)) return w.map(entschluesseln);
+    if (w && typeof w === 'object') {
+      const o = {};
+      Object.keys(w).forEach((k) => { o[k] = entschluesseln(w[k]); });
+      return o;
+    }
+    return w;
+  }
+  const TEXTE = (function () {
+    const el = document.getElementById('bw-tools-texte');
+    if (!el) return {};
+    try { return entschluesseln(JSON.parse(el.textContent)); } catch (e) { return {}; }
+  })();
+  function tx(name, deutsch, werte) {
+    const s = typeof TEXTE[name] === 'string' && TEXTE[name] !== '' ? TEXTE[name] : deutsch;
+    return werte ? s.replace(/\{(\w+)\}/g, (m, k) => (k in werte ? werte[k] : m)) : s;
+  }
+  // Adresse der Rechnerseite für Teilen und Bild, im Theme die echte.
+  const ADRESSE = tx('adresse', 'beanwatch.ch/koffeinrechner');
+  const ADRESSE_URL = tx('adresse_url', 'https://beanwatch.ch/koffeinrechner');
+  // Dezimalzeichen, im Theme nach Sprache. Der Prototyp zeigt Punkte.
+  const zahl1 = (w) => w.toFixed(1).replace('.', tx('dezimal', '.'));
 
   /* ======================================================================
      Koffeinrechner
@@ -84,6 +121,11 @@ window.BWTools = (function () {
       hinweis: 'zum Vergleich'
     }
   ];
+
+  // Im Theme: Namen, Listentexte und Hinweise je Getränk, gleiche Reihenfolge.
+  if (Array.isArray(TEXTE.getraenke)) {
+    TEXTE.getraenke.forEach((t, i) => { if (GETRAENKE[i] && t) Object.assign(GETRAENKE[i], t); });
+  }
 
   /** Koffein einer Portion, je nach Art des Eintrags. */
   function mgVon(index, menge) {
@@ -267,16 +309,16 @@ window.BWTools = (function () {
     const urteil = document.getElementById('urteil');
     if (urteil) {
       if (summe === 0) {
-        urteil.textContent = 'Trag oben ein, was Du heute getrunken hast.';
+        urteil.textContent = tx('urteil_leer', 'Trag oben ein, was Du heute getrunken hast.');
       } else if (rest > 100) {
-        urteil.innerHTML = `Beim Schlafengehen sind noch <strong>${Math.round(rest)} mg</strong> in Dir. ` +
-          'Das ist etwa ein doppelter Espresso, den Du mit ins Bett nimmst. Der letzte Kaffee dürfte früher sein.';
+        urteil.innerHTML = tx('urteil_viel', 'Beim Schlafengehen sind noch <strong>{mg} mg</strong> in Dir. ' +
+          'Das ist etwa ein doppelter Espresso, den Du mit ins Bett nimmst. Der letzte Kaffee dürfte früher sein.', { mg: Math.round(rest) });
       } else if (rest > SCHLAFGRENZE) {
-        urteil.innerHTML = `Noch <strong>${Math.round(rest)} mg</strong> im Körper. ` +
-          'Einschlafen geht meist, aber die Tiefschlafphasen leiden. Zwei Stunden früher wäre besser.';
+        urteil.innerHTML = tx('urteil_mittel', 'Noch <strong>{mg} mg</strong> im Körper. ' +
+          'Einschlafen geht meist, aber die Tiefschlafphasen leiden. Zwei Stunden früher wäre besser.', { mg: Math.round(rest) });
       } else {
-        urteil.innerHTML = `Nur noch <strong>${Math.round(rest)} mg</strong>. ` +
-          'Das steht Deinem Schlaf nicht im Weg. Passt so.';
+        urteil.innerHTML = tx('urteil_wenig', 'Nur noch <strong>{mg} mg</strong>. ' +
+          'Das steht Deinem Schlaf nicht im Weg. Passt so.', { mg: Math.round(rest) });
       }
     }
 
@@ -284,9 +326,9 @@ window.BWTools = (function () {
     if (menge) {
       if (summe > 400) {
         menge.hidden = false;
-        menge.innerHTML = `<strong>${Math.round(summe)} mg</strong> am Tag liegen über der Menge, ` +
+        menge.innerHTML = tx('tagesmenge', '<strong>{mg} mg</strong> am Tag liegen über der Menge, ' +
           'die die EFSA für gesunde Erwachsene als unbedenklich einstuft (400 mg). ' +
-          'Kein Drama an einem einzelnen Tag, aber dauerhaft einen Blick wert.';
+          'Kein Drama an einem einzelnen Tag, aber dauerhaft einen Blick wert.', { mg: Math.round(summe) });
       } else {
         menge.hidden = true;
       }
@@ -331,7 +373,7 @@ window.BWTools = (function () {
     if (!liste) return;
 
     if (!konsum.length) {
-      liste.innerHTML = '<p style="opacity:.6;font-size:.9rem">Noch nichts eingetragen.</p>';
+      liste.innerHTML = '<p style="opacity:.6;font-size:.9rem">' + tx('liste_leer', 'Noch nichts eingetragen.') + '</p>';
       return;
     }
 
@@ -343,7 +385,7 @@ window.BWTools = (function () {
         return `<div class="zutat">
           <span>${String(c.stunde).padStart(2, '0')}:00 · ${nameVon(c.getraenkIndex, c.menge)}</span>
           <span class="menge">${Math.round(mgVon(c.getraenkIndex, c.menge))} mg
-            <button class="entfernen" data-weg="${echterIndex}" aria-label="Entfernen"
+            <button class="entfernen" data-weg="${echterIndex}" aria-label="${tx('entfernen', 'Entfernen')}"
                     style="margin-left:8px;color:inherit;opacity:.5">✕</button>
           </span>
         </div>`;
@@ -370,7 +412,7 @@ window.BWTools = (function () {
     auswahl.innerHTML = GETRAENKE.map((g, i) => {
       const wert = g.mg !== undefined
         ? `${g.mg} mg`
-        : `${Math.round(mgVon(i))} mg bei ${g.standard} ${g.einheit}`;
+        : tx('option_menge', '{mg} mg bei {menge} {einheit}', { mg: Math.round(mgVon(i)), menge: g.standard, einheit: g.einheit });
       return `<option value="${i}">${g.liste || g.name} · ${wert}</option>`;
     }).join('');
 
@@ -382,8 +424,8 @@ window.BWTools = (function () {
       if (g.einheit) {
         mengenfeld.hidden = false;
         mengenLabel.textContent = g.einheit === 'g'
-          ? 'Wie viel Kaffee hast Du verwendet?'
-          : 'Wie viel hast Du getrunken?';
+          ? tx('menge_kaffee', 'Wie viel Kaffee hast Du verwendet?')
+          : tx('menge_getraenk', 'Wie viel hast Du getrunken?');
         menge.value = g.standard;
         menge.step = g.einheit === 'g' ? 1 : 10;
         menge.min = g.einheit === 'g' ? 5 : 50;
@@ -448,7 +490,7 @@ window.BWTools = (function () {
     if (teilen) {
       teilen.addEventListener('click', async () => {
         const alt = teilen.textContent;
-        teilen.textContent = 'Bild wird gebaut …';
+        teilen.textContent = tx('bild_wird_gebaut', 'Bild wird gebaut …');
         teilen.disabled = true;
         try {
           const flaeche = await zeichneTeilenBild();
@@ -537,7 +579,7 @@ window.BWTools = (function () {
     ctx.fillStyle = '#4FC4E2';
     ctx.font = `700 30px ${S}`;
     ctx.letterSpacing = '4px';
-    ctx.fillText('SO VIEL KOFFEIN HABE ICH IN MIR', 80, SICHER_OBEN + 12);
+    ctx.fillText(tx('bild_kopf', 'SO VIEL KOFFEIN HABE ICH IN MIR'), 80, SICHER_OBEN + 12);
     ctx.letterSpacing = '0px';
 
     if (signet) {
@@ -556,10 +598,10 @@ window.BWTools = (function () {
 
     ctx.font = `600 32px ${S}`;
     ctx.fillStyle = 'rgba(255,243,232,.88)';
-    ctx.fillText(`nehme ich um ${uhr} mit in den Schlaf`, 80, 392);
+    ctx.fillText(tx('bild_schlaf', 'nehme ich um {uhr} mit in den Schlaf', { uhr }), 80, 392);
     ctx.font = `500 28px ${S}`;
     ctx.fillStyle = 'rgba(255,243,232,.6)';
-    ctx.fillText(`von insgesamt ${Math.round(summe)} mg an diesem Tag`, 80, 432);
+    ctx.fillText(tx('bild_insgesamt', 'von insgesamt {mg} mg an diesem Tag', { mg: Math.round(summe) }), 80, 432);
 
     // --- Kurve ---
     const kx = 80, ky = 480, kb = BILD_B - 160, kh = 268;
@@ -574,7 +616,7 @@ window.BWTools = (function () {
     ctx.setLineDash([]);
 
     ctx.font = `600 21px ${S}`;
-    const grenzText = '50 mg · Schlafgrenze';
+    const grenzText = tx('bild_grenze', '50 mg · Schlafgrenze');
     const grenzBreite = ctx.measureText(grenzText).width;
     ctx.fillStyle = '#004B5C';
     ctx.fillRect(kx + 2, ySchwelle - 32, grenzBreite + 16, 25);
@@ -619,7 +661,7 @@ window.BWTools = (function () {
     ctx.textAlign = xSchlaf > BILD_B - 260 ? 'right' : 'left';
     const versatz = ctx.textAlign === 'right' ? -12 : 12;
     ctx.font = `700 24px ${S}`;
-    ctx.fillText('Schlafenszeit', xSchlaf + versatz, ky + 26);
+    ctx.fillText(tx('bild_schlafenszeit', 'Schlafenszeit'), xSchlaf + versatz, ky + 26);
     ctx.font = `700 24px ${S}`;
     ctx.fillText(`(${uhr})`, xSchlaf + versatz, ky + 54);
     ctx.textAlign = 'left';
@@ -696,7 +738,7 @@ window.BWTools = (function () {
     ctx.font = `700 24px ${S}`;
     ctx.fillStyle = '#4FC4E2';
     ctx.letterSpacing = '3px';
-    ctx.fillText('MEIN TAG', 80, y);
+    ctx.fillText(tx('bild_mein_tag', 'MEIN TAG'), 80, y);
     ctx.letterSpacing = '0px';
     y += 42;
 
@@ -717,7 +759,7 @@ window.BWTools = (function () {
       const uebrigMg = uebrig.reduce((s, c) => s + mgVon(c.getraenkIndex, c.menge), 0);
       ctx.font = `600 26px ${S}`;
       ctx.fillStyle = 'rgba(255,243,232,.62)';
-      ctx.fillText(`und ${uebrig.length} weitere`, 80, y);
+      ctx.fillText(tx('bild_weitere', 'und {n} weitere', { n: uebrig.length }), 80, y);
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(255,70,18,.85)';
       ctx.fillText(`${Math.round(uebrigMg)} mg`, BILD_B - 80, y);
@@ -732,11 +774,11 @@ window.BWTools = (function () {
     ctx.fillRect(0, bandOben, BILD_B, BILD_H - bandOben);
     ctx.fillStyle = '#FFF3E8';
     ctx.font = `800 36px ${S}`;
-    ctx.fillText('Und wie viel Koffein nimmst Du', 80, 1150);
-    ctx.fillText('mit in den Schlaf?', 80, 1194);
+    ctx.fillText(tx('bild_frage_1', 'Und wie viel Koffein nimmst Du'), 80, 1150);
+    ctx.fillText(tx('bild_frage_2', 'mit in den Schlaf?'), 80, 1194);
     ctx.font = `600 27px ${S}`;
     ctx.fillStyle = 'rgba(255,243,232,.9)';
-    ctx.fillText('beanwatch.ch/koffeinrechner', 80, SICHER_UNTEN + 28);
+    ctx.fillText(ADRESSE, 80, SICHER_UNTEN + 28);
 
     return flaeche;
   }
@@ -755,19 +797,19 @@ window.BWTools = (function () {
 
      Als Rückfalllinie bleibt der Download.                                  */
 
-  const TEILTEXT = 'Wie viel Koffein nimmst Du mit in den Schlaf? ' +
-                   'Ausgerechnet mit dem Koffeinrechner von Beanwatch.';
+  const TEILTEXT = tx('teiltext', 'Wie viel Koffein nimmst Du mit in den Schlaf? ' +
+                   'Ausgerechnet mit dem Koffeinrechner von Beanwatch.');
 
   const PLATTFORMEN = [
     {
       schluessel: 'linkedin', name: 'LinkedIn',
       url: 'https://www.linkedin.com/feed/?shareActive=true&text=' +
-           encodeURIComponent(TEILTEXT + ' beanwatch.ch/koffeinrechner')
+           encodeURIComponent(TEILTEXT + ' ' + ADRESSE)
     },
     {
       schluessel: 'facebook', name: 'Facebook',
       url: 'https://www.facebook.com/sharer/sharer.php?u=' +
-           encodeURIComponent('https://beanwatch.ch/koffeinrechner')
+           encodeURIComponent(ADRESSE_URL)
     },
     {
       schluessel: 'instagram', name: 'Instagram',
@@ -801,24 +843,23 @@ window.BWTools = (function () {
     dialog.id = 'teilen-dialog';
     dialog.className = 'teilen-dialog';
     dialog.innerHTML = `
-      <div class="teilen-fenster" role="dialog" aria-modal="true" aria-label="Ergebnis teilen">
-        <button class="teilen-zu" aria-label="Schliessen">✕</button>
-        <span class="eyebrow" style="color:var(--redorange)">Dein Ergebnis</span>
-        <h3 style="margin-top:12px">Wohin damit?</h3>
+      <div class="teilen-fenster" role="dialog" aria-modal="true" aria-label="${tx('teilen_aria', 'Ergebnis teilen')}">
+        <button class="teilen-zu" aria-label="${tx('schliessen', 'Schliessen')}">✕</button>
+        <span class="eyebrow" style="color:var(--redorange)">${tx('teilen_eyebrow', 'Dein Ergebnis')}</span>
+        <h3 style="margin-top:12px">${tx('teilen_titel', 'Wohin damit?')}</h3>
         <div class="teilen-vorschau"></div>
 
         ${nativ ? `
           <button class="btn btn--primaer" data-nativ style="width:100%;justify-content:center">
-            Bild teilen
+            ${tx('bild_teilen', 'Bild teilen')}
           </button>
-          <p class="teilen-erklaerung">Bild und Text gehen zusammen an die App Deiner Wahl.</p>
+          <p class="teilen-erklaerung">${tx('nativ_erklaerung', 'Bild und Text gehen zusammen an die App Deiner Wahl.')}</p>
         ` : `
           <p class="teilen-erklaerung">
             ${ablageGeht
-              ? 'Ein Klick legt das Bild in die Zwischenablage und öffnet die Plattform. Dort fügst Du es mit ' +
-                (navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : 'Strg + V') +
-                ' in den Beitrag ein.'
-              : 'Das Bild wird gespeichert und die Plattform öffnet sich. Lade es dort im Beitrag hoch.'}
+              ? tx('ablage_erklaerung', 'Ein Klick legt das Bild in die Zwischenablage und öffnet die Plattform. Dort fügst Du es mit {taste} in den Beitrag ein.',
+                { taste: navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : tx('taste_strg', 'Strg + V') })
+              : tx('speichern_erklaerung', 'Das Bild wird gespeichert und die Plattform öffnet sich. Lade es dort im Beitrag hoch.')}
           </p>
           <div class="teilen-knoepfe">
             ${PLATTFORMEN.map(p => `
@@ -828,7 +869,7 @@ window.BWTools = (function () {
         `}
 
         <button class="btn btn--linie" data-speichern style="margin-top:12px;width:100%;justify-content:center">
-          Nur speichern
+          ${tx('nur_speichern', 'Nur speichern')}
         </button>
         <p class="teilen-hinweis" role="status"></p>
       </div>`;
@@ -839,7 +880,7 @@ window.BWTools = (function () {
 
     const mini = new Image();
     mini.src = flaeche.toDataURL('image/png');
-    mini.alt = 'Vorschau des Bildes';
+    mini.alt = tx('vorschau_alt', 'Vorschau des Bildes');
     vorschau.appendChild(mini);
 
     function speichern() {
@@ -872,7 +913,7 @@ window.BWTools = (function () {
 
     dialog.querySelector('[data-speichern]').addEventListener('click', () => {
       speichern();
-      hinweis.textContent = 'Gespeichert. Du findest es in Deinem Download-Ordner.';
+      hinweis.textContent = tx('gespeichert', 'Gespeichert. Du findest es in Deinem Download-Ordner.');
     });
 
     const nativKnopf = dialog.querySelector('[data-nativ]');
@@ -881,12 +922,12 @@ window.BWTools = (function () {
         try {
           const blob = await blobVon(flaeche);
           const datei = new File([blob], 'beanwatch-koffeinrechner.png', { type: 'image/png' });
-          await navigator.share({ files: [datei], text: TEILTEXT + ' beanwatch.ch/koffeinrechner' });
+          await navigator.share({ files: [datei], text: TEILTEXT + ' ' + ADRESSE });
           schliessen();
         } catch (e) {
           if (e && e.name === 'AbortError') return;   // Nutzer hat abgebrochen
           speichern();
-          hinweis.textContent = 'Teilen ging nicht, das Bild wurde stattdessen gespeichert.';
+          hinweis.textContent = tx('teilen_fehler', 'Teilen ging nicht, das Bild wurde stattdessen gespeichert.');
         }
       });
     }
@@ -897,10 +938,10 @@ window.BWTools = (function () {
         const kopiert = await inAblage();
         if (!kopiert) speichern();
 
-        const taste = navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : 'Strg + V';
+        const taste = navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : tx('taste_strg', 'Strg + V');
         hinweis.textContent = kopiert
-          ? `Bild ist in der Zwischenablage. Im Beitrag auf ${p.name} mit ${taste} einfügen.`
-          : `Bild gespeichert. Im Beitrag auf ${p.name} hochladen.`;
+          ? tx('in_ablage', 'Bild ist in der Zwischenablage. Im Beitrag auf {plattform} mit {taste} einfügen.', { plattform: p.name, taste })
+          : tx('nur_gespeichert', 'Bild gespeichert. Im Beitrag auf {plattform} hochladen.', { plattform: p.name });
 
         window.open(p.url, '_blank', 'noopener');
       });
@@ -936,8 +977,8 @@ window.BWTools = (function () {
   /* Farbzuordnung wie in der Rösterei: Filterkaffee trägt Redorange,
      Espresso Cyanblau. */
   const ZIELE = {
-    filter:   { gh: [2.5, 7.0], kh: [0.5, 3.5], farbe: '#FF4612', name: 'Filterkaffee' },
-    espresso: { gh: [3.5, 8.5], kh: [2.0, 5.0], farbe: '#4FC4E2', name: 'Espresso' }
+    filter:   { gh: [2.5, 7.0], kh: [0.5, 3.5], farbe: '#FF4612', name: tx('ziel_filter', 'Filterkaffee') },
+    espresso: { gh: [3.5, 8.5], kh: [2.0, 5.0], farbe: '#4FC4E2', name: tx('ziel_espresso', 'Espresso') }
   };
 
   const ACHSE_MAX = 16;   // °dH auf beiden Achsen, deckt Schweizer Leitungswasser ab
@@ -967,8 +1008,8 @@ window.BWTools = (function () {
 
     /* Vorlagen, damit man nicht bei null anfängt. */
     const VORLAGEN = {
-      horgen:      { ca: 78,  mg: 12, hco3: 250, name: 'Leitungswasser Horgen' },
-      zuerich:     { ca: 45,  mg: 6,  hco3: 140, name: 'Leitungswasser Zürich' },
+      horgen:      { ca: 78,  mg: 12, hco3: 250, name: tx('vorlage_horgen', 'Leitungswasser Horgen') },
+      zuerich:     { ca: 45,  mg: 6,  hco3: 140, name: tx('vorlage_zuerich', 'Leitungswasser Zürich') },
       volvic:      { ca: 12,  mg: 8,  hco3: 71,  name: 'Volvic' },
       evian:       { ca: 80,  mg: 26, hco3: 360, name: 'Evian' },
       lauretana:   { ca: 1,   mg: 0.3, hco3: 4,  name: 'Lauretana' },
@@ -986,9 +1027,9 @@ window.BWTools = (function () {
       // Werte in der gewählten Einheit anzeigen
       const E = EINHEITEN[einheit];
       document.getElementById('anzeige-gh').textContent =
-        (gh * E.faktor).toFixed(1) + ' ' + E.kuerzel;
+        zahl1(gh * E.faktor) + ' ' + E.kuerzel;
       document.getElementById('anzeige-kh').textContent =
-        (kh * E.faktor).toFixed(1) + ' ' + E.kuerzel;
+        zahl1(kh * E.faktor) + ' ' + E.kuerzel;
       document.getElementById('anzeige-ppm').textContent = Math.round(gh * F_PPM) + ' ppm';
 
       // Punkt im Diagramm setzen
@@ -1010,7 +1051,7 @@ window.BWTools = (function () {
         treffer[k] = imBereich(gh, z.gh) && imBereich(kh, z.kh);
         const marke = document.getElementById('treffer-' + k);
         if (marke) {
-          marke.textContent = treffer[k] ? 'Im Zielbereich' : 'Ausserhalb';
+          marke.textContent = treffer[k] ? tx('im_zielbereich', 'Im Zielbereich') : tx('ausserhalb', 'Ausserhalb');
           marke.className = 'pill' + (treffer[k] ? ' pill--gefuellt' : '');
           // Keine eigene Farbe setzen: Die Pille steht auf dem dunkelblauen
           // Ergebnisfeld und erbt von dort Hellorange. Ein fest gesetztes
@@ -1024,23 +1065,23 @@ window.BWTools = (function () {
       if (!urteil) return;
 
       if (treffer.filter && treffer.espresso) {
-        urteil.innerHTML = 'Dieses Wasser passt für <strong>beides</strong>. Filterkaffee und Espresso liegen im Zielbereich.';
-        rat.textContent = 'Nichts zu tun. Wenn Du eine Espressomaschine hast, entkalke sie trotzdem im üblichen Rhythmus.';
+        urteil.innerHTML = tx('wasser_urteil_beides', 'Dieses Wasser passt für <strong>beides</strong>. Filterkaffee und Espresso liegen im Zielbereich.');
+        rat.textContent = tx('wasser_rat_beides', 'Nichts zu tun. Wenn Du eine Espressomaschine hast, entkalke sie trotzdem im üblichen Rhythmus.');
       } else if (treffer.filter) {
-        urteil.innerHTML = 'Gut für <strong>Filterkaffee</strong>. Für Espresso ist es etwas zu weich.';
-        rat.textContent = 'Für die Espressomaschine wäre etwas mehr Karbonathärte besser, sonst kann der Espresso dünn und spitz wirken.';
+        urteil.innerHTML = tx('wasser_urteil_filter', 'Gut für <strong>Filterkaffee</strong>. Für Espresso ist es etwas zu weich.');
+        rat.textContent = tx('wasser_rat_filter', 'Für die Espressomaschine wäre etwas mehr Karbonathärte besser, sonst kann der Espresso dünn und spitz wirken.');
       } else if (treffer.espresso) {
-        urteil.innerHTML = 'Gut für <strong>Espresso</strong>. Für hellen Filterkaffee ist es einen Tick zu hart.';
-        rat.textContent = 'Für Pour Over lohnt sich ein Tischwasserfilter, dann kommen die Fruchtnoten klarer durch.';
+        urteil.innerHTML = tx('wasser_urteil_espresso', 'Gut für <strong>Espresso</strong>. Für hellen Filterkaffee ist es einen Tick zu hart.');
+        rat.textContent = tx('wasser_rat_espresso', 'Für Pour Over lohnt sich ein Tischwasserfilter, dann kommen die Fruchtnoten klarer durch.');
       } else if (kh > 5) {
-        urteil.innerHTML = 'Die <strong>Karbonathärte ist zu hoch</strong>. Sie puffert die Säuren weg, der Kaffee schmeckt flach.';
-        rat.textContent = 'Ein Wasserfilter mit Ionenaustauscher senkt gezielt die Karbonathärte. Für die Espressomaschine ist er hier praktisch Pflicht.';
+        urteil.innerHTML = tx('wasser_urteil_kh_hoch', 'Die <strong>Karbonathärte ist zu hoch</strong>. Sie puffert die Säuren weg, der Kaffee schmeckt flach.');
+        rat.textContent = tx('wasser_rat_kh_hoch', 'Ein Wasserfilter mit Ionenaustauscher senkt gezielt die Karbonathärte. Für die Espressomaschine ist er hier praktisch Pflicht.');
       } else if (gh < 2) {
-        urteil.innerHTML = 'Sehr <strong>mineralarm</strong>. Ohne Mineralien fehlt dem Kaffee der Körper.';
-        rat.textContent = 'Destilliertes oder sehr weiches Wasser ergibt dünnen, oft sauren Kaffee. Hier hilft Aufmineralisieren, etwa mit Mineralkonzentrat.';
+        urteil.innerHTML = tx('wasser_urteil_mineralarm', 'Sehr <strong>mineralarm</strong>. Ohne Mineralien fehlt dem Kaffee der Körper.');
+        rat.textContent = tx('wasser_rat_mineralarm', 'Destilliertes oder sehr weiches Wasser ergibt dünnen, oft sauren Kaffee. Hier hilft Aufmineralisieren, etwa mit Mineralkonzentrat.');
       } else {
-        urteil.innerHTML = 'Ausserhalb der beiden Zielbereiche, aber <strong>nicht dramatisch</strong>.';
-        rat.textContent = 'Probier es einfach aus. Wenn der Kaffee flach schmeckt, liegt es meist an zu hoher Karbonathärte.';
+        urteil.innerHTML = tx('wasser_urteil_sonst', 'Ausserhalb der beiden Zielbereiche, aber <strong>nicht dramatisch</strong>.');
+        rat.textContent = tx('wasser_rat_sonst', 'Probier es einfach aus. Wenn der Kaffee flach schmeckt, liegt es meist an zu hoher Karbonathärte.');
       }
     }
 
@@ -1048,7 +1089,7 @@ window.BWTools = (function () {
 
     const vorlage = document.getElementById('wasser-vorlage');
     if (vorlage) {
-      vorlage.innerHTML = '<option value="">Eigene Werte eingeben</option>' +
+      vorlage.innerHTML = '<option value="">' + tx('eigene_werte', 'Eigene Werte eingeben') + '</option>' +
         Object.keys(VORLAGEN).map(k => `<option value="${k}">${VORLAGEN[k].name}</option>`).join('');
 
       vorlage.addEventListener('change', () => {
@@ -1097,8 +1138,8 @@ window.BWTools = (function () {
 
       const xt = svg.querySelector('#achse-x-titel');
       const yt = svg.querySelector('#achse-y-titel');
-      if (xt) xt.textContent = `Karbonathärte KH in ${E.kuerzel}`;
-      if (yt) yt.textContent = `Gesamthärte GH in ${E.kuerzel}`;
+      if (xt) xt.textContent = tx('achse_kh', 'Karbonathärte KH in {einheit}', { einheit: E.kuerzel });
+      if (yt) yt.textContent = tx('achse_gh', 'Gesamthärte GH in {einheit}', { einheit: E.kuerzel });
     }
 
     const einheitWahl = document.getElementById('haerte-einheit');
@@ -1141,7 +1182,7 @@ window.BWTools = (function () {
      ====================================================================== */
   /* Der Abschlusstext hing fest am Filterkaffee. Espresso-Guides brauchen
      einen eigenen, deshalb als zweites Argument überschreibbar. */
-  const TIMER_ENDE = 'Trichter abnehmen, umrühren, probieren. Wie ist es geworden?';
+  const TIMER_ENDE = tx('timer_ende', 'Trichter abnehmen, umrühren, probieren. Wie ist es geworden?');
 
   function brewTimer(phasen, schlusstext) {
     const uhr = document.getElementById('timer-uhr');
@@ -1175,8 +1216,8 @@ window.BWTools = (function () {
       onUpdate: () => zeige(stand.s),
       onComplete: () => {
         laeuft = false;
-        start.textContent = 'Nochmal';
-        phase.textContent = 'Fertig';
+        start.textContent = tx('timer_nochmal', 'Nochmal');
+        phase.textContent = tx('timer_fertig', 'Fertig');
         anweisung.textContent = schlusstext || TIMER_ENDE;
       }
     });
@@ -1186,15 +1227,15 @@ window.BWTools = (function () {
         tl.restart(); tl.pause(); stand.s = 0; zeige(0);
       }
       laeuft = !laeuft;
-      if (laeuft) { tl.play(); start.textContent = 'Pause'; }
-      else { tl.pause(); start.textContent = 'Weiter'; }
+      if (laeuft) { tl.play(); start.textContent = tx('timer_pause', 'Pause'); }
+      else { tl.pause(); start.textContent = tx('timer_weiter', 'Weiter'); }
     });
 
     zurueck.addEventListener('click', () => {
       tl.pause(0);
       stand.s = 0;
       laeuft = false;
-      start.textContent = 'Start';
+      start.textContent = tx('timer_start', 'Start');
       zeige(0);
     });
 

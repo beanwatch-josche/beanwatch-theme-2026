@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-koffeinrechner",
+      "settings": {}
+    }
+  },
+  "order": ["haupt"]
+}

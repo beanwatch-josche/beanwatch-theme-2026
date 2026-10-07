@@ -22,6 +22,9 @@
   art (seit 0.10.0, optional): espresso, filter oder decaf. Dann trägt die
   Karte data-art für den Filter von kaffees.js auf der Startseite.
 
+  fahne_statt (seit 0.11.0, optional): eine Fahne statt karte_fahne, etwa
+  «Auch ohne Koffein» beim Decaf im Kaffeefinder. Sie ist nie pink.
+
   Aufruf: {%- render 'bw-produkt-karte', p: produkt -%}
           {%- render 'bw-produkt-karte', p: produkt, art: 'espresso' -%}
 {%- endcomment -%}
@@ -43,6 +46,10 @@
   assign ist_neu = false
   if fahne != blank and pinke_fahnen contains fahne
     assign ist_neu = true
+  endif
+  if fahne_statt != blank
+    assign fahne = fahne_statt
+    assign ist_neu = false
   endif
   assign pille = 'pill'
   if ist_neu

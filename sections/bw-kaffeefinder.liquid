@@ -1,0 +1,170 @@
+{%- comment -%}
+  Der Kaffeefinder (seit 0.11.0), Vorlage page.welcher-kaffee, übertragen aus
+  welcher-kaffee.html der Werkstatt: Markup, Klassen und IDs wie dort, denn
+  kaffeefinder.js und seiten.css brauchen sie. Feste Texte aus den
+  Sprachdateien (finder), Fragen und Anleitungen als Datenblock
+  (bw-finder-texte).
+
+  Die drei Ergebnisse (Entscheid 07.10.2026), je in Shop-Reihenfolge:
+    klassisch  Espressos der Kollektion espresso mit Geschmacksprofil
+               (custom.profile_meter_value) bis 3, ohne Wert ebenfalls hier;
+               danach die Decafs der Kollektion mit der Fahne «Auch ohne
+               Koffein»
+    fruchtig   Espressos mit Profil ab 4, ohne Decaf
+    filter     die Kollektion filterkaffee ohne Decaf
+  Die Ergebnisse #klassisch, #fruchtig und #filter öffnet kaffeefinder.js
+  auch direkt, die Startseite verlinkt sie.
+{%- endcomment -%}
+{%- liquid
+  # Platzhalter für «Frage {n}». Eine «}» in einem Text beendet in Shopify
+  # das Ausgabe-Tag zu früh, deshalb steht sie hier.
+  assign platz_n = '{n}'
+  assign id_decaf = collections['decaf-coffee'].id
+  assign fahne_decaf = 'finder.auch_ohne_koffein' | t
+  assign espresso = collections['espresso']
+  assign filter = collections['filterkaffee']
+
+  capture karten_klassisch
+    if espresso != blank
+      for p in espresso.products
+        assign ids = p.collections | map: 'id'
+        if ids contains id_decaf
+          continue
+        endif
+        assign profil = p.metafields.custom.profile_meter_value.value | plus: 0
+        if profil < 4
+          render 'bw-produkt-karte', p: p
+        endif
+      endfor
+      for p in espresso.products
+        assign ids = p.collections | map: 'id'
+        if ids contains id_decaf
+          render 'bw-produkt-karte', p: p, fahne_statt: fahne_decaf
+        endif
+      endfor
+    endif
+  endcapture
+
+  capture karten_fruchtig
+    if espresso != blank
+      for p in espresso.products
+        assign ids = p.collections | map: 'id'
+        if ids contains id_decaf
+          continue
+        endif
+        assign profil = p.metafields.custom.profile_meter_value.value | plus: 0
+        if profil >= 4
+          render 'bw-produkt-karte', p: p
+        endif
+      endfor
+    endif
+  endcapture
+
+  capture karten_filter
+    if filter != blank
+      for p in filter.products
+        assign ids = p.collections | map: 'id'
+        unless ids contains id_decaf
+          render 'bw-produkt-karte', p: p
+        endunless
+      endfor
+    endif
+  endcapture
+
+  assign karten_klassisch = karten_klassisch | strip
+  assign karten_fruchtig = karten_fruchtig | strip
+  assign karten_filter = karten_filter | strip
+  assign ergebnisse = 'klassisch,fruchtig,filter' | split: ','
+-%}
+
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      <a href="{{ routes.collections_url }}">{{ 'kopf.shop' | t }}</a><span class="teiler">·</span><span>{{ 'finder.kaffee_eyebrow' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'finder.kaffee_eyebrow' | t }}</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'finder.kaffee_titel' | t }}</h1>
+    <p class="lead">{{ 'finder.kaffee_lead' | t }}</p>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+{%- comment -%}
+  Fragebogen: Frage und Ergebnis stehen beide verborgen im Markup,
+  kaffeefinder.js zeigt eines davon. Die Fragen baut das Skript aus dem
+  Datenblock, die drei Ergebnisse stehen fest hier, damit die Karten beim
+  Laden die Hover-Effekte aus basis.js bekommen.
+{%- endcomment %}
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <div class="finder" id="finder">
+
+      <noscript>
+        <p class="finder-ohne-js">{{ 'finder.kaffee_ohne_js_html' | t: url: routes.collections_url }}</p>
+      </noscript>
+
+      <div class="finder-frage" id="finder-frage" hidden>
+        <div class="finder-leiste">
+          <span class="finder-schritt eyebrow" id="finder-schritt">{{ 'finder.frage' | t | replace: platz_n, '1' }}</span>
+          <button class="finder-zurueck" id="finder-zurueck" type="button" hidden>{{ 'finder.zurueck' | t }}</button>
+        </div>
+        <h2 class="finder-titel" id="finder-titel" tabindex="-1"></h2>
+        <div class="mahlgrad-optionen finder-antworten" id="finder-antworten" role="group" aria-labelledby="finder-titel"></div>
+      </div>
+
+      <div class="finder-ergebnis" id="finder-ergebnis" hidden>
+        {%- for e in ergebnisse %}
+        {%- liquid
+          case e
+            when 'klassisch'
+              assign karten = karten_klassisch
+            when 'fruchtig'
+              assign karten = karten_fruchtig
+            else
+              assign karten = karten_filter
+          endcase
+          assign titel = 'finder.' | append: e | append: '_titel'
+          assign text = 'finder.' | append: e | append: '_text'
+        -%}
+
+        <article class="finder-treffer" data-ergebnis="{{ e }}" hidden>
+          <span class="eyebrow">{{ 'finder.dein_kaffee' | t }}</span>
+          <h2 tabindex="-1">{{ titel | t }}</h2>
+          <p>{{ text | t }}</p>
+          {%- if karten != blank %}
+          <div class="produkt-raster">
+            {{ karten }}
+          </div>
+          {%- endif %}
+        </article>
+        {%- endfor %}
+
+        <p class="finder-anleitung" id="finder-anleitung" hidden>
+          {{ 'finder.anleitung_vor' | t }} <a id="finder-anleitung-link" href="{{ routes.root_url }}">{{ 'finder.anleitung' | t }}</a>
+        </p>
+
+        <div class="finder-aktionen">
+          <button class="btn btn--linie" id="finder-neu" type="button">{{ 'finder.neu_starten' | t }}</button>
+          <a class="finder-genauer" id="finder-genauer" href="{{ page.url }}" hidden>{{ 'finder.genauer' | t }}</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% render 'bw-finder-texte', art: 'kaffee' %}
+{%- assign shop_name = 'kopf.shop' | t -%}
+{% render 'bw-brot-schema', name_1: shop_name, url_1: routes.collections_url %}
+
+<script src="{{ 'kaffeefinder.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Kaffeefinder",
+  "settings": []
+}
+{% endschema %}

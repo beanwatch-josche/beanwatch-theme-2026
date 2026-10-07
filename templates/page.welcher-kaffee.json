@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-kaffeefinder",
+      "settings": {}
+    }
+  },
+  "order": ["haupt"]
+}

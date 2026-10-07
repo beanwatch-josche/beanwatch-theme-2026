@@ -13,6 +13,10 @@
      Fokus          Nach jedem Wechsel springt der Fokus auf die neue
                     Überschrift, damit Tastatur und Screenreader folgen.
      Reduzierte Bewegung  Wechsel ohne Überblenden.
+     Im Theme       Steht ein Datenblock #bw-finder-texte in der Seite, kommen
+                    Fragen, Antworten, «Frage {n}» und die Anleitungen daraus,
+                    übersetzt und mit Zielen, die es im Shop gibt. Ohne Block
+                    gilt der deutsche Wortlaut hier.
    ========================================================================== */
 
 (function () {
@@ -33,6 +37,28 @@
   const genauerEl = document.getElementById('finder-genauer');
   const neuEl = document.getElementById('finder-neu');
   const ruhig = window.BW && window.BW.wenigerBewegung;
+
+  // Texte aus dem Theme. Shopify maskiert übersetzte Texte (&#39; usw.),
+  // deshalb einmal zurückwandeln; die Werte kommen nur als Text an.
+  function entschluesseln(w) {
+    if (typeof w === 'string') {
+      const t = document.createElement('textarea');
+      t.innerHTML = w;
+      return t.value;
+    }
+    if (Array.isArray(w)) return w.map(entschluesseln);
+    if (w && typeof w === 'object') {
+      const o = {};
+      Object.keys(w).forEach((k) => { o[k] = entschluesseln(w[k]); });
+      return o;
+    }
+    return w;
+  }
+  const TEXTE = (function () {
+    const el = document.getElementById('bw-finder-texte');
+    if (!el) return null;
+    try { return entschluesseln(JSON.parse(el.textContent)); } catch (e) { return null; }
+  })();
 
   /* ------------------------------------------------------------------
      Die Fragen. Eine Antwort führt entweder zur nächsten Frage (weiter)
@@ -78,6 +104,28 @@
     cappuccino: { text: 'Rezept Cappuccino', href: '/blogs/kaffeerezepte/cappuccino-rezept.html' }
   };
 
+  // Im Theme: übersetzte Fragen und Antworten über die deutschen legen. Die
+  // Anleitungen kommen dort ganz aus dem Block, nur mit Zielen, die es gibt.
+  if (TEXTE && TEXTE.fragen) {
+    Object.keys(FRAGEN).forEach((k) => {
+      const t = TEXTE.fragen[k];
+      if (!t) return;
+      if (t.titel) FRAGEN[k].titel = t.titel;
+      (t.antworten || []).forEach((a, i) => {
+        const ziel = FRAGEN[k].antworten[i];
+        if (!ziel || !a) return;
+        if (a.text) ziel.text = a.text;
+        if ('zusatz' in a) ziel.zusatz = a.zusatz;
+      });
+    });
+  }
+  const ausDemTheme = !!(TEXTE && TEXTE.anleitungen);
+  if (ausDemTheme) {
+    Object.keys(ANLEITUNGEN).forEach((k) => { delete ANLEITUNGEN[k]; });
+    Object.assign(ANLEITUNGEN, TEXTE.anleitungen);
+  }
+  const frageWort = (n) => ((TEXTE && TEXTE.frage) || 'Frage {n}').replace('{n}', n);
+
   const ERGEBNISSE = ['klassisch', 'fruchtig', 'filter'];
 
   // Die beantworteten Fragen in ihrer Reihenfolge, für «Zurück».
@@ -118,7 +166,7 @@
     const f = FRAGEN[schluessel];
     ergebnisEl.hidden = true;
     frageEl.hidden = false;
-    schrittEl.textContent = 'Frage ' + (verlauf.length + 1);
+    schrittEl.textContent = frageWort(verlauf.length + 1);
     zurueckEl.hidden = verlauf.length === 0;
     titelEl.textContent = f.titel;
     antwortenEl.dataset.frage = schluessel;
@@ -134,7 +182,9 @@
     trefferEls.forEach((el) => { el.hidden = el.dataset.ergebnis !== art; });
 
     let hilfe = anleitung && ANLEITUNGEN[anleitung];
-    if (hilfe && window.BWStart && !BWStart.zeigen(hilfe.href)) hilfe = hilfe.ersatz;
+    // Aus dem Theme kommen nur Ziele, die es gibt; der Start-Modus prüft nur
+    // die Pfade des Prototyps.
+    if (hilfe && !ausDemTheme && window.BWStart && !BWStart.zeigen(hilfe.href)) hilfe = hilfe.ersatz;
     anleitungEl.hidden = !hilfe;
     if (hilfe) {
       anleitungLink.textContent = hilfe.text;
