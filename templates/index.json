@@ -2,7 +2,9 @@
   "sections": {
     "haupt": {
       "type": "bw-startseite",
-      "settings": {}
+      "settings": {
+        "ueber_bild": "shopify://shop_images/beanwatch-horgen-ufer.webp"
+      }
     }
   },
   "order": [

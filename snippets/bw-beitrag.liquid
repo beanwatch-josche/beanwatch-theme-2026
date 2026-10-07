@@ -6,7 +6,13 @@
   a       der Artikel
   art     wissen | rezept | guide | baristaguide (kommt vom Blog, denn
           ein Artikel kennt seinen Blog in Liquid nicht)
-  modus   'json' für den Datenblock, sonst die Karte
+  modus   'json' für den Datenblock, 'besser' für eine Karte im Raster
+          «Kaffee besser machen» der Startseite (seit 0.10.0), sonst die
+          Karte
+  Nur für 'besser': form (breit oder hoch), marke («Neuestes Rezept»),
+          cta («Zum Rezept»), alle_url und alle_text («Alle Rezepte»).
+          Ohne Artikelbild zeigt ein Brew Guide sein Gerät (data-geraet,
+          gezeichnet von besser.js), erkannt am Handle.
 
   Felder wie im Prototyp (BEITRAEGE in wissen.js):
     titel      custom.kurztitel, sonst der Artikeltitel
@@ -21,6 +27,7 @@
 
   Aufruf: {%- render 'bw-beitrag', a: artikel, art: 'rezept' -%}
           {%- render 'bw-beitrag', a: artikel, art: 'wissen', modus: 'json' -%}
+          {%- render 'bw-beitrag', a: artikel, art: 'rezept', modus: 'besser', form: 'breit', marke: m, cta: c, alle_url: u, alle_text: t -%}
 {%- endcomment -%}
 {%- liquid
   assign mf = a.metafields.custom
@@ -65,6 +72,55 @@
 -%}
 {%- if modus == 'json' -%}
 {"art":{{ art | json }},"titel":{{ titel | json }},"text":{{ text | json }},"themen":{{ themen | json }},"datum":{{ datum | json }},"dauer":{{ dauer | json }},"bewertung":{% if bewertung != blank %}{{ bewertung | json }}{% else %}null{% endif %},"ziel":{{ a.url | json }},"bild":{% if a.image %}{{ a.image | image_url: width: 640 | json }}{% else %}null{% endif %},"stand":"live"}
+{%- elsif modus == 'besser' -%}
+{%- liquid
+  assign geraet = ''
+  if art == 'guide' and a.image == blank
+    if a.handle contains 'v60'
+      assign geraet = 'v60'
+    elsif a.handle contains 'chemex'
+      assign geraet = 'chemex'
+    elsif a.handle contains 'french'
+      assign geraet = 'frenchpress'
+    elsif a.handle contains 'aeropress'
+      assign geraet = 'aeropress'
+    elsif a.handle contains 'cold'
+      assign geraet = 'coldbrew'
+    endif
+  endif
+  assign meta = datum
+  if dauer != blank
+    if meta != blank
+      assign meta = meta | append: ' · '
+    endif
+    assign meta = meta | append: dauer
+  endif
+  if bewertung != blank
+    assign meta = meta | append: ' · ★ ' | append: bewertung
+  endif
+-%}
+<article class="besser-karte besser-karte--{{ form | default: 'breit' }}">
+  {%- if a.image %}
+  <a class="besser-bild" href="{{ a.url }}" tabindex="-1" aria-hidden="true">
+    {{ a.image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '450, 675, 900', sizes: '(min-width: 1080px) 25vw, 100vw', alt: '' }}
+  </a>
+  {%- else %}
+  <a class="besser-bild ist-leer" href="{{ a.url }}"{% if geraet != blank %} data-geraet="{{ geraet }}"{% endif %} tabindex="-1" aria-hidden="true"></a>
+  {%- endif %}
+  <div class="besser-koerper">
+    <div class="besser-zeile">
+      <span class="beitrag-art beitrag-art--{{ art_klasse }}"><i class="punkt"></i>{{ art_schluessel | t }}</span>
+      <span class="besser-marke">{{ marke }}</span>
+    </div>
+    <h3><a href="{{ a.url }}">{{ titel | escape }}</a></h3>
+    <p>{{ text | escape }}</p>
+    <span class="besser-meta">{{ meta }}</span>
+    <div class="besser-fuss">
+      <a class="btn btn--primaer" href="{{ a.url }}" data-pfeil>{{ cta }}</a>
+      <a class="besser-alle" href="{{ alle_url }}">{{ alle_text }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
+</article>
 {%- else -%}
 <a class="beitrag" href="{{ a.url }}" data-art="{{ art }}" data-themen="{{ themen | join: ' ' }}">
   {%- if a.image %}

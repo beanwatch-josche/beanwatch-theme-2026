@@ -1,8 +1,9 @@
 {%- comment -%}
   Titel, Beschreibung, Canonical und Vorschaukarten für soziale Netzwerke.
   hreflang setzt Shopify selbst für alle veröffentlichten Sprachen.
-  Wie im Prototyp: «Titel · Beanwatch», die Startseite trägt nur den
-  Shopnamen.
+  Wie im Prototyp: «Titel · Beanwatch». Die Startseite trägt seit 0.10.0
+  den Titel aus den Shop-Einstellungen (page_title), wie im alten Theme,
+  mit «· Beanwatch», wenn er die Marke nicht schon nennt.
 {%- endcomment -%}
 {%- liquid
   assign marke = 'Beanwatch'
@@ -46,9 +47,7 @@
   if ist_shop
     assign kanonisch = request.origin | append: routes.collections_url
   endif
-  if request.page_type == 'index'
-    assign voll = shop.name
-  elsif titel contains marke
+  if titel contains marke
     assign voll = titel
   else
     assign voll = titel | append: ' · ' | append: marke

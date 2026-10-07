@@ -3,8 +3,8 @@
   wie dort. Links stehen fest im Code und erscheinen nur, wenn ihr Ziel in
   Shopify existiert, die Brew Guides erst, wenn ein Guide veröffentlicht
   ist. Die Rechtstexte kommen aus den Shopify-Richtlinien.
-  Noch nicht drin, weil das Ziel fehlt: Newsletter (#newsletter gibt es erst
-  mit der Startseite) und Wholesale.
+  Noch nicht drin, weil das Ziel fehlt: Wholesale. Der Newsletter steht
+  seit 0.10.0 auf der Startseite (#newsletter).
 {%- endcomment -%}
 <footer class="fuss">
   <div class="wrap">
@@ -81,6 +81,7 @@
           {%- if pages['ueber-uns'] != blank %}
           <li><a href="{{ pages['ueber-uns'].url }}">{{ 'fuss.ueber_uns' | t }}</a></li>
           {%- endif %}
+          <li><a href="{{ routes.root_url }}#newsletter">{{ 'fuss.newsletter' | t }}</a></li>
           {%- if pages['contact'] != blank %}
           <li><a href="{{ pages['contact'].url }}">{{ 'fuss.kontakt' | t }}</a></li>
           {%- endif %}

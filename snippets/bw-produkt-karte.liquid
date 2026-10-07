@@ -19,7 +19,11 @@
   Variante; bw-theme.js fängt es ab und öffnet die Schublade, ohne
   JavaScript führt es zum Warenkorb. Ausverkauft ist der Knopf gesperrt.
 
+  art (seit 0.10.0, optional): espresso, filter oder decaf. Dann trägt die
+  Karte data-art für den Filter von kaffees.js auf der Startseite.
+
   Aufruf: {%- render 'bw-produkt-karte', p: produkt -%}
+          {%- render 'bw-produkt-karte', p: produkt, art: 'espresso' -%}
 {%- endcomment -%}
 {%- liquid
   assign mf = p.metafields.custom
@@ -73,7 +77,7 @@
     assign noten = noten | split: '|'
   endif
 -%}
-<article class="produkt">
+<article class="produkt"{% if art != blank %} data-art="{{ art }}"{% endif %}>
   <div class="produkt-bild">
     {%- if fahne != blank %}
     <span class="produkt-fahne{% if ist_neu %} produkt-fahne--pink{% endif %}">{{ fahne | escape }}</span>

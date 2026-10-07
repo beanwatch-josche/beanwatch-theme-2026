@@ -1,19 +1,471 @@
-{%- assign titel = 'rohbau.start_titel' | t -%}
-{%- assign lead = 'rohbau.start_lead' | t -%}
-{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel, lead: lead -%}
-<section class="sektion">
+{%- comment -%}
+  Die Startseite (seit 0.10.0), übertragen aus index.html der Werkstatt:
+  Markup, Klassen und IDs wie dort, denn faehren.js, animationen.js,
+  kaffees.js, prozess.js und besser.js hängen an ihnen. Feste Texte aus den
+  Sprachdateien (start), Abschnitte wie im Prototyp (Entscheid Joscha
+  07.10.2026).
+
+  Woher die Inhalte kommen:
+    Kopf, Laufband, Prozessweg, Über uns, Newsletter   Sprachdateien; das
+                  Foto bei «Willkommen» ist eine Einstellung der Sektion
+    Unsere Kaffees  Kollektionen espresso und filterkaffee ohne Decaf, dann
+                  decaf-coffee, je in Shop-Reihenfolge, wie auf der
+                  Shop-Seite; data-art für den Filter von kaffees.js
+    Kaffeefinder  erst, wenn es die Seite welcher-kaffee gibt (Entscheid
+                  Joscha). Klassisch und fruchtig führen zu den Kollektionen
+                  klassische-espressos und fruchtige-espressos, solange es
+                  sie nicht gibt zum Ergebnis im Finder; Filterkaffee zum
+                  Abschnitt auf der Shop-Seite.
+    Kaffee besser machen  je Blog der neueste Beitrag (kaffeerezepte,
+                  kaffeewissen, brew-guides, barista-guides) und die Seiten
+                  koffeinrechner und wasserhaerte, in der Reihenfolge des
+                  Prototyps (Rezept, Artikel, Brew Guide, Tool, Barista
+                  Guide, Tool). Was es nicht gibt, fällt weg; die
+                  Rasterplatzierung schliesst die Lücken.
+    Newsletter    Kundenformular von Shopify mit dem Tag newsletter, wie
+                  im Fuss des bisherigen Shops
+  Seitentitel und Meta-Beschreibung kommen aus den Shop-Einstellungen
+  (bw-kopfdaten).
+{%- endcomment -%}
+{%- liquid
+  assign pfeil = '<svg class="pfeil" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+  assign pfeil_box = pfeil | replace: ' width="17" height="17"', ''
+  assign pfeil_klein = pfeil | replace: '"17"', '"15"'
+
+  # Guides: Ein Blog zählt erst mit einem veröffentlichten Artikel.
+  assign hat_brew = false
+  if blogs['brew-guides'] != blank
+    assign n = blogs['brew-guides'].articles_count | plus: 0
+    if n > 0
+      assign hat_brew = true
+    endif
+  endif
+  assign hat_barista = false
+  if blogs['barista-guides'] != blank
+    assign n = blogs['barista-guides'].articles_count | plus: 0
+    if n > 0
+      assign hat_barista = true
+    endif
+  endif
+
+  # Unsere Kaffees, gruppiert wie auf der Shop-Seite
+  assign k_decaf = collections['decaf-coffee']
+  assign decaf_ids = ''
+  if k_decaf != blank
+    assign decaf_ids = k_decaf.products | map: 'id'
+  endif
+  assign n_kaffees = 0
+  capture kaffees
+    for p in collections['espresso'].products
+      unless decaf_ids contains p.id
+        render 'bw-produkt-karte', p: p, art: 'espresso'
+        assign n_kaffees = n_kaffees | plus: 1
+      endunless
+    endfor
+    for p in collections['filterkaffee'].products
+      unless decaf_ids contains p.id
+        render 'bw-produkt-karte', p: p, art: 'filter'
+        assign n_kaffees = n_kaffees | plus: 1
+      endunless
+    endfor
+    for p in k_decaf.products
+      render 'bw-produkt-karte', p: p, art: 'decaf'
+      assign n_kaffees = n_kaffees | plus: 1
+    endfor
+  endcapture
+  assign ziel_kaufen = '#kaffees'
+  if n_kaffees == 0
+    assign ziel_kaufen = routes.collections_url
+  endif
+
+  # Kaffeefinder
+  assign finder = pages['welcher-kaffee']
+  assign ziel_klassisch = ''
+  assign ziel_fruchtig = ''
+  if finder != blank
+    assign ziel_klassisch = finder.url | append: '#klassisch'
+    assign ziel_fruchtig = finder.url | append: '#fruchtig'
+  endif
+  if collections['klassische-espressos'] != blank
+    assign ziel_klassisch = collections['klassische-espressos'].url
+  endif
+  if collections['fruchtige-espressos'] != blank
+    assign ziel_fruchtig = collections['fruchtige-espressos'].url
+  endif
+
+  # Prozessweg, Station 5: «, Guides» erst mit Brew Guides, der Rechner
+  # als Link erst, wenn es seine Seite gibt
+  assign guides_satz = ''
+  if hat_brew
+    assign guides_satz = 'start.guides' | t
+  endif
+  assign werkzeug = 'start.phase_5_werkzeug' | t
+  if pages['wasserhaerte'] != blank
+    assign werkzeug = '<a href="' | append: pages['wasserhaerte'].url | append: '">' | append: werkzeug | append: '</a>'
+  endif
+
+  assign wissen_seite = blogs['kaffeewissen'].url | default: routes.root_url
+-%}
+
+<section class="hero hero--faehren" id="hero">
+  <div class="hero-himmel" data-parallax="0.18"></div>
+
+  <svg class="hero-sonne" id="hero-sonne" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+    <g id="sonnen-strahlen" stroke="#FF4612" stroke-width="3" stroke-linecap="round" opacity=".5">
+      <path d="M100.0 34.0L100.0 10.0"/><path d="M126.8 35.3L131.8 23.3"/><path d="M146.7 53.3L163.6 36.4"/><path d="M164.7 73.2L176.7 68.2"/>
+      <path d="M166.0 100.0L190.0 100.0"/><path d="M164.7 126.8L176.7 131.8"/><path d="M146.7 146.7L163.6 163.6"/><path d="M126.8 164.7L131.8 176.7"/>
+      <path d="M100.0 166.0L100.0 190.0"/><path d="M73.2 164.7L68.2 176.7"/><path d="M53.3 146.7L36.4 163.6"/><path d="M35.3 126.8L23.3 131.8"/>
+      <path d="M34.0 100.0L10.0 100.0"/><path d="M35.3 73.2L23.3 68.2"/><path d="M53.3 53.3L36.4 36.4"/><path d="M73.2 35.3L68.2 23.3"/>
+    </g>
+    <circle id="sonnen-kern" cx="100" cy="100" r="46" fill="#FF4612" opacity=".16"/>
+    <circle cx="100" cy="100" r="46" stroke="#FF4612" stroke-width="2.5" opacity=".55"/>
+  </svg>
+
   <div class="wrap">
-    <ul class="bw-rohbau-links">
-      <li><a class="btn btn--primaer" href="{{ routes.collections_url }}" data-pfeil>{{ 'kopf.shop' | t }}</a></li>
-      {%- if blogs['kaffeewissen'] != blank %}
-      <li><a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}">{{ 'fuss.kaffeewissen' | t }}</a></li>
-      {%- endif %}
-      {%- if blogs['kaffeerezepte'] != blank %}
-      <li><a class="btn btn--linie" href="{{ blogs['kaffeerezepte'].url }}">{{ 'fuss.kaffeerezepte' | t }}</a></li>
-      {%- endif %}
-    </ul>
+    <div class="hero-raster">
+      <div class="hero-text">
+        <span class="hero-eyebrow eyebrow" data-hero="eyebrow">
+          <span class="punkt"></span> {{ 'start.eyebrow' | t }}
+        </span>
+
+        <h1 data-hero="headline">
+          <span class="zeile"><span class="inner-zeile">{{ 'start.titel_1' | t }}</span></span>
+          <span class="zeile"><span class="inner-zeile akzent">{{ 'start.titel_2' | t }}</span></span>
+          <span class="zeile"><span class="inner-zeile">{{ 'start.titel_3' | t }}</span></span>
+        </h1>
+
+        <p class="hero-sub lead" data-hero="sub">{{ 'start.lead' | t }}</p>
+
+        <div class="hero-aktionen" data-hero="aktionen">
+          <a class="btn btn--primaer" href="{{ ziel_kaufen }}">
+            {{ 'start.knopf_kaufen' | t }}
+            {{ pfeil }}
+          </a>
+          <a class="btn btn--linie" href="#prozess">{{ 'start.knopf_roesten' | t }}</a>
+        </div>
+
+        <div class="hero-belege" data-hero="belege">
+          <span class="pill pill--pink">{{ 'start.beleg_punkte' | t }}</span>
+          <span class="pill">{{ 'start.beleg_frisch' | t }}</span>
+          <span class="pill pill--cyan">{{ 'start.beleg_horgen' | t }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-wellen" aria-hidden="true">
+    <svg class="welle-hinten" id="welle-hinten" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,120 C240,60 480,180 720,120 C960,60 1200,180 1440,120 C1680,60 1920,180 2160,120 C2400,60 2640,180 2880,120 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+    <div class="faehre-spur faehre-spur--hinten" id="faehre-kaffee"
+         data-faehre="{{ 'start.faehre_kaffee' | t }}" data-ladung="stapel" data-akzent="signal"
+         data-gedanke="{{ 'start.gedanke_kaffee' | t }}"></div>
+    <svg class="welle-mitte" id="welle-mitte" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,140 C240,90 480,190 720,140 C960,90 1200,190 1440,140 C1680,90 1920,190 2160,140 C2400,90 2640,190 2880,140 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+    <div class="faehre-spur faehre-spur--vorne" id="faehre-roesterei"
+         data-faehre="{{ 'start.faehre_roesterei' | t }}" data-ladung="haufen" data-akzent="kontur"
+         data-gedanke="{{ 'start.gedanke_roesterei' | t }}"></div>
+    <svg class="welle-vorne" id="welle-vorne" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,165 C240,130 480,200 720,165 C960,130 1200,200 1440,165 C1680,130 1920,200 2160,165 C2400,130 2640,200 2880,165 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+  </div>
+
+  <div class="hero-scrollhinweis" id="scrollhinweis">
+    <span class="eyebrow">{{ 'start.scroll' | t }}</span>
+    <span class="linie"></span>
   </div>
 </section>
+
+<div class="laufband" aria-hidden="true">
+  <div class="laufband-spur" id="laufband-spur" data-laufband>
+    {%- for gruppe in (1..2) %}
+    <div class="laufband-gruppe">
+      <span>{{ 'start.laufband_1' | t }}</span><i class="trenner"></i>
+      <span>{{ 'start.laufband_2' | t }}</span><i class="trenner"></i>
+      <span>{{ 'start.laufband_3' | t }}</span><i class="trenner"></i>
+      <span>{{ 'start.laufband_4' | t }}</span><i class="trenner"></i>
+    </div>
+    {%- endfor %}
+  </div>
+</div>
+
+{%- if n_kaffees > 0 %}
+<section class="sektion kaffees" id="kaffees">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'start.kaffees_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'start.kaffees_titel' | t }}</h2>
+      </div>
+      <div class="kaffee-aktionen">
+        <div class="reihe-knoepfe" hidden>
+          <button class="reihe-knopf" type="button" data-richtung="-1" aria-label="{{ 'start.kaffees_zurueck' | t }}" aria-controls="kaffee-spur" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <button class="reihe-knopf" type="button" data-richtung="1" aria-label="{{ 'start.kaffees_weiter' | t }}" aria-controls="kaffee-spur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <a class="btn btn--linie" href="{{ routes.collections_url }}">
+          {{ 'hub.alle_anzeigen' | t }}
+          {{ pfeil }}
+        </a>
+      </div>
+    </div>
+
+    <div class="filterleiste" role="group" aria-label="{{ 'start.kaffees_filtern' | t }}" hidden>
+      <button class="filter-knopf ist-aktiv" type="button" data-filter="alle" aria-pressed="true">{{ 'start.filter_alle' | t }}</button>
+      <button class="filter-knopf" type="button" data-filter="espresso" aria-pressed="false">{{ 'start.filter_espresso' | t }}</button>
+      <button class="filter-knopf" type="button" data-filter="filter" aria-pressed="false">{{ 'start.filter_filter' | t }}</button>
+      <button class="filter-knopf" type="button" data-filter="decaf" aria-pressed="false">{{ 'start.filter_decaf' | t }}</button>
+    </div>
+
+    <div class="kaffee-spur" id="kaffee-spur" tabindex="0" role="region" aria-label="{{ 'start.kaffees_eyebrow' | t }}">
+      {{- kaffees -}}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if finder != blank %}
+<section class="sektion passt" id="passt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'start.finder_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'start.finder_titel_html' | t }}</h2>
+      </div>
+    </div>
+
+    <div class="passt-raster" data-batch>
+      <a class="passt-box passt-box--klassisch" href="{{ ziel_klassisch }}">
+        <h3>{{ 'start.klassisch_titel' | t }}</h3>
+        <span class="passt-noten"><span class="pill">{{ 'start.klassisch_note_1' | t }}</span><span class="pill">{{ 'start.klassisch_note_2' | t }}</span><span class="pill">{{ 'start.klassisch_note_3' | t }}</span></span>
+        <span class="passt-mehr">{{ 'start.klassisch_mehr' | t }} <span class="passt-knopf" aria-hidden="true">{{ pfeil_box }}</span></span>
+      </a>
+
+      <a class="passt-box passt-box--fruchtig" href="{{ ziel_fruchtig }}">
+        <h3>{{ 'start.fruchtig_titel' | t }}</h3>
+        <span class="passt-noten"><span class="pill">{{ 'start.fruchtig_note_1' | t }}</span><span class="pill">{{ 'start.fruchtig_note_2' | t }}</span><span class="pill">{{ 'start.fruchtig_note_3' | t }}</span></span>
+        <span class="passt-mehr">{{ 'start.fruchtig_mehr' | t }} <span class="passt-knopf" aria-hidden="true">{{ pfeil_box }}</span></span>
+      </a>
+
+      <a class="passt-box passt-box--filter" href="{{ routes.collections_url }}#filterkaffee">
+        <h3>{{ 'start.filter_titel' | t }}</h3>
+        <span class="passt-noten"><span class="pill">{{ 'start.filter_note_1' | t }}</span><span class="pill">{{ 'start.filter_note_2' | t }}</span><span class="pill">{{ 'start.filter_note_3' | t }}</span></span>
+        <span class="passt-mehr">{{ 'start.filter_mehr' | t }} <span class="passt-knopf" aria-hidden="true">{{ pfeil_box }}</span></span>
+      </a>
+
+      <a class="passt-box passt-box--unsicher" href="{{ finder.url }}">
+        <h3>{{ 'start.unsicher_titel' | t }}</h3>
+        <p>{{ 'start.unsicher_text' | t }}</p>
+        <span class="passt-mehr">{{ 'start.unsicher_mehr' | t }} <span class="passt-knopf" aria-hidden="true">{{ pfeil_box }}</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<section class="sektion pfad" id="prozess">
+  <div class="pfad-buehne">
+    <div class="atmo" data-atmo="sterne" data-dichte="5.7" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="sektion-kopf">
+        <div class="text">
+          <span class="eyebrow">{{ 'start.prozess_eyebrow' | t }}</span>
+          <h2 data-split="zeilen">{{ 'start.prozess_titel_html' | t }}</h2>
+        </div>
+        <p>{{ 'start.prozess_text' | t }}</p>
+      </div>
+    </div>
+
+    <div class="pfad-weg">
+      <svg class="pfad-linie" aria-hidden="true" focusable="false"></svg>
+
+      <ol class="pfad-phasen" role="list">
+        {%- assign illus = 'zweig,containerschiff,bullet,versand,zuriga' | split: ',' %}
+        {%- for illu in illus %}
+        {%- assign k_titel = 'start.phase_' | append: forloop.index | append: '_titel' %}
+        {%- assign k_text = 'start.phase_' | append: forloop.index | append: '_text' %}
+        <li class="pfad-phase">
+          <div class="pfad-illu" data-illu="{{ illu }}"></div>
+          <div class="pfad-text">
+            <h3>{{ k_titel | t }}</h3>
+            {%- if forloop.last %}
+            <p>{{ 'start.phase_5_text_html' | t: guides: guides_satz, werkzeug: werkzeug }}</p>
+            {%- else %}
+            <p>{{ k_text | t }}</p>
+            {%- endif %}
+          </div>
+        </li>
+        {%- endfor %}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="sektion ueber" id="ueber">
+  <div class="wrap">
+    <div class="ueber-raster">
+      <div class="ueber-bild">
+        {%- if section.settings.ueber_bild != blank %}
+        {%- assign bild_alt = 'start.ueber_bild_alt' | t %}
+        {{ section.settings.ueber_bild | image_url: width: 1400 | image_tag: loading: 'lazy', widths: '600, 900, 1200, 1400', sizes: '(min-width: 1080px) 50vw, 100vw', alt: bild_alt }}
+        {%- endif %}
+      </div>
+      <div class="ueber-text">
+        <span class="eyebrow" style="color:var(--redorange)">{{ 'start.ueber_eyebrow' | t }}</span>
+        <p class="gross" data-split="woerter">{{ 'start.ueber_gross' | t }}</p>
+        <p>{{ 'start.ueber_text' | t }}</p>
+        {%- if pages['ueber-uns'] != blank %}
+        <div class="ueber-aktionen">
+          <a class="btn btn--linie" href="{{ pages['ueber-uns'].url }}" data-pfeil>{{ 'start.ueber_knopf' | t }}</a>
+        </div>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{%- capture karten -%}
+  {%- if blogs['kaffeerezepte'] != blank and blogs['kaffeerezepte'].articles.size > 0 -%}
+    {%- assign marke = 'start.marke_rezept' | t -%}
+    {%- assign cta = 'start.cta_rezept' | t -%}
+    {%- assign alle = 'start.alle_rezepte' | t -%}
+    {%- render 'bw-beitrag', a: blogs['kaffeerezepte'].articles.first, art: 'rezept', modus: 'besser', form: 'breit', marke: marke, cta: cta, alle_url: blogs['kaffeerezepte'].url, alle_text: alle -%}
+  {%- endif -%}
+  {%- if blogs['kaffeewissen'] != blank and blogs['kaffeewissen'].articles.size > 0 -%}
+    {%- assign marke = 'start.marke_artikel' | t -%}
+    {%- assign cta = 'start.cta_artikel' | t -%}
+    {%- assign alle = 'start.alle_artikel' | t -%}
+    {%- render 'bw-beitrag', a: blogs['kaffeewissen'].articles.first, art: 'wissen', modus: 'besser', form: 'breit', marke: marke, cta: cta, alle_url: blogs['kaffeewissen'].url, alle_text: alle -%}
+  {%- endif -%}
+  {%- if hat_brew -%}
+    {%- assign marke = 'start.marke_brew' | t -%}
+    {%- assign cta = 'start.cta_guide' | t -%}
+    {%- assign alle = 'start.alle_brew' | t -%}
+    {%- render 'bw-beitrag', a: blogs['brew-guides'].articles.first, art: 'guide', modus: 'besser', form: 'hoch', marke: marke, cta: cta, alle_url: blogs['brew-guides'].url, alle_text: alle -%}
+  {%- endif -%}
+  {%- capture barista -%}
+    {%- if hat_barista -%}
+      {%- assign marke = 'start.marke_barista' | t -%}
+      {%- assign cta = 'start.cta_guide' | t -%}
+      {%- assign alle = 'start.alle_barista' | t -%}
+      {%- render 'bw-beitrag', a: blogs['barista-guides'].articles.first, art: 'baristaguide', modus: 'besser', form: 'hoch', marke: marke, cta: cta, alle_url: blogs['barista-guides'].url, alle_text: alle -%}
+    {%- endif -%}
+  {%- endcapture -%}
+  {%- assign n_tools = 0 -%}
+  {%- assign tool_handles = 'koffeinrechner,wasserhaerte' | split: ',' -%}
+  {%- for h in tool_handles -%}
+    {%- assign seite = pages[h] -%}
+    {%- if seite != blank -%}
+      {%- assign n_tools = n_tools | plus: 1 -%}
+      {%- if n_tools == 2 -%}{{ barista }}{%- endif -%}
+      {%- assign k_text = 'start.tool_' | append: h -%}
+      <article class="besser-karte besser-karte--breit">
+        <a class="besser-bild ist-leer" href="{{ seite.url }}" tabindex="-1" aria-hidden="true">
+          {%- if h == 'koffeinrechner' -%}
+          <svg class="besser-icon" viewBox="0 0 24 24" fill="none" stroke="#004B5C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/></svg>
+          {%- else -%}
+          <svg class="besser-icon" viewBox="0 0 24 24" fill="none" stroke="#004B5C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3.5 4.2 6 7.6 6 10.8a6 6 0 0 1-12 0C6 10.6 8.5 7.2 12 3Z"/><path d="M9.3 14.4a2.9 2.9 0 0 0 2.7 2.6"/></svg>
+          {%- endif -%}
+        </a>
+        <div class="besser-koerper">
+          <div class="besser-zeile">
+            <span class="beitrag-art beitrag-art--tool"><i class="punkt"></i>{{ 'beitraege.art_tool' | t }}</span>
+            <span class="besser-marke">{% if n_tools == 1 %}{{ 'start.marke_tool' | t }}{% else %}{{ 'start.marke_tool_weiteres' | t }}{% endif %}</span>
+          </div>
+          <h3><a href="{{ seite.url }}">{{ seite.title | escape }}</a></h3>
+          <p>{{ k_text | t }}</p>
+          <span class="besser-meta">{{ 'start.tool_meta' | t }}</span>
+          <div class="besser-fuss">
+            <a class="btn btn--primaer" href="{{ seite.url }}" data-pfeil>{{ 'start.cta_tool' | t }}</a>
+            {%- if pages['tools'] != blank %}
+            <a class="besser-alle" href="{{ pages['tools'].url }}">{{ 'start.alle_tools' | t }} {{ pfeil_klein }}</a>
+            {%- endif %}
+          </div>
+        </div>
+      </article>
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if n_tools < 2 -%}{{ barista }}{%- endif -%}
+{%- endcapture -%}
+{%- assign karten = karten | strip -%}
+{%- if karten != blank %}
+<section class="sektion besser" id="wissen">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'start.besser_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'start.besser_titel' | t }}</h2>
+        <p>{{ 'start.besser_text' | t: guides: guides_satz }}</p>
+      </div>
+      <a class="btn btn--linie" href="{{ wissen_seite }}">
+        {{ 'start.besser_alles' | t }}
+        {{ pfeil }}
+      </a>
+    </div>
+
+    <div class="besser-raster" data-batch>
+      {{ karten }}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<section class="sektion newsletter" id="newsletter">
+  <div class="wrap">
+    <div class="newsletter-box" data-reveal>
+      <img class="newsletter-signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+      <div>
+        <span class="eyebrow">{{ 'start.newsletter_eyebrow' | t }}</span>
+        <h2 style="margin-top:14px">{{ 'start.newsletter_titel_html' | t }}</h2>
+        <p>{{ 'start.newsletter_text' | t }}</p>
+      </div>
+      <div>
+        {%- assign nl_stand = '' -%}
+        {%- form 'customer', id: 'newsletter-formular', class: 'newsletter-form' -%}
+          {%- if form.posted_successfully? -%}
+            {%- assign nl_stand = 'ok' -%}
+          {%- elsif form.errors -%}
+            {%- assign nl_stand = 'fehler' -%}
+          {%- endif %}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <input type="email" name="contact[email]" placeholder="{{ 'start.newsletter_platzhalter' | t }}" aria-label="{{ 'start.newsletter_aria' | t }}" autocomplete="email" required>
+          <button class="btn btn--hell" type="submit">
+            {{ 'start.newsletter_knopf' | t }}
+            {{ pfeil }}
+          </button>
+        {%- endform -%}
+        {%- if nl_stand == 'ok' %}
+        <p class="newsletter-hinweis newsletter-meldung" role="status">{{ 'start.newsletter_danke' | t }}</p>
+        {%- elsif nl_stand == 'fehler' %}
+        <p class="newsletter-hinweis newsletter-meldung" role="alert">{{ 'start.newsletter_fehler' | t }}</p>
+        {%- endif %}
+        {%- capture datenschutz -%}
+          {%- if shop.privacy_policy -%}
+            <a href="{{ shop.privacy_policy.url }}">{{ 'start.newsletter_datenschutz' | t }}</a>
+          {%- else -%}
+            {{ 'start.newsletter_datenschutz' | t }}
+          {%- endif -%}
+        {%- endcapture %}
+        <p class="newsletter-hinweis">{{ 'start.newsletter_hinweis_html' | t: datenschutz: datenschutz }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<link rel="stylesheet" href="{{ 'faehren.css' | asset_url }}">
+<script src="{{ 'atmosphaere.js' | asset_url }}" defer></script>
+<script src="{{ 'animationen.js' | asset_url }}" defer></script>
+<script src="{{ 'faehren.js' | asset_url }}" defer></script>
+<script src="{{ 'kaffees.js' | asset_url }}" defer></script>
+<script src="{{ 'besser.js' | asset_url }}" defer></script>
+<script src="{{ 'prozess.js' | asset_url }}" defer></script>
+
 {% schema %}
-{ "name": "Startseite (Rohbau)", "settings": [] }
+{
+  "name": "Startseite",
+  "settings": [
+    { "type": "header", "content": "Willkommen bei Beanwatch" },
+    { "type": "image_picker", "id": "ueber_bild", "label": "Foto neben dem Willkommenstext", "info": "Den Ausschnitt setzt der Fokuspunkt des Bildes." }
+  ]
+}
 {% endschema %}
