@@ -27,6 +27,9 @@
 {%- endcomment -%}
 {%- liquid
   assign dez = 'rezept.dezimal' | t
+  # Platzhalter für hubs.js. Eine «}» in einem Text beendet in Shopify das
+  # Ausgabe-Tag zu früh, deshalb stehen sie hier und nicht dort.
+  assign platz_n = '{n}'
 
   # 02 Bohnen
   assign kollektion = collections['espresso']
@@ -210,8 +213,8 @@
 
     <div class="rezeptur-fluss rezeptur-fluss--breit"
          data-text-dezimal="{{ dez }}"
-         data-text-gramm="{{ 'hub.gramm' | t: n: '{n}' }}"
-         data-text-ziel="{{ 'hub_espresso.ziel' | t: n: '{n}' }}"
+         data-text-gramm="{{ 'hub.gramm' | t: n: platz_n }}"
+         data-text-ziel="{{ 'hub_espresso.ziel' | t: n: platz_n }}"
          data-text-hinweis-hell="{{ 'hub_espresso.hinweis_hell' | t }}"
          data-text-hinweis-dunkel="{{ 'hub_espresso.hinweis_dunkel' | t }}"
          data-text-satz-einfach-hell="{{ 'hub_espresso.satz_einfach_hell' | t }}"
@@ -441,7 +444,7 @@
 
     <button class="btn btn--linie mehr-knopf" type="button" id="getraenke-mehr"
             aria-expanded="false" aria-controls="getraenke-raster"
-            data-text-zu="{{ 'hub_espresso.alle_rezepte_zahl' | t: n: '{n}' }}" data-text-auf="{{ 'hub.weniger' | t }}" hidden>
+            data-text-zu="{{ 'hub_espresso.alle_rezepte_zahl' | t: n: platz_n }}" data-text-auf="{{ 'hub.weniger' | t }}" hidden>
       <span class="wort">{{ 'hub_espresso.alle_rezepte_zahl' | t: n: n_kacheln }}</span>
     </button>
   </div>

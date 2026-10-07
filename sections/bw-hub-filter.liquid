@@ -24,6 +24,10 @@
 {%- endcomment -%}
 {%- liquid
   assign dez = 'rezept.dezimal' | t
+  # Platzhalter für hubs.js. Eine «}» in einem Text beendet in Shopify das
+  # Ausgabe-Tag zu früh, deshalb stehen sie hier und nicht dort.
+  assign platz_n = '{n}'
+  assign platz_v = '{v}'
 
   # 02 Bohnen
   assign kollektion = collections['filterkaffee']
@@ -197,15 +201,15 @@
 
     <div class="rezeptur-fluss rezeptur-fluss--breit" id="filter-rezeptur"
          data-text-dezimal="{{ dez }}"
-         data-text-gramm="{{ 'hub.gramm' | t: n: '{n}' }}"
-         data-text-liter="{{ 'hub_filter.liter' | t: n: '{n}' }}"
+         data-text-gramm="{{ 'hub.gramm' | t: n: platz_n }}"
+         data-text-liter="{{ 'hub_filter.liter' | t: n: platz_n }}"
          data-text-zu="{{ zu }}"
          data-text-hinweis-hell="{{ 'hub_filter.hinweis_hell' | t }}"
          data-text-hinweis-dunkel="{{ 'hub_filter.hinweis_dunkel' | t }}"
-         data-text-bloom="{{ 'hub_filter.bloom' | t: n: '{n}' }}"
-         data-text-guss="{{ 'hub_filter.guss' | t: n: '{n}' }}"
-         data-text-satz-hell="{{ 'hub_filter.satz_hell' | t: v: '{v}' }}"
-         data-text-satz-dunkel="{{ 'hub_filter.satz_dunkel' | t: v: '{v}' }}">
+         data-text-bloom="{{ 'hub_filter.bloom' | t: n: platz_n }}"
+         data-text-guss="{{ 'hub_filter.guss' | t: n: platz_n }}"
+         data-text-satz-hell="{{ 'hub_filter.satz_hell' | t: v: platz_v }}"
+         data-text-satz-dunkel="{{ 'hub_filter.satz_dunkel' | t: v: platz_v }}">
 
       <div class="rezeptur-ergebnis rezeptur-ergebnis--breit" data-reveal>
         <span class="eyebrow">{{ 'hub.dein_rezept' | t }}</span>

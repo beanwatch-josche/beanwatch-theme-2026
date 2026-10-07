@@ -63,6 +63,8 @@ Shopify-Admin → Onlineshop → Themes → bei diesem Theme «…» → **Stand
 
 Shopify gibt Texte aus `| t` schon maskiert aus, ausser der Schlüssel endet auf `_html` (etwa `rezept.aktualisiert_html` mit dem `<time>`-Element). Nach `| t` deshalb nie `| escape`, sonst steht `&amp;#39;` im Text. Texte für Skripte (Portionen, Bewertung) stehen als `data-text-*` am Element; ohne sie fallen die Skripte auf Deutsch zurück. Für `wissen.js` stehen sie unter `texte` im Datenblock.
 
+Platzhalter wie `{n}` für die Skripte nie als Text in ein Ausgabe-Tag schreiben (`{{ 'x' | t: n: '{n}' }}`): Shopify beendet das Tag bei der ersten `}` und lehnt die ganze Datei ab, über GitHub ohne Meldung. Theme Check merkt das nicht. Den Platzhalter vorher zuweisen (`assign platz_n = '{n}'`) und die Variable übergeben, wie in `bw-rezept` und den Hubs.
+
 ### Start-Modus im Theme
 
 Im Prototyp legt der `PLAN` in `start.js` fest, welche Guides sichtbar sind. Im Theme rendert Liquid denselben Plan aus den **veröffentlichten** Artikeln der Blogs `brew-guides` und `barista-guides` (`snippets/bw-seitendaten.liquid`). Einen Guide sichtbar machen heisst hier also: ihn in Shopify veröffentlichen. Links auf Ausgeblendetes baut Liquid gar nicht erst (`{% if blogs['brew-guides'].articles_count > 0 %}`).
