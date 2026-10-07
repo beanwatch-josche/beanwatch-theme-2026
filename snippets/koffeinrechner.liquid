@@ -1,0 +1,137 @@
+{%- comment -%}
+  Aus der Werkstatt (werkzeug/vorlagen/koffeinrechner.html), geschrieben von
+  theme-export.rb. Nicht hier ändern, sondern dort und neu exportieren.
+{%- endcomment -%}
+    <div class="rechner">
+
+      <!-- ---------- Eingaben ---------- -->
+      <div>
+        <div class="rechner-feld">
+          <label for="getraenk-auswahl">Was hast Du getrunken?</label>
+          <select id="getraenk-auswahl"></select>
+          <p class="hinweis" id="getraenk-hinweis"
+             style="display:block;margin:10px 0 0;font-size:.84rem;opacity:.7"></p>
+        </div>
+
+        <!-- Erscheint nur bei Getränken, deren Menge Du selbst bestimmst. -->
+        <div class="rechner-feld" id="mengenfeld" hidden>
+          <label for="menge" id="menge-label">Wie viel Kaffee hast Du verwendet?</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input type="number" id="menge" value="15" min="5" max="120" step="1" style="flex:1">
+            <span style="font-weight:700;opacity:.7" id="menge-einheit">g</span>
+          </div>
+        </div>
+
+        <div class="rechner-feld">
+          <label for="konsum-zeit">
+            Um wie viel Uhr?
+            <span class="hinweis">Aktuell <span class="wertanzeige" id="zeit-anzeige">08:00</span></span>
+          </label>
+          <input type="range" id="konsum-zeit" min="5" max="23" step="1" value="8">
+          <div class="bereich-werte"><span>05:00</span><span>23:00</span></div>
+        </div>
+
+        <button class="btn btn--primaer" id="hinzufuegen" style="margin-bottom:34px">
+          Hinzufügen
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+
+        <div class="rechner-feld">
+          <label for="schlaf-zeit">
+            Wann gehst Du schlafen?
+            <span class="hinweis">Aktuell <span class="wertanzeige" id="schlaf-anzeige">23:00</span></span>
+          </label>
+          <input type="range" id="schlaf-zeit" min="19" max="26" step="1" value="23">
+          <div class="bereich-werte"><span>19:00</span><span>02:00</span></div>
+        </div>
+
+        <div class="rechner-feld">
+          <label>Dein Tag</label>
+          <div id="konsum-liste"></div>
+        </div>
+      </div>
+
+      <!-- ---------- Ergebnis ---------- -->
+      <div class="rechner-ergebnis">
+        <!-- Kopf der Box, damit das geteilte Bild und die Seite gleich aussehen -->
+        <div class="box-kopf">
+          <span class="eyebrow" style="color:var(--cyanblau)">Koffeinrechner</span>
+          <img class="box-signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="44" height="45">
+        </div>
+
+        <span class="eyebrow" style="margin-top:24px;display:block">Beim Schlafengehen noch im Körper</span>
+        <span class="gross" id="wert-rest" data-wert="0">0<span class="einheit"> mg</span></span>
+
+        <div class="rechner-balken" id="balken-rest"><span class="fuellung"></span></div>
+        <div class="rechner-skala">
+          <span>0 mg</span><span>50 mg · Schlafgrenze</span><span>200 mg</span>
+        </div>
+
+        <p class="unterzeile" id="urteil"></p>
+
+        <!-- Tageskurve -->
+        <svg id="koffein-kurve" viewBox="0 0 600 180" preserveAspectRatio="none"
+             style="width:100%;height:150px;margin-top:26px;overflow:visible" aria-label="Koffeinverlauf über den Tag">
+          <line x1="0" y1="180" x2="600" y2="180" stroke="rgba(255,243,232,.3)" stroke-width="1.5"/>
+          <line class="schwelle" x1="0" y1="150" x2="600" y2="150"
+                stroke="rgba(255,243,232,.45)" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <text class="schwelle-text" x="4" y="143" fill="rgba(255,243,232,.75)"
+                style="font:600 12px Gabarito,sans-serif">50 mg · ab hier stört Koffein den Schlaf</text>
+          <path class="kurve-flaeche" d="" fill="#FF4612" opacity=".22"/>
+          <path class="kurve-linie" d="" fill="none" stroke="#FF4612" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <line class="schlaf-marke" x1="500" y1="0" x2="500" y2="180"
+                stroke="#4FC4E2" stroke-width="2" stroke-dasharray="4 4"/>
+          <text class="schlaf-text" x="506" y="14" fill="#4FC4E2"
+                style="font:600 13px Gabarito,sans-serif">Schlafenszeit</text>
+          <!-- Beschriftung der Hochpunkte, per JS gesetzt -->
+          <g class="kurve-marken"></g>
+        </svg>
+        <div class="rechner-skala"><span>05:00</span><span>14:00</span><span>02:00</span></div>
+        <p style="margin-top:12px;font-size:.82rem;opacity:.75">
+          Die Kurve zeigt, wie viel Koffein über den Tag in Deinem Körper ist.
+          Die waagrechte Linie markiert 50 mg: Darüber wird Einschlafen für die
+          meisten spürbar schwerer. Die senkrechte Linie ist Deine Schlafenszeit.
+        </p>
+
+        <div class="rechner-zeilen">
+          <div class="rechner-zeile">
+            <span>Insgesamt heute</span>
+            <span class="wert" id="wert-gesamt" data-wert="0">0<span class="einheit"> mg</span></span>
+          </div>
+          <div class="rechner-zeile">
+            <span>Halbwertszeit</span><span class="wert">rund 5 Stunden</span>
+          </div>
+          <div class="rechner-zeile">
+            <span>Richtwert EFSA pro Tag</span><span class="wert">400 mg</span>
+          </div>
+        </div>
+
+        <div class="rechner-warnung" id="tagesmenge" hidden></div>
+
+        <!-- Fusszeile der Box, taucht auch im geteilten Bild auf -->
+        <div class="box-fuss">
+          <span>Und wie viel Koffein hast Du?</span>
+          <strong>beanwatch.ch/koffeinrechner</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erscheint, sobald etwas eingetragen ist -->
+    <button class="btn btn--primaer" id="teilen-knopf" hidden style="margin-top:22px">
+      Auf Social Media teilen
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+      </svg>
+    </button>
+
+    <p class="sternchen">
+      * Die Einschätzung gilt für durchschnittliche, gesunde Erwachsene. Wer
+      schwanger ist, stillt, Medikamente nimmt oder empfindlich auf Koffein
+      reagiert, baut es deutlich langsamer ab und sollte sich nicht auf diese
+      Werte verlassen. In der Schwangerschaft empfehlen die Fachgesellschaften
+      höchstens 200 mg pro Tag. Bei gesundheitlichen Fragen ist Deine Ärztin
+      oder Dein Arzt die richtige Adresse.
+    </p>

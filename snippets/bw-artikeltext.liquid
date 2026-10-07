@@ -1,0 +1,259 @@
+{%- comment -%}
+  Bereitet den Artikeltext aus dem Shop für die Wissensartikel auf (seit
+  0.8.0, 07.10.2026). Der Text im Shop bleibt, wie er ist; das alte Theme
+  zeigt ihn weiter unverändert, und die Übersetzungen gelten weiter. Was der
+  Prototyp (werkzeug/artikel-holen.rb) beim Bauen umstellt, macht hier
+  Liquid, nach dem Aufbau und nicht nach dem Wortlaut, damit es in Deutsch,
+  Englisch und Französisch gleich greift:
+
+    Lead               der erste Absatz vor der ersten H2
+    Inhaltsverzeichnis die H2, deren Liste nur Sprünge im Text enthält (jeder
+                       Listenpunkt ein href="#…"); Überschrift und Liste
+                       fallen weg, Bilder darin bleiben. Das Verzeichnis
+                       steht in der Seitenspalte.
+    Kurzübersicht      die H2 direkt davor, wenn sie nur eine Liste hat; sie
+                       wird zu .kurzuebersicht mit Ziffern
+    Rezeptverweis      custom.rezeptverweis (Metaobjekt rezeptverweis), nur
+                       wenn das Rezept veröffentlicht ist: In der H2 Nummer
+                       «abschnitt» bleiben Bilder und erster Absatz, dann
+                       folgen Übergang und Kasten «Zum Rezept». Mit
+                       «kuerzen» fällt der Rest weg, ausser den H3 aus
+                       «behalten»; ganze H2 aus «weg» fallen ebenfalls weg.
+                       Ohne «kuerzen» bleibt alles und der Kasten kommt dazu.
+                       Die Nummern zählen alle H2 des Shop-Texts ab 1.
+    Bilder, Tabellen   <figure> wird .artikelbild, die Diagramme mit Handy-
+                       Fassung .artikelbild--breit; Tabellen bekommen
+                       .tabellenrahmen und .vergleichstabelle, die Bildzeile
+                       .bildzeile (Rest in bw-theme.css)
+    Pfeilabsätze       «→ …» wird .verweiszeile
+    Koffeinrechner     <div id="bw-caffeine-inline"> wird der Rechner
+                       (snippets/koffeinrechner aus der Werkstatt)
+    Download-Box       bleibt, der Knopf wird .btn (Entscheid Joscha)
+    Anführungszeichen  auf Deutsch „…“ zu «…» wie im Prototyp
+  H2 ohne ID bekommen eine (abschnitt-N), damit das Verzeichnis springen kann.
+
+  a     der Artikel
+  teil  'lead', 'text' oder 'inhalt' (Links für das Verzeichnis)
+  Aufruf: {%- render 'bw-artikeltext', a: article, teil: 'text' -%}
+{%- endcomment -%}
+{%- liquid
+  assign mf = a.metafields.custom
+  assign rv = mf.rezeptverweis.value
+  # Das Rezept erscheint nur, wenn es veröffentlicht ist (articles[…] kennt
+  # nur veröffentlichte Artikel).
+  assign hat_rezept = false
+  if rv != blank and rv.ziel.value != blank
+    assign rezept = articles[rv.ziel.value]
+    if rezept != blank
+      assign hat_rezept = true
+    endif
+  endif
+  assign ab_nr = 0
+  assign kuerzen = false
+  assign behalten = ','
+  assign weg = ','
+  if hat_rezept
+    assign ab_nr = rv.abschnitt.value | plus: 0
+    if rv.kuerzen.value == true
+      assign kuerzen = true
+    endif
+    if rv.behalten.value != blank
+      assign behalten = rv.behalten.value | join: ',' | prepend: ',' | append: ','
+    endif
+    if rv.weg.value != blank
+      assign weg = rv.weg.value | join: ',' | prepend: ',' | append: ','
+    endif
+  endif
+
+  assign roh = a.content | remove: '<meta charset="utf-8">' | remove: '<p> </p>' | remove: '<p>&nbsp;</p>'
+  if request.locale.iso_code == 'de'
+    assign roh = roh | replace: '„', '«' | replace: '“', '»'
+  endif
+  assign teile = roh | split: '<h2'
+  assign vorspann = teile.first
+  assign anzahl = teile.size | minus: 1
+
+  # Lead: der erste Absatz vor der ersten H2.
+  assign lead = ''
+  if vorspann contains '</p>'
+    assign stueck = vorspann | split: '</p>' | first
+    assign weg_lead = stueck | append: '</p>'
+    assign vorspann = vorspann | remove_first: weg_lead
+    assign nach_p = stueck | split: '<p' | last
+    assign attr = nach_p | split: '>' | first
+    assign lead = nach_p | remove_first: attr | remove_first: '>' | strip
+  endif
+
+  # Inhaltsverzeichnis: jeder Listenpunkt ein Sprung im Text.
+  assign toc_nr = 0
+  if anzahl > 0
+    for i in (1..anzahl)
+      assign kopf = teile[i] | split: '</h2>' | first
+      assign rest = teile[i] | remove_first: kopf | remove_first: '</h2>'
+      assign punkte = rest | split: '<li' | size | minus: 1
+      assign spruenge = rest | split: 'href="#' | size | minus: 1
+      if punkte > 0 and punkte == spruenge
+        assign toc_nr = i
+        break
+      endif
+    endfor
+  endif
+
+  # Kurzübersicht: die H2 davor, wenn sie nur aus einer Liste besteht.
+  assign kurz_nr = 0
+  if toc_nr > 1
+    assign k = toc_nr | minus: 1
+    assign kopf = teile[k] | split: '</h2>' | first
+    assign rest = teile[k] | remove_first: kopf | remove_first: '</h2>'
+    assign listen = rest | split: '<ul' | size | minus: 1
+    unless rest contains '<p'
+      if listen == 1
+        assign kurz_nr = k
+      endif
+    endunless
+  endif
+-%}
+{%- if hat_rezept -%}
+  {%- capture kasten -%}
+  <aside class="verweiskasten" data-getraenk="{{ rv.getraenk.value | escape }}">
+    <div class="verweis-glas" aria-hidden="true"></div>
+    <div class="verweis-text">
+      <span class="eyebrow">{{ 'artikel.anleitung' | t }}</span>
+      <h3>{{ rv.titel.value }}</h3>
+      {%- if rv.text.value != blank %}
+      <p>{{ rv.text.value | escape | newline_to_br }}</p>
+      {%- endif %}
+      <a class="btn btn--primaer" href="{{ rezept.url }}" data-pfeil>{% if rv.knopf.value != blank %}{{ rv.knopf.value }}{% else %}{{ 'artikel.zum_rezept' | t }}{% endif %}</a>
+    </div>
+  </aside>
+  {%- endcapture -%}
+{%- endif -%}
+{%- liquid
+  assign links = ''
+  capture text
+    echo vorspann
+    if anzahl > 0
+      for i in (1..anzahl)
+        assign kopf = teile[i] | split: '</h2>' | first
+        assign rest = teile[i] | remove_first: kopf | remove_first: '</h2>'
+        assign kopf = '<h2' | append: kopf | append: '</h2>'
+
+        # Das Verzeichnis aus dem Shop: nur die Bilder darin bleiben.
+        if i == toc_nr
+          assign bilder = rest | split: '<figure'
+          for b in bilder offset: 1
+            echo '<figure'
+            echo b | split: '</figure>' | first
+            echo '</figure>'
+          endfor
+          continue
+        endif
+
+        if i == kurz_nr
+          echo '<div class="kurzuebersicht"><h2 id="ueberblick">'
+          echo 'artikel.kurzuebersicht' | t
+          echo '</h2><ol>'
+          assign punkte = rest | split: '<li'
+          for p in punkte offset: 1
+            assign attr = p | split: '>' | first
+            assign innen = p | remove_first: attr | remove_first: '>' | split: '</li>' | first | strip
+            echo '<li><span class="ziffer">'
+            if forloop.index < 10
+              echo '0'
+            endif
+            echo forloop.index
+            echo '</span><span class="aussage">'
+            echo innen
+            echo '</span></li>'
+          endfor
+          echo '</ol></div>'
+          assign titel_kurz = 'artikel.kurzuebersicht' | t
+          assign links = links | append: '<a href="#ueberblick">' | append: titel_kurz | append: '</a>'
+          continue
+        endif
+
+        assign nr_text = ',' | append: i | append: ','
+        if kuerzen and weg contains nr_text
+          continue
+        endif
+
+        # ID für den Sprung aus dem Verzeichnis
+        assign oeffner = kopf | split: '>' | first
+        if oeffner contains 'id="'
+          assign kopf_id = oeffner | split: 'id="' | last | split: '"' | first
+        else
+          assign kopf_id = 'abschnitt-' | append: i
+          assign neuer_oeffner = '<h2 id="' | append: kopf_id | append: '"'
+          assign kopf = kopf | replace_first: '<h2', neuer_oeffner
+        endif
+        assign kopf_titel = kopf | strip_html | strip
+        assign links = links | append: '<a href="#' | append: kopf_id | append: '">' | append: kopf_titel | append: '</a>'
+
+        if i == ab_nr
+          assign unter = rest | split: '<h3'
+          assign direkt = unter.first
+          assign kopfteil = ''
+          if direkt contains '<p'
+            assign vor = direkt | split: '<p' | first
+            if vor contains '<ul' or vor contains '<ol' or vor contains '<table' or vor contains '<div' or vor contains '<section' or vor contains '<nav'
+              assign kopfteil = ''
+            else
+              assign kopfteil = direkt | split: '</p>' | first | append: '</p>'
+            endif
+          endif
+          echo kopf
+          echo kopfteil
+          if rv.uebergang.value != blank
+            echo '<p>'
+            echo rv.uebergang.value | escape | newline_to_br
+            echo '</p>'
+          endif
+          echo kasten
+          if kuerzen
+            for t in unter offset: 1
+              assign m_text = ',' | append: forloop.index | append: ','
+              if behalten contains m_text
+                echo '<h3'
+                echo t
+              endif
+            endfor
+          else
+            echo direkt | remove_first: kopfteil
+            for t in unter offset: 1
+              echo '<h3'
+              echo t
+            endfor
+          endif
+          continue
+        endif
+
+        echo kopf
+        echo rest
+      endfor
+    endif
+  endcapture
+
+  if teil == 'text'
+    if text contains 'bw-caffeine-inline'
+      capture rechner
+        render 'koffeinrechner'
+      endcapture
+      assign text = text | replace: '<div id="bw-caffeine-inline"></div>', rechner
+    endif
+    assign text = text | replace: '<figure>', '<figure class="artikelbild">'
+    assign text = text | replace: '<figure class="bw-responsive-diagram">', '<figure class="artikelbild artikelbild--breit bw-responsive-diagram">'
+    assign text = text | replace: '<table', '<div class="tabellenrahmen"><table' | replace: '</table>', '</table></div>'
+    assign text = text | replace: '<table>', '<table class="vergleichstabelle">'
+    assign text = text | replace: 'class="coffee-table ', 'class="vergleichstabelle coffee-table ' | replace: 'class="coffee-table"', 'class="vergleichstabelle coffee-table"'
+    assign text = text | replace: 'class="coffee-table__images"', 'class="bildzeile coffee-table__images"'
+    assign pfeil = '<p class="verweiszeile"><span class="pfeil" aria-hidden="true">→</span>'
+    assign pfeil_span = pfeil | append: '<span>'
+    assign text = text | replace: '<p>→', pfeil | replace: '<p><span>→', pfeil_span
+    assign text = text | replace: 'class="bw-download-box__btn"', 'class="btn btn--primaer bw-download-box__btn" data-pfeil'
+    echo text
+  elsif teil == 'lead'
+    echo lead
+  elsif teil == 'inhalt'
+    echo links
+  endif
+-%}

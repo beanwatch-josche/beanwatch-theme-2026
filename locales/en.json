@@ -223,6 +223,18 @@
     "leer": "Nothing here yet for this filter. It is on its way.",
     "lesezeit": "{{ n }} min"
   },
+  "artikel": {
+    "inhalt": "Contents",
+    "inhaltsverzeichnis": "Table of contents",
+    "kurzuebersicht": "Key points at a glance",
+    "lesezeit": "{{ n }} min read",
+    "direkt_los": "Want to get started right away?",
+    "anleitung": "Recipe",
+    "zum_rezept": "To the recipe",
+    "autor_einleitung": "Founder and roaster at Beanwatch.",
+    "fragen_html": "Questions about this article? <a href=\"mailto:hoi@beanwatch.ch\">hoi@beanwatch.ch</a>",
+    "weiterlesen_html": "Read on."
+  },
   "rezepte": {
     "eyebrow": "Coffee recipes",
     "titel": "Cool ideas for hot days.",

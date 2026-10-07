@@ -223,6 +223,18 @@
     "leer": "Rien pour ce filtre pour le moment. Ça arrive.",
     "lesezeit": "{{ n }} min"
   },
+  "artikel": {
+    "inhalt": "Sommaire",
+    "inhaltsverzeichnis": "Table des matières",
+    "kurzuebersicht": "L’essentiel en bref",
+    "lesezeit": "{{ n }} min de lecture",
+    "direkt_los": "Tu veux te lancer tout de suite ?",
+    "anleitung": "Recette",
+    "zum_rezept": "Vers la recette",
+    "autor_einleitung": "Fondateur et torréfacteur de Beanwatch.",
+    "fragen_html": "Une question sur cet article ? <a href=\"mailto:hoi@beanwatch.ch\">hoi@beanwatch.ch</a>",
+    "weiterlesen_html": "À lire aussi."
+  },
   "rezepte": {
     "eyebrow": "Recettes de café",
     "titel": "Des idées fraîches pour les jours chauds.",

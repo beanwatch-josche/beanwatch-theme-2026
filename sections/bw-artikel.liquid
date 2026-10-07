@@ -1,11 +1,203 @@
-{%- render 'bw-rohbau-kopf', eyebrow: blog.title, titel: article.title -%}
-<section class="sektion">
-  <div class="wrap bw-rohbau-text">
-    <p class="bw-rohbau-datum">{{ article.published_at | date: format: 'date' }}</p>
-    {%- if article.image %}{{ article.image | image_url: width: 1200 | image_tag: loading: 'eager', alt: article.title }}{% endif %}
-    {{ article.content }}
+{%- comment -%}
+  Wissensartikel (Vorlage article, seit 0.8.0, ersetzt den Rohbau),
+  übertragen aus blogs/kaffeewissen/*.html der Werkstatt (Generator
+  werkzeug/artikel-bauen.rb). Der Text kommt aus dem Shop und wird in
+  bw-artikeltext aufbereitet: Lead, Kurzübersicht, Verzeichnis in der
+  Seitenspalte, Rezeptverweis, Bilder und Tabellen im Design des Prototyps.
+
+  Woher die Inhalte kommen (Felder seit 07.10.2026):
+    Kopf        Brotkrumen Start · Kaffeewissen · Espresso- oder Filter-Hub
+                (aus custom.themen, wenn die Seite existiert) · Kurzname
+                aus custom.brotkrume, sonst der Titel; Pille aus
+                custom.kategorie, sonst «Wissen»; Titel, Lead, Autor mit
+                custom.bild_des_autoren (sonst Theme-Einstellung), Datum,
+                Lesezeit wie auf den Karten (Wörter durch 200); die Zeile
+                «Du willst direkt loslegen?» nur, wenn das Rezept aus
+                custom.rezeptverweis veröffentlicht ist; Artikelbild
+    Text        bw-artikeltext
+    Autor       Bild wie oben, «Geschrieben von», Name, «Gründer und Röster
+                von Beanwatch.», dann Vorname und custom.uber_den_autoren
+                (der Satz setzt dort nach dem Namen fort), Kontakt
+    Passt dazu  Wissensartikel mit den meisten gemeinsamen custom.themen,
+                ohne den Artikel selbst; Liquid zeichnet vor, beitrag.js
+                zeichnet gleich neu
+
+  Skripte: wissen.js und beitrag.js (Verzeichnis, Passt dazu), hubs.js für
+  das Glas im Rezeptkasten, tools.js für den Koffeinrechner.
+  Schema: bw-artikel-schema (Article, BreadcrumbList).
+{%- endcomment -%}
+{%- liquid
+  assign mf = article.metafields.custom
+  assign themen = mf.themen.value
+
+  assign rv = mf.rezeptverweis.value
+  # Das Rezept erscheint nur, wenn es veröffentlicht ist (articles[…] kennt
+  # nur veröffentlichte Artikel).
+  assign hat_rezept = false
+  if rv != blank and rv.ziel.value != blank
+    assign rezept = articles[rv.ziel.value]
+    if rezept != blank
+      assign hat_rezept = true
+    endif
+  endif
+
+  assign hub_url = ''
+  assign hub_name = ''
+  if themen contains 'espresso' and pages['espresso'] != blank
+    assign hub_url = pages['espresso'].url
+    assign hub_name = 'kopf.espresso' | t
+  elsif themen contains 'filter' and pages['filterkaffee'] != blank
+    assign hub_url = pages['filterkaffee'].url
+    assign hub_name = 'kopf.filterkaffee' | t
+  endif
+
+  assign kurzname = mf.brotkrume.value | default: article.title
+  assign kategorie = mf.kategorie.value
+  if kategorie == blank
+    assign kategorie = 'beitraege.art_wissen' | t
+  endif
+
+  assign woerter = article.content | replace: '<', ' <' | strip_html | split: ' ' | size
+  assign lesezeit = woerter | divided_by: 200.0 | round | at_least: 1
+
+  assign autor_bild = mf.bild_des_autoren.value | default: settings.autor_bild
+  assign vorname = article.author | split: ' ' | first
+  assign ausser = mf.kurztitel.value | default: article.title
+  assign hat_rechner = false
+  if article.content contains 'bw-caffeine-inline'
+    assign hat_rechner = true
+  endif
+-%}
+
+{%- render 'bw-artikel-schema', kurzname: kurzname, hub_url: hub_url, hub_name: hub_name -%}
+
+<section class="beitragskopf">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      <a href="{{ blog.url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- if hub_url != blank %}
+      <a href="{{ hub_url }}">{{ hub_name }}</a><span class="teiler">·</span>
+      {%- endif %}
+      <span>{{ kurzname }}</span>
+    </nav>
+
+    <div class="seitenkopf-raster beitragskopf-raster">
+      <div>
+        <span class="beitrag-art beitrag-art--wissen" style="margin-top:22px;display:inline-flex">
+          <i class="punkt"></i>{{ kategorie }}
+        </span>
+
+        <h1 data-split="zeilen">{{ article.title }}</h1>
+
+        {%- capture lead -%}{%- render 'bw-artikeltext', a: article, teil: 'lead' -%}{%- endcapture -%}
+        {%- if lead != blank %}
+        <p class="lead">{{ lead }}</p>
+        {%- endif %}
+
+        <div class="beitragsmeta">
+          <span class="autor">
+            {%- if autor_bild != blank -%}
+            {{ autor_bild | image_url: width: 76, height: 76, crop: 'center' | image_tag: width: 38, height: 38, alt: '' }}
+            {%- endif %}
+            {{ article.author }}
+          </span>
+          <span class="trenn">·</span>
+          <span><time datetime="{{ article.published_at | date: '%Y-%m-%d' }}">{% render 'bw-datum', datum: article.published_at %}</time></span>
+          <span class="trenn">·</span>
+          <span>{{ 'artikel.lesezeit' | t: n: lesezeit }}</span>
+        </div>
+
+        {%- if hat_rezept %}
+        <p class="kopfverweis">
+          {{ 'artikel.direkt_los' | t }}
+          <a href="{{ rezept.url }}" data-pfeil>{% if rv.knopf.value != blank %}{{ rv.knopf.value }}{% else %}{{ 'artikel.zum_rezept' | t }}{% endif %}</a>
+        </p>
+        {%- endif %}
+      </div>
+
+      {%- if article.image %}
+      <div class="beitragsbild" data-reveal>
+        {{ article.image | image_url: width: 1600 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '600, 900, 1200, 1600', sizes: '(min-width: 1080px) 46vw, 100vw', alt: article.image.alt | default: article.title }}
+      </div>
+      {%- endif %}
+    </div>
   </div>
 </section>
+
+<section class="wrap">
+  <div class="beitragslayout">
+    <article class="beitragstext">
+      {% render 'bw-artikeltext', a: article, teil: 'text' %}
+
+      <div class="autorbox">
+        {%- if autor_bild != blank %}
+        <div class="portrait">
+          {{ autor_bild | image_url: width: 400 | image_tag: loading: 'lazy', widths: '200, 400', sizes: '140px', alt: article.author }}
+        </div>
+        {%- endif %}
+        <div>
+          <span class="rolle">{{ 'produkt.autor_rolle' | t }}</span>
+          <h3>{{ article.author }}</h3>
+          <p>
+            {{ 'artikel.autor_einleitung' | t }}
+            {%- if mf.uber_den_autoren.value != blank %} {{ vorname }} {{ mf.uber_den_autoren.value }}{% endif %}
+            {{ 'artikel.fragen_html' | t }}
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <aside class="beitragsseite">
+      <nav class="inhaltsverzeichnis" id="artikel-inhalt" aria-label="{{ 'artikel.inhaltsverzeichnis' | t }}" data-text-klapp="{{ 'artikel.inhaltsverzeichnis' | t }}">
+        <h4>{{ 'artikel.inhalt' | t }}</h4>
+        {% render 'bw-artikeltext', a: article, teil: 'inhalt' %}
+      </nav>
+    </aside>
+  </div>
+</section>
+
+<section class="sektion verwandt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'produkt.passt_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'artikel.weiterlesen_html' | t }}</h2>
+      </div>
+      <a class="btn btn--linie" href="{{ blog.url }}" data-pfeil>{{ 'produkt.alles_wissen' | t }}</a>
+    </div>
+    <div class="beitraege" id="verwandt-raster">
+      {%- if themen.size > 0 -%}
+      {%- render 'bw-verwandte', themen: themen, anzahl: 3, art: 'wissen', ausser: article.id -%}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% render 'bw-beitraege-daten' %}
+
+<script src="{{ 'wissen.js' | asset_url }}" defer></script>
+<script src="{{ 'beitrag.js' | asset_url }}" defer></script>
+{%- if hat_rezept %}
+<script src="{{ 'hubs.js' | asset_url }}" defer></script>
+{%- endif %}
+{%- if hat_rechner %}
+<script src="{{ 'tools.js' | asset_url }}" defer></script>
+{%- endif %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.BWBeitrag) return;
+    BWBeitrag.inhaltsverzeichnis('#artikel-inhalt', '.beitragstext h2');
+    BWBeitrag.verwandte('#verwandt-raster', {{ themen | json }} || [], 3, {{ ausser | json }}, 'wissen');
+    {%- if hat_rezept %}
+    if (window.BWHub) BWBeitrag.verweiskasten();
+    {%- endif %}
+    {%- if hat_rechner %}
+    if (window.BWTools) BWTools.koffeinrechner();
+    {%- endif %}
+  });
+</script>
+
 {% schema %}
-{ "name": "Artikel (Rohbau)", "settings": [] }
+{ "name": "Wissensartikel", "settings": [] }
 {% endschema %}

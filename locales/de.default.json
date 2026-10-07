@@ -223,6 +223,18 @@
     "leer": "Zu diesem Filter gibt es noch nichts. Kommt aber.",
     "lesezeit": "{{ n }} Min."
   },
+  "artikel": {
+    "inhalt": "Inhalt",
+    "inhaltsverzeichnis": "Inhaltsverzeichnis",
+    "kurzuebersicht": "Das Wichtigste in Kürze",
+    "lesezeit": "{{ n }} Minuten Lesezeit",
+    "direkt_los": "Du willst direkt loslegen?",
+    "anleitung": "Anleitung",
+    "zum_rezept": "Zum Rezept",
+    "autor_einleitung": "Gründer und Röster von Beanwatch.",
+    "fragen_html": "Fragen zum Artikel? <a href=\"mailto:hoi@beanwatch.ch\">hoi@beanwatch.ch</a>",
+    "weiterlesen_html": "Weiterlesen."
+  },
   "rezepte": {
     "eyebrow": "Kaffeerezepte",
     "titel": "Coole Ideen für heisse Tage.",

@@ -15,9 +15,11 @@ window.BWBeitrag = (function () {
      sucht es niemand mehr. Es wandert deshalb nach oben, direkt hinter
      die Kurzübersicht, und steht dort eingeklappt: für die Suche voll
      lesbar, ohne den Anfang des Artikels zuzustellen.
+     Das Verzeichnis kommt als Element, nicht über eine feste ID: Im
+     Shopify-Theme heisst <main> schon «inhalt». Die Beschriftung des
+     Klappknopfs liest es aus data-text-klapp (übersetzt im Theme).
      ------------------------------------------------------------------ */
-  function verzeichnisUmhaengen() {
-    const nav = document.getElementById('inhalt');
+  function verzeichnisUmhaengen(nav) {
     if (!nav) return;
 
     const seite = nav.closest('.beitragsseite');
@@ -31,7 +33,7 @@ window.BWBeitrag = (function () {
     const huelle = document.createElement('details');
     huelle.className = 'inhalt-klapp';
     const knopf = document.createElement('summary');
-    knopf.textContent = 'Inhaltsverzeichnis';
+    knopf.textContent = nav.dataset.textKlapp || 'Inhaltsverzeichnis';
     huelle.appendChild(knopf);
 
     const schmal = window.matchMedia('(max-width:1080px)');
@@ -65,7 +67,7 @@ window.BWBeitrag = (function () {
     const nav = document.querySelector(zielAuswahl);
     if (!nav) return;
 
-    verzeichnisUmhaengen();
+    verzeichnisUmhaengen(nav);
 
     const titel = gsap.utils.toArray(ueberschriften).filter(h => h.id);
     if (!titel.length) return;
