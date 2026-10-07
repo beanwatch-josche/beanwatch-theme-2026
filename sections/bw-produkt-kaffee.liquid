@@ -17,8 +17,15 @@
     Hergeleitet werden die Titel der Meter (aus dem Wert), die Themen für
     «Passt dazu» und das Ziel von «Zur Rezeptur».
 
-  Fehlt ein Feld, fällt sein Teil weg, ohne leere Überschrift; das
-  Inhaltsverzeichnis nennt nur Abschnitte, die es gibt.
+  Seit 0.7.0 (07.10.2026, Entscheid Joscha) steht die Beschreibung wie im
+  Live-Shop im Kopf neben den Bildern, nach den Noten-Icons; darunter nach
+  dem Kaufknopf die Zeile «Frisch geröstet». kurzbeschrieb (doppelt mit
+  den Icons) und geschichte_titel bleiben im Shop, erscheinen aber nicht
+  mehr; die Story-Sektion mit Seitenbox und Inhaltsverzeichnis ist weg.
+  «Unser Tipp» (best_for) steht unter den Zubereitungswerten, ohne sie
+  unter den Fakten.
+
+  Fehlt ein Feld, fällt sein Teil weg, ohne leere Überschrift.
 
   Espresso, Filter und Decaf kommen aus den Kollektionen, verglichen über
   IDs wie in bw-navschluessel (Handles sind übersetzt).
@@ -120,8 +127,8 @@
     endif
   endif
 
-  # Die Beschreibung beginnt im Shop meist mit einem <h4> für die alte
-  # Seite. Hier steht dafür geschichte_titel.
+  # Die Beschreibung beginnt im Shop teils mit einem <h4> für die alte
+  # Seite. Im Kopf steht sie ohne diesen Zwischentitel.
   assign geschichte = product.description | strip
   assign anfang = geschichte | slice: 0, 3
   if anfang == '<h4'
@@ -150,8 +157,12 @@
     assign hat_farm = true
   endif
   assign werte = mf.zubereitung_werte.value
+  assign hat_werte = false
+  if werte.size > 0
+    assign hat_werte = true
+  endif
   assign hat_zubereitung = false
-  if werte.size > 0 or mf.zubereitung_text.value != blank
+  if hat_werte or mf.zubereitung_text.value != blank
     assign hat_zubereitung = true
   endif
   # Die Karte im Kaufbereich: das Schwesterprodukt (dieselbe Bohne), sonst
@@ -161,10 +172,6 @@
   if schwester == blank and mf.kombi_partner.value != blank
     assign schwester = mf.kombi_partner.value
     assign schwester_rolle = 'produkt.partner' | t
-  endif
-  assign hat_geschichte = false
-  if mf.geschichte_titel.value != blank or geschichte != blank or mf.best_for.value != blank
-    assign hat_geschichte = true
   endif
 -%}
 
@@ -186,14 +193,15 @@
         <span class="herkunftszeile">{{ herkunft }}</span>
         {%- endif %}
         <h1 data-split="zeilen">{{ product.title }}</h1>
-        {%- if mf.kurzbeschrieb.value != blank %}
-        <p class="kurzbeschrieb">{{ mf.kurzbeschrieb.value }}</p>
-        {%- endif %}
         {%- if noten != blank %}
         <div class="notenreihe" id="notenreihe" data-noten="{{ noten | escape }}"></div>
         {%- endif %}
+        {%- if geschichte != blank %}
+        <div class="produkt-beschreibung">{{ geschichte }}</div>
+        {%- endif %}
 
         {% render 'bw-kaufwahl', p: product %}
+        <p class="kaufhinweis"><strong>{{ 'produkt.frisch_titel' | t }}.</strong> {{ 'produkt.frisch_text' | t }}</p>
 
         {%- if schwester != blank %}
         <a class="schwester" href="{{ schwester.url }}">
@@ -229,6 +237,13 @@
       {%- assign gramm = gramm | strip -%}
       {%- if gramm != blank %}<div class="fakt"><span class="rolle">{{ 'produkt.fakt_menge' | t }}</span><span class="wert">{{ 'produkt.menge' | t: menge: gramm }}</span></div>{% endif %}
     </div>
+    {%- unless hat_werte %}
+    {%- if mf.best_for.value != blank %}
+    <div class="merksatz">
+      <strong>{{ 'produkt.tipp' | t }}</strong> {{ mf.best_for.value }}
+    </div>
+    {%- endif %}
+    {%- endunless %}
   </div>
 </section>
 
@@ -270,50 +285,6 @@
   </div>
 </section>
 {%- endif %}
-
-<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
-  <div class="wrap">
-    <div class="beitragslayout" style="padding-block:0">
-      <div class="beitragstext">
-        {%- if hat_geschichte %}
-        <span class="eyebrow" style="color:var(--redorange)">{{ 'produkt.geschichte_eyebrow' | t }}</span>
-        {%- endif %}
-        {%- if mf.geschichte_titel.value != blank %}
-        <h2 data-split="zeilen" style="margin-top:14px">{{ mf.geschichte_titel.value }}</h2>
-        {%- endif %}
-        {{ geschichte }}
-        {%- if mf.best_for.value != blank %}
-        <div class="merksatz">
-          <strong>{{ 'produkt.tipp' | t }}</strong> {{ mf.best_for.value }}
-        </div>
-        {%- endif %}
-      </div>
-
-      <aside class="beitragsseite">
-        <div class="seitenbox">
-          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
-          <h4>{{ 'produkt.frisch_titel' | t }}</h4>
-          <p>{{ 'produkt.frisch_text' | t }}</p>
-          {%- if v.available %}
-          <button type="submit" form="produkt-form" class="btn btn--hell" data-pfeil>{{ 'produkt.in_den_warenkorb' | t }}</button>
-          {%- endif %}
-        </div>
-
-        {%- if hat_aufbereitung or hat_varietaet or hat_fermentation or hat_entkoffeinierung or hat_farm or hat_zubereitung %}
-        <div class="inhaltsverzeichnis">
-          <h4>{{ 'produkt.inhalt' | t }}</h4>
-          {%- if hat_aufbereitung %}<a href="#aufbereitung">{{ 'produkt.inhalt_aufbereitung' | t }}</a>{% endif %}
-          {%- if hat_varietaet %}<a href="#varietaet">{{ 'produkt.inhalt_varietaet' | t }}</a>{% endif %}
-          {%- if hat_fermentation %}<a href="#fermentation">{{ 'produkt.inhalt_fermentation' | t }}</a>{% endif %}
-          {%- if hat_entkoffeinierung %}<a href="#entkoffeinierung">{{ 'produkt.inhalt_entkoffeinierung' | t }}</a>{% endif %}
-          {%- if hat_farm %}<a href="#farm">{{ 'produkt.inhalt_farm' | t }}</a>{% endif %}
-          {%- if hat_zubereitung %}<a href="#zubereitung">{{ 'produkt.inhalt_zubereitung' | t }}</a>{% endif %}
-        </div>
-        {%- endif %}
-      </aside>
-    </div>
-  </div>
-</section>
 
 {%- if hat_aufbereitung %}
 <section class="sektion" id="aufbereitung">
@@ -482,6 +453,11 @@
       </div>
       {%- endfor %}
     </div>
+    {%- if mf.best_for.value != blank %}
+    <div class="merksatz">
+      <strong>{{ 'produkt.tipp' | t }}</strong> {{ mf.best_for.value }}
+    </div>
+    {%- endif %}
     {%- endif %}
   </div>
 </section>

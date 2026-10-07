@@ -3488,3 +3488,17 @@
   .schwester .text{flex:1 1 calc(100% - 76px);}
   .schwester .hin{margin-left:76px;}
 }
+
+/* Produktbeschreibung im Kopf, neben den Bildern wie im Live-Shop. Unter dem
+   Kaufknopf eine Hinweiszeile («Frisch geröstet», beim Buch «Signiert auf
+   Wunsch»). Der Merksatz («Am besten als», «Für wen») steht weiter unten
+   bei der Zubereitung bzw. unter den Buchfakten (07.10.2026). */
+.produkt-beschreibung{margin-top:24px;font-size:1.02rem;line-height:1.65;max-width:54ch;}
+.produkt-beschreibung p+p{margin-top:12px;}
+.kaufhinweis{margin-top:14px;font-size:.86rem;line-height:1.5;opacity:.75;max-width:54ch;}
+.kaufhinweis strong{font-weight:700;}
+/* Dort liegt der Merksatz auf hellorangem Grund, deshalb weiss wie die
+   Karten darüber. Nur auf Produktseiten: im Archiv steht er nach einer
+   Rezeptur auf weissem Grund. */
+.produktkopf ~ .sektion .rezeptur ~ .merksatz,
+.produktkopf ~ .sektion .fakten ~ .merksatz{background:#fff;}

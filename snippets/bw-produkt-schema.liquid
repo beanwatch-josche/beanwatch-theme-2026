@@ -29,8 +29,9 @@
             dem Barcode der Variante, Versand nach dem Versandprofil
             «Bücher» (B-Post bis 2 kg, CHF 8.50)
   Produkte ohne Kaffeefelder (Buch, Zubehör) bekommen die Beschreibung aus
-  custom.kurzbeschrieb oder dem Anfang der Produktbeschreibung und die
-  Eigenschaften aus custom.fakten.
+  dem ersten Absatz der Produktbeschreibung, wie ihn die Seite im Kopf
+  zeigt (seit 0.7.0, vorher custom.kurzbeschrieb), und die Eigenschaften
+  aus custom.fakten.
   Aufruf: {% render 'bw-produkt-schema', p: product, hub_url: hub_url, hub_name: hub_name %}
 {%- endcomment -%}
 {%- liquid
@@ -107,7 +108,8 @@
 {%- if roest != blank %} {{ 'produkt.meter_roest' | t }}: {{ roest }}.{% endif %}
 {%- endcapture -%}
 {%- if fakten.size > 0 -%}
-  {%- capture beschreibung -%}{{ mf.kurzbeschrieb.value | default: p.description | strip_html | truncatewords: 60 }}{%- endcapture -%}
+  {%- assign erster = p.description | split: '</p>' | first -%}
+  {%- capture beschreibung -%}{{ erster | strip_html | truncatewords: 60 }}{%- endcapture -%}
 {%- endif -%}
 <script type="application/ld+json">
 {

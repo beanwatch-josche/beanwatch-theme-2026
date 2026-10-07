@@ -4,24 +4,27 @@
   products/kaffee-erlebnis-schweiz.html der Werkstatt. Die Kaffees haben
   eigene Vorlagen (bw-produkt-kaffee), das Probierset bekommt eine eigene.
 
-  Woher die Inhalte kommen (Felder seit 07.10.2026, ausser kurzbeschrieb
-  und geschichte_titel vom 06.10.):
+  Woher die Inhalte kommen (Felder seit 07.10.2026):
     Kopf          Galerie aus den Produktbildern (bw-galerie), Zeile über
-                  dem Titel custom.kopfzeile, custom.kurzbeschrieb, Preis
-                  mit custom.preis_zusatz, Knopf custom.weiterlesen (link),
+                  dem Titel custom.kopfzeile, die Produktbeschreibung im
+                  Shop-Wortlaut (mit Fakten nur der erste Absatz, beim Buch
+                  stehen im zweiten die Buchdaten), Preis mit
+                  custom.preis_zusatz, Knopf custom.weiterlesen (link),
+                  darunter die Zeile custom.seitenbox_titel und _text,
                   Karte «Leseprobe aus dem Buch» aus custom.leseprobe (seit
                   0.6.1, beim Buch das Kapitel zur Kaffeegeschichte), sonst
                   «Passt gut dazu» aus custom.passt_artikel
-    Fakten        custom.fakten (Metaobjekte produktfakt: rolle, wert)
-    Geschichte    custom.geschichte_titel, der erste Absatz der
-                  Produktbeschreibung im Shop-Wortlaut (beim Buch stehen im
-                  zweiten Absatz die Buchdaten, die das Faktenraster zeigt),
-                  «Für wen:» custom.fuer_wen, Seitenbox
-                  custom.seitenbox_titel und _text
+    Fakten        custom.fakten (Metaobjekte produktfakt: rolle, wert),
+                  darunter «Für wen:» custom.fuer_wen
     Bildblöcke    custom.bildbloecke (Metaobjekte bildblock: anker, eyebrow,
                   titel, text, bild, pillen), jeder zweite gedreht
     Autor         custom.autor_name, _text (Rich Text), _bild
     Passt dazu    Wissensartikel zum Thema aus der Sektionseinstellung
+  Seit 0.7.0 (07.10.2026, Entscheid Joscha) steht die Beschreibung wie im
+  Live-Shop im Kopf. kurzbeschrieb und geschichte_titel bleiben im Shop,
+  erscheinen aber nicht mehr; die Story-Sektion mit Inhaltsverzeichnis ist
+  weg, die Seitenbox ist die Zeile unter dem Knopf.
+
   Fehlt ein Feld, fällt sein Teil weg, ohne leere Überschrift. Verweise auf
   Artikel erscheinen nur, wenn der Artikel veröffentlicht ist, und zeigen
   auf die Adresse in der Sprache der Seite.
@@ -30,7 +33,6 @@
 {%- endcomment -%}
 {%- liquid
   assign mf = product.metafields.custom
-  assign v = product.selected_or_first_available_variant
 
   assign ids = product.collections | map: 'id'
   assign ist_buch = false
@@ -42,7 +44,7 @@
   assign bloecke = mf.bildbloecke.value
 
   # Beim Buch stehen im zweiten Absatz der Beschreibung die Buchdaten; die
-  # zeigt das Faktenraster, die Geschichte nimmt deshalb nur den ersten.
+  # zeigt das Faktenraster, der Kopf nimmt deshalb nur den ersten.
   assign geschichte = product.description | strip
   if fakten.size > 0 and geschichte contains '</p>'
     assign geschichte = geschichte | split: '</p>' | first | append: '</p>'
@@ -88,9 +90,14 @@
     assign karte_hin = 'produkt.ansehen' | t
   endif
 
-  assign hat_geschichte = false
-  if mf.geschichte_titel.value != blank or geschichte != blank or mf.fuer_wen.value != blank
-    assign hat_geschichte = true
+  # Zeile unter dem Knopf: Titel mit Punkt, ausser er endet schon auf einem
+  # Satzzeichen.
+  assign hinweis_titel = mf.seitenbox_titel.value | strip
+  if hinweis_titel != blank
+    assign letztes = hinweis_titel | slice: -1, 1
+    unless '.!?:' contains letztes
+      assign hinweis_titel = hinweis_titel | append: '.'
+    endunless
   endif
   assign themen = section.settings.themen | default: 'grundlagen' | remove: ' ' | split: ','
 -%}
@@ -111,11 +118,14 @@
         <span class="herkunftszeile">{{ mf.kopfzeile.value }}</span>
         {%- endif %}
         <h1 data-split="zeilen">{{ product.title }}</h1>
-        {%- if mf.kurzbeschrieb.value != blank %}
-        <p class="kurzbeschrieb">{{ mf.kurzbeschrieb.value }}</p>
+        {%- if geschichte != blank %}
+        <div class="produkt-beschreibung">{{ geschichte }}</div>
         {%- endif %}
 
         {% render 'bw-kaufwahl', p: product, zusatz: mf.preis_zusatz.value, link_url: weiter_url, link_text: weiter_text %}
+        {%- if hinweis_titel != blank %}
+        <p class="kaufhinweis"><strong>{{ hinweis_titel | escape }}</strong>{% if mf.seitenbox_text.value != blank %} {{ mf.seitenbox_text.value | escape | newline_to_br }}{% endif %}</p>
+        {%- endif %}
 
         {%- if karte != blank %}
         <a class="schwester" href="{{ karte.url }}">
@@ -136,60 +146,21 @@
   </div>
 </section>
 
-{%- if fakten.size > 0 %}
+{%- if fakten.size > 0 or mf.fuer_wen.value != blank %}
 <section class="sektion" style="padding-block:clamp(30px,4vw,52px)">
   <div class="wrap">
+    {%- if fakten.size > 0 %}
     <div class="fakten" data-batch>
       {%- for f in fakten %}
       <div class="fakt"><span class="rolle">{{ f.rolle.value }}</span><span class="wert">{{ f.wert.value }}</span></div>
       {%- endfor %}
     </div>
-  </div>
-</section>
-{%- endif %}
-
-{%- if hat_geschichte or mf.seitenbox_titel.value != blank %}
-<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
-  <div class="wrap">
-    <div class="beitragslayout" style="padding-block:0">
-      <div class="beitragstext">
-        {%- if hat_geschichte %}
-        <span class="eyebrow" style="color:var(--redorange)">{% if ist_buch %}{{ 'produkt.geschichte_eyebrow_buch' | t }}{% else %}{{ 'produkt.geschichte_eyebrow_anderes' | t }}{% endif %}</span>
-        {%- endif %}
-        {%- if mf.geschichte_titel.value != blank %}
-        <h2 data-split="zeilen" style="margin-top:14px">{{ mf.geschichte_titel.value }}</h2>
-        {%- endif %}
-        {{ geschichte }}
-        {%- if mf.fuer_wen.value != blank %}
-        <div class="merksatz">
-          <strong>{{ 'produkt.fuer_wen' | t }}</strong> {{ mf.fuer_wen.value | escape | newline_to_br }}
-        </div>
-        {%- endif %}
-      </div>
-
-      <aside class="beitragsseite">
-        {%- if mf.seitenbox_titel.value != blank %}
-        <div class="seitenbox">
-          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
-          <h4>{{ mf.seitenbox_titel.value }}</h4>
-          {%- if mf.seitenbox_text.value != blank %}
-          <p>{{ mf.seitenbox_text.value | escape | newline_to_br }}</p>
-          {%- endif %}
-          {%- if v.available %}
-          <button type="submit" form="produkt-form" class="btn btn--hell" data-pfeil>{{ 'produkt.in_den_warenkorb' | t }}</button>
-          {%- endif %}
-        </div>
-        {%- endif %}
-
-        {%- if bloecke.size > 0 or mf.autor_name.value != blank %}
-        <div class="inhaltsverzeichnis">
-          <h4>{{ 'produkt.inhalt' | t }}</h4>
-          {%- for b in bloecke %}<a href="#{{ b.anker.value | handleize }}">{{ b.eyebrow.value | default: b.titel.value }}</a>{% endfor %}
-          {%- if mf.autor_name.value != blank %}<a href="#autor">{{ 'produkt.inhalt_autor' | t }}</a>{% endif %}
-        </div>
-        {%- endif %}
-      </aside>
+    {%- endif %}
+    {%- if mf.fuer_wen.value != blank %}
+    <div class="merksatz">
+      <strong>{{ 'produkt.fuer_wen' | t }}</strong> {{ mf.fuer_wen.value | escape | newline_to_br }}
     </div>
+    {%- endif %}
   </div>
 </section>
 {%- endif %}
