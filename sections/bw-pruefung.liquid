@@ -1,0 +1,13 @@
+<p>{{ section.settings.artikel.size }}</p>
+{% schema %}
+{
+  "name": "Prüfung",
+  "settings": [
+    { "type": "header", "content": "Fotos der Espresso-Routine" },
+    { "type": "paragraph", "content": "Platzhalter aus den Rezepten, bis es eigene Aufnahmen gibt. Den Ausschnitt setzt der Fokuspunkt des Bildes." },
+    { "type": "image_picker", "id": "routine_bild_1", "label": "Schritt 1: Aufheizen und spülen" },
+    { "type": "header", "content": "Tiefer rein" },
+    { "type": "article_list", "id": "artikel", "label": "Artikel", "limit": 3, "info": "Leer: Flat White, Welche Milch und Café Crème wie im Prototyp, sonst die neusten Wissensartikel zum Thema Espresso." }
+  ]
+}
+{% endschema %}
