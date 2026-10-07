@@ -184,8 +184,12 @@
         {%- assign bilder = product.media | where: 'media_type', 'image' -%}
         <div class="galerie-haupt" id="galerie-haupt">
           {%- if bilder.size > 0 %}
-          {%- comment -%} Ohne srcset: produkt.js tauscht beim Klick auf ein Vorschaubild nur src. {%- endcomment %}
-          {{ bilder.first | image_url: width: 1200 | image_tag: id: 'galerie-bild', loading: 'eager', fetchpriority: 'high', alt: bilder.first.alt | default: product.title }}
+          {%- comment -%}
+            srcset: nil, denn produkt.js tauscht beim Klick auf ein Vorschaubild
+            nur src. image_tag setzt sonst von sich aus ein srcset, und der
+            Browser bliebe beim alten Bild.
+          {%- endcomment %}
+          {{ bilder.first | image_url: width: 1200 | image_tag: id: 'galerie-bild', srcset: nil, loading: 'eager', fetchpriority: 'high', alt: bilder.first.alt | default: product.title }}
           {%- endif %}
         </div>
         {%- if bilder.size > 1 %}
