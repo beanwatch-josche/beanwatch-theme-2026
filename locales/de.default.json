@@ -56,7 +56,9 @@
     "aktualisieren": "Mengen übernehmen",
     "zur_kasse": "Zur Kasse",
     "zur_seite": "Warenkorb ansehen",
-    "schliessen": "Warenkorb schliessen"
+    "schliessen": "Warenkorb schliessen",
+    "notiz": "Anweisungen zur Bestellung",
+    "notiz_hinweis": "Etwa eine Widmung fürs Buch oder ein Hinweis zur Lieferung"
   },
   "produkt": {
     "in_den_warenkorb": "In den Warenkorb",
@@ -126,7 +128,14 @@
     "schema_noten": "Geschmacksnoten",
     "schema_ideal": "Ideal für",
     "partner": "Passt gut dazu",
-    "grundpreis_kurz": "{{ preis }} / 100 g"
+    "grundpreis_kurz": "{{ preis }} / 100 g",
+    "geschichte_eyebrow_buch": "Warum dieses Buch",
+    "geschichte_eyebrow_anderes": "Warum wir es führen",
+    "fuer_wen": "Für wen:",
+    "autor_rolle": "Geschrieben von",
+    "inhalt_autor": "Der Autor",
+    "weiterlesen_titel_html": "Weiterlesen,<br>bevor Du bestellst.",
+    "alles_wissen": "Alles Wissen"
   },
   "rohbau": {
     "hinweis": "Rohbau: Diese Seite bekommt bis zum Start ihr Design aus dem Prototyp. Inhalte, Preise und Warenkorb sind schon echt.",

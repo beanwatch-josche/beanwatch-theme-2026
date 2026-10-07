@@ -49,6 +49,7 @@
   const inhalt = document.getElementById('bw-warenkorb-inhalt');
   const fuss = document.getElementById('bw-warenkorb-fuss');
   const summe = document.getElementById('bw-warenkorb-summe');
+  const notiz = document.getElementById('bw-warenkorb-notiz');
   const aufWarenkorbseite = document.body.querySelector('.bw-warenkorb-form') !== null;
   let zuvor = null;
 
@@ -105,6 +106,7 @@
         <span class="bw-preis">${betrag(z.final_line_price)}</span>
       </li>`).join('')}</ul>`;
     if (summe) summe.textContent = betrag(korb.total_price);
+    if (notiz && document.activeElement !== notiz) notiz.value = korb.note || '';
     if (fuss) fuss.hidden = false;
     pfeileSetzen(schublade);
   }
@@ -161,6 +163,18 @@
       } catch (err) { fehler(err); mengenKnopf.disabled = false; }
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') schliessen(); });
+  }
+
+  // Notiz zur Bestellung: kurz nach dem Tippen speichern (/cart/update.js),
+  // beim Verlassen des Felds sofort. Beim Bezahlen geht sie ohnehin mit.
+  if (notiz) {
+    let warten = null;
+    const speichern = () => {
+      clearTimeout(warten);
+      anfrage((R.notiz || '/cart/update') + '.js', { note: notiz.value }).catch(fehler);
+    };
+    notiz.addEventListener('input', () => { clearTimeout(warten); warten = setTimeout(speichern, 600); });
+    notiz.addEventListener('change', speichern);
   }
 
   // «In den Warenkorb»: jedes Formular, das auf /cart/add zeigt.

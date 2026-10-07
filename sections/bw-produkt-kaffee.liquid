@@ -180,29 +180,7 @@
     </nav>
 
     <div class="produktkopf-raster">
-      <div>
-        {%- assign bilder = product.media | where: 'media_type', 'image' -%}
-        <div class="galerie-haupt" id="galerie-haupt">
-          {%- if bilder.size > 0 %}
-          {%- comment -%}
-            srcset: nil, denn produkt.js tauscht beim Klick auf ein Vorschaubild
-            nur src. image_tag setzt sonst von sich aus ein srcset, und der
-            Browser bliebe beim alten Bild.
-          {%- endcomment %}
-          {{ bilder.first | image_url: width: 1200 | image_tag: id: 'galerie-bild', srcset: nil, loading: 'eager', fetchpriority: 'high', alt: bilder.first.alt | default: product.title }}
-          {%- endif %}
-        </div>
-        {%- if bilder.size > 1 %}
-        <div class="galerie-mini" id="galerie-mini">
-          {%- for b in bilder %}
-          <button type="button"{% if forloop.first %} class="ist-aktiv"{% endif %} data-bild="{{ b | image_url: width: 1200 }}" aria-label="{{ b.alt | default: product.title | escape }}">
-            {{ b | image_url: width: 240 | image_tag: loading: 'lazy', alt: '' }}
-          </button>
-          {%- endfor %}
-        </div>
-        {%- endif %}
-      </div>
-
+      {%- render 'bw-galerie', p: product %}
       <div class="produkt-kauf">
         {%- if herkunft != blank %}
         <span class="herkunftszeile">{{ herkunft }}</span>

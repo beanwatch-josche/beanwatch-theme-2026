@@ -14,7 +14,11 @@
   Intervalle dieselben 10 %; bekämen sie verschiedene Rabatte, müsste die
   Preiszeile dem gewählten Intervall folgen.
 
-  p   das Produkt
+  p          das Produkt
+  zusatz     statt des Grundpreises unter dem Preis, etwa beim Buch
+             «220 Seiten · 21 × 27 cm» (seit 0.6.0)
+  link_url   zweiter Knopf neben «In den Warenkorb», etwa «Zur
+  link_text  Kaffeegeschichte» beim Buch (seit 0.6.0)
   Aufruf: {%- render 'bw-kaufwahl', p: product -%}
 {%- endcomment -%}
 {%- liquid
@@ -28,6 +32,9 @@
     render 'bw-grundpreis', preis: v.price, v: v
   endcapture
   assign grund_einmal = grund_einmal | strip
+  if zusatz != blank
+    assign grund_einmal = zusatz | escape
+  endif
 -%}
 <div class="preiszeile">
   <span class="preis" data-kaufwahl-preis>{{ v.price | money }}</span>
@@ -36,7 +43,19 @@
   {%- endif %}
 </div>
 {%- form 'product', p, id: 'produkt-form', class: 'bw-kaufform' %}
+  {%- if p.variants.size > 1 %}
+  {%- comment -%} Mehrere Varianten (etwa Zubehör): Auswahl mit Preis, ohne JavaScript nutzbar. {%- endcomment %}
+  <label class="bw-feld">
+    <span>{{ p.options.first }}</span>
+    <select name="id">
+      {%- for w in p.variants %}
+      <option value="{{ w.id }}"{% if w.id == v.id %} selected{% endif %}{% unless w.available %} disabled{% endunless %}>{{ w.title }} · {{ w.price | money }}</option>
+      {%- endfor %}
+    </select>
+  </label>
+  {%- else %}
   <input type="hidden" name="id" value="{{ v.id }}">
+  {%- endif %}
   {%- if mit_abo -%}
     {%- liquid
       assign erste = plaene.first
@@ -78,5 +97,8 @@
     <button type="submit" class="btn btn--primaer"{% unless v.available %} disabled{% endunless %} data-pfeil>
       {%- if v.available -%}{{ 'produkt.in_den_warenkorb' | t }}{%- else -%}{{ 'produkt.ausverkauft' | t }}{%- endif -%}
     </button>
+    {%- if link_url != blank %}
+    <a class="btn btn--linie" href="{{ link_url }}">{{ link_text | escape }}</a>
+    {%- endif %}
   </div>
 {%- endform %}

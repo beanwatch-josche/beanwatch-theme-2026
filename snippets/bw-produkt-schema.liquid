@@ -23,6 +23,14 @@
   p         das Produkt
   hub_url   Espresso, Filterkaffee oder Decaf (aus der Sektion)
   hub_name
+  buch      true auf der Seite für Buch und Zubehör, wenn das Produkt in
+            der Kollektion bucher steht (seit 0.6.0): Typ Product und Book
+            wie im Prototyp, Autor aus custom.autor_name, ISBN und GTIN aus
+            dem Barcode der Variante, Versand nach dem Versandprofil
+            «Bücher» (B-Post bis 2 kg, CHF 8.50)
+  Produkte ohne Kaffeefelder (Buch, Zubehör) bekommen die Beschreibung aus
+  custom.kurzbeschrieb oder dem Anfang der Produktbeschreibung und die
+  Eigenschaften aus custom.fakten.
   Aufruf: {% render 'bw-produkt-schema', p: product, hub_url: hub_url, hub_name: hub_name %}
 {%- endcomment -%}
 {%- liquid
@@ -33,8 +41,12 @@
   assign bearbeitung_max = 3
   assign transit_min = 1
   assign transit_max = 2
+  if buch
+    assign versand = 8.50
+  endif
 
   assign mf = p.metafields.custom
+  assign fakten = mf.fakten.value
   assign v = p.selected_or_first_available_variant
   assign seite = request.origin | append: p.url
   assign land = mf.ursprungsland.value
@@ -94,6 +106,9 @@
 {%- if ideal != blank %} {{ 'produkt.schema_ideal' | t }}: {{ ideal }}.{% endif %}
 {%- if roest != blank %} {{ 'produkt.meter_roest' | t }}: {{ roest }}.{% endif %}
 {%- endcapture -%}
+{%- if fakten.size > 0 -%}
+  {%- capture beschreibung -%}{{ mf.kurzbeschrieb.value | default: p.description | strip_html | truncatewords: 60 }}{%- endcapture -%}
+{%- endif -%}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -113,7 +128,7 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Product",
+  "@type": {% if buch %}["Product", "Book"]{% else %}"Product"{% endif %},
   "@id": {{ seite | append: '#product' | json }},
   "name": {{ p.title | json }},
   "url": {{ seite | json }},
@@ -129,11 +144,25 @@
   {%- if v.sku != blank %}
   "sku": {{ v.sku | json }},
   {%- endif %}
+  {%- if buch %}
+  {%- if mf.autor_name.value != blank %}
+  "author": { "@type": "Person", "name": {{ mf.autor_name.value | json }} },
+  {%- endif %}
+  {%- if v.barcode != blank %}
+  "isbn": {{ v.barcode | json }},
+  "gtin13": {{ v.barcode | remove: '-' | remove: ' ' | json }},
+  {%- endif %}
+  {%- endif %}
   {%- if land != blank %}
   "countryOfOrigin": {{ land | json }},
   {%- endif %}
   "additionalProperty": [
     {%- assign erste = true -%}
+    {%- for f in fakten -%}
+      {%- unless erste %},{% endunless %}
+    { "@type": "PropertyValue", "name": {{ f.rolle.value | json }}, "value": {{ f.wert.value | json }} }
+      {%- assign erste = false -%}
+    {%- endfor -%}
     {%- for paar in (1..6) -%}
       {%- case paar -%}
         {%- when 1 -%}{%- assign name = 'produkt.fakt_aufbereitung' | t -%}{%- assign wert = aufbereitung -%}

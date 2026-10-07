@@ -1,7 +1,8 @@
 {%- comment -%}
   Die Warenkorbseite /cart. Funktioniert ohne JavaScript: Mengen ändern
   über das Formular, Entfernen über url_to_remove, Bezahlen über
-  name="checkout". Die Schublade (snippets/bw-warenkorb.liquid) ist der
+  name="checkout". Die Notiz («Anweisungen zur Bestellung», seit 0.6.0)
+  geht mit jedem Absenden mit, wie im bisherigen Shop. Die Schublade (snippets/bw-warenkorb.liquid) ist der
   schnelle Weg, diese Seite der sichere.
 {%- endcomment -%}
 {%- assign titel = 'warenkorb.titel' | t -%}
@@ -33,6 +34,10 @@
         </li>
         {%- endfor %}
       </ul>
+      <label class="bw-feld bw-notiz">
+        <span>{{ 'warenkorb.notiz' | t }}</span>
+        <textarea name="note" rows="3" placeholder="{{ 'warenkorb.notiz_hinweis' | t }}">{{ cart.note }}</textarea>
+      </label>
       <div class="bw-summe">
         <span>{{ 'warenkorb.zwischensumme' | t }}</span>
         <strong>{{ cart.total_price | money }}</strong>

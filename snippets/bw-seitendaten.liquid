@@ -33,7 +33,8 @@
     alle: {{ routes.collections_url | json }},
     warenkorb: {{ routes.cart_url | json }},
     hinzufuegen: {{ routes.cart_add_url | json }},
-    aendern: {{ routes.cart_change_url | json }}
+    aendern: {{ routes.cart_change_url | json }},
+    notiz: {{ routes.cart_update_url | json }}
   };
   window.BW_WAEHRUNG = {{ cart.currency.iso_code | json }};
   window.BW_TEXTE = {

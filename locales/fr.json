@@ -56,7 +56,9 @@
     "aktualisieren": "Mettre à jour les quantités",
     "zur_kasse": "Passer commande",
     "zur_seite": "Voir le panier",
-    "schliessen": "Fermer le panier"
+    "schliessen": "Fermer le panier",
+    "notiz": "Instructions pour la commande",
+    "notiz_hinweis": "Par exemple, une dédicace dans le livre ou une remarque sur la livraison"
   },
   "produkt": {
     "in_den_warenkorb": "Ajouter au panier",
@@ -126,7 +128,14 @@
     "schema_noten": "Notes de dégustation",
     "schema_ideal": "Idéal pour",
     "partner": "Va bien avec",
-    "grundpreis_kurz": "{{ preis }} / 100 g"
+    "grundpreis_kurz": "{{ preis }} / 100 g",
+    "geschichte_eyebrow_buch": "Pourquoi ce livre",
+    "geschichte_eyebrow_anderes": "Pourquoi nous le proposons",
+    "fuer_wen": "Pour qui :",
+    "autor_rolle": "Écrit par",
+    "inhalt_autor": "L’auteur",
+    "weiterlesen_titel_html": "À lire<br>avant de commander.",
+    "alles_wissen": "Tous les articles"
   },
   "rohbau": {
     "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",

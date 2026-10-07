@@ -1,44 +1,259 @@
 {%- comment -%}
-  Rohbau der Produktseite: echte Daten und echter Warenkorb, noch ohne das
-  Design aus products/*.html der Werkstatt. bw-theme.js fängt das Formular
-  ab und legt ohne Neuladen in den Warenkorb.
+  Produktseite für alles ausser Kaffee (Vorlage product, seit 0.6.0), heute
+  das Buch «Kaffee Erlebnis Schweiz», übertragen aus
+  products/kaffee-erlebnis-schweiz.html der Werkstatt. Die Kaffees haben
+  eigene Vorlagen (bw-produkt-kaffee), das Probierset bekommt eine eigene.
+
+  Woher die Inhalte kommen (Felder seit 07.10.2026, ausser kurzbeschrieb
+  und geschichte_titel vom 06.10.):
+    Kopf          Galerie aus den Produktbildern (bw-galerie), Zeile über
+                  dem Titel custom.kopfzeile, custom.kurzbeschrieb, Preis
+                  mit custom.preis_zusatz, Knopf custom.weiterlesen (link),
+                  Karte «Passt gut dazu» aus custom.passt_artikel
+    Fakten        custom.fakten (Metaobjekte produktfakt: rolle, wert)
+    Geschichte    custom.geschichte_titel, der erste Absatz der
+                  Produktbeschreibung im Shop-Wortlaut (beim Buch stehen im
+                  zweiten Absatz die Buchdaten, die das Faktenraster zeigt),
+                  «Für wen:» custom.fuer_wen, Seitenbox
+                  custom.seitenbox_titel und _text
+    Bildblöcke    custom.bildbloecke (Metaobjekte bildblock: anker, eyebrow,
+                  titel, text, bild, pillen), jeder zweite gedreht
+    Autor         custom.autor_name, _text (Rich Text), _bild
+    Passt dazu    Wissensartikel zum Thema aus der Sektionseinstellung
+  Fehlt ein Feld, fällt sein Teil weg, ohne leere Überschrift. Verweise auf
+  Artikel erscheinen nur, wenn der Artikel veröffentlicht ist, und zeigen
+  auf die Adresse in der Sprache der Seite.
+
+  Schema: bw-produkt-schema (Product, beim Buch auch Book).
 {%- endcomment -%}
-{%- assign variante = product.selected_or_first_available_variant -%}
-{%- render 'bw-rohbau-kopf', eyebrow: product.vendor, titel: product.title -%}
-<section class="sektion">
-  <div class="wrap bw-rohbau-produkt">
-    {%- if product.featured_image %}
-    <div class="bw-rohbau-bild">
-      {{ product.featured_image | image_url: width: 900 | image_tag: loading: 'eager', sizes: '(min-width: 900px) 45vw, 100vw', widths: '450, 700, 900', alt: product.featured_image.alt | default: product.title }}
-    </div>
-    {%- endif %}
-    <div>
-      <p class="bw-preis">{{ variante.price | money }}</p>
-      {%- form 'product', product, class: 'bw-produkt-form' %}
-        {%- if product.has_only_default_variant %}
-        <input type="hidden" name="id" value="{{ variante.id }}">
-        {%- else %}
-        <label class="bw-feld">
-          <span>{{ product.options.first }}</span>
-          <select name="id">
-            {%- for v in product.variants %}
-            <option value="{{ v.id }}"{% if v.id == variante.id %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>{{ v.title }} · {{ v.price | money }}</option>
-            {%- endfor %}
-          </select>
-        </label>
+{%- liquid
+  assign mf = product.metafields.custom
+  assign v = product.selected_or_first_available_variant
+
+  assign ids = product.collections | map: 'id'
+  assign ist_buch = false
+  if collections['bucher'] != blank and ids contains collections['bucher'].id
+    assign ist_buch = true
+  endif
+
+  assign fakten = mf.fakten.value
+  assign bloecke = mf.bildbloecke.value
+
+  # Beim Buch stehen im zweiten Absatz der Beschreibung die Buchdaten; die
+  # zeigt das Faktenraster, die Geschichte nimmt deshalb nur den ersten.
+  assign geschichte = product.description | strip
+  if fakten.size > 0 and geschichte contains '</p>'
+    assign geschichte = geschichte | split: '</p>' | first | append: '</p>'
+  endif
+
+  # Zweiter Knopf (Typ link, Shopify verlangt eine ganze Adresse). Zeigt er
+  # auf einen Artikel (/blogs/…), kommt die Adresse aus articles[…]: in der
+  # Sprache der Seite und nur, wenn der Artikel veröffentlicht ist.
+  assign weiter = mf.weiterlesen.value
+  assign weiter_url = ''
+  assign weiter_text = ''
+  if weiter != blank
+    assign weiter_url = weiter.url
+    assign weiter_text = weiter.text
+    if weiter_url contains '/blogs/'
+      assign pfad = weiter_url | split: '/blogs/' | last | split: '?' | first | split: '#' | first
+      assign artikel = articles[pfad]
+      if artikel != blank
+        assign weiter_url = artikel.url
+      else
+        assign weiter_url = ''
+      endif
+    endif
+  endif
+
+  assign passt = ''
+  if mf.passt_artikel.value != blank
+    assign passt = articles[mf.passt_artikel.value]
+  endif
+
+  assign hat_geschichte = false
+  if mf.geschichte_titel.value != blank or geschichte != blank or mf.fuer_wen.value != blank
+    assign hat_geschichte = true
+  endif
+  assign themen = section.settings.themen | default: 'grundlagen' | remove: ' ' | split: ','
+-%}
+
+<section class="produktkopf">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'produkt.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'produkt.brot_start' | t }}</a><span class="teiler">·</span>
+      <a href="{{ routes.collections_url }}">{{ 'kopf.shop' | t }}</a><span class="teiler">·</span>
+      <span>{{ product.title }}</span>
+    </nav>
+
+    <div class="produktkopf-raster">
+      {%- render 'bw-galerie', p: product %}
+
+      <div class="produkt-kauf">
+        {%- if mf.kopfzeile.value != blank %}
+        <span class="herkunftszeile">{{ mf.kopfzeile.value }}</span>
         {%- endif %}
-        <label class="bw-feld">
-          <span>{{ 'warenkorb.anzahl' | t }}</span>
-          <input type="number" name="quantity" value="1" min="1" inputmode="numeric">
-        </label>
-        <button type="submit" class="btn btn--primaer"{% unless variante.available %} disabled{% endunless %} data-pfeil>
-          {%- if variante.available -%}{{ 'produkt.in_den_warenkorb' | t }}{%- else -%}{{ 'produkt.ausverkauft' | t }}{%- endif -%}
-        </button>
-      {%- endform %}
-      <div class="bw-rohbau-text">{{ product.description }}</div>
+        <h1 data-split="zeilen">{{ product.title }}</h1>
+        {%- if mf.kurzbeschrieb.value != blank %}
+        <p class="kurzbeschrieb">{{ mf.kurzbeschrieb.value }}</p>
+        {%- endif %}
+
+        {% render 'bw-kaufwahl', p: product, zusatz: mf.preis_zusatz.value, link_url: weiter_url, link_text: weiter_text %}
+
+        {%- if passt != blank %}
+        <a class="schwester" href="{{ passt.url }}">
+          {%- if passt.image %}
+          {{ passt.image | image_url: width: 120 | image_tag: loading: 'lazy', alt: '' }}
+          {%- endif %}
+          <span class="text">
+            <span class="rolle">{{ 'produkt.partner' | t }}</span>
+            <h4>{{ passt.metafields.custom.kurztitel.value | default: passt.title }}</h4>
+          </span>
+          <span class="hin">{{ 'produkt.ansehen' | t }}
+            <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+        {%- endif %}
+      </div>
     </div>
   </div>
 </section>
+
+{%- if fakten.size > 0 %}
+<section class="sektion" style="padding-block:clamp(30px,4vw,52px)">
+  <div class="wrap">
+    <div class="fakten" data-batch>
+      {%- for f in fakten %}
+      <div class="fakt"><span class="rolle">{{ f.rolle.value }}</span><span class="wert">{{ f.wert.value }}</span></div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_geschichte or mf.seitenbox_titel.value != blank %}
+<section class="sektion" style="background:#fff;border-block:1px solid var(--linie)">
+  <div class="wrap">
+    <div class="beitragslayout" style="padding-block:0">
+      <div class="beitragstext">
+        {%- if hat_geschichte %}
+        <span class="eyebrow" style="color:var(--redorange)">{% if ist_buch %}{{ 'produkt.geschichte_eyebrow_buch' | t }}{% else %}{{ 'produkt.geschichte_eyebrow_anderes' | t }}{% endif %}</span>
+        {%- endif %}
+        {%- if mf.geschichte_titel.value != blank %}
+        <h2 data-split="zeilen" style="margin-top:14px">{{ mf.geschichte_titel.value }}</h2>
+        {%- endif %}
+        {{ geschichte }}
+        {%- if mf.fuer_wen.value != blank %}
+        <div class="merksatz">
+          <strong>{{ 'produkt.fuer_wen' | t }}</strong> {{ mf.fuer_wen.value | escape | newline_to_br }}
+        </div>
+        {%- endif %}
+      </div>
+
+      <aside class="beitragsseite">
+        {%- if mf.seitenbox_titel.value != blank %}
+        <div class="seitenbox">
+          <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+          <h4>{{ mf.seitenbox_titel.value }}</h4>
+          {%- if mf.seitenbox_text.value != blank %}
+          <p>{{ mf.seitenbox_text.value | escape | newline_to_br }}</p>
+          {%- endif %}
+          {%- if v.available %}
+          <button type="submit" form="produkt-form" class="btn btn--hell" data-pfeil>{{ 'produkt.in_den_warenkorb' | t }}</button>
+          {%- endif %}
+        </div>
+        {%- endif %}
+
+        {%- if bloecke.size > 0 or mf.autor_name.value != blank %}
+        <div class="inhaltsverzeichnis">
+          <h4>{{ 'produkt.inhalt' | t }}</h4>
+          {%- for b in bloecke %}<a href="#{{ b.anker.value | handleize }}">{{ b.eyebrow.value | default: b.titel.value }}</a>{% endfor %}
+          {%- if mf.autor_name.value != blank %}<a href="#autor">{{ 'produkt.inhalt_autor' | t }}</a>{% endif %}
+        </div>
+        {%- endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- for b in bloecke %}
+<section class="sektion" id="{{ b.anker.value | handleize }}"{% unless forloop.first %} style="padding-top:0"{% endunless %}>
+  <div class="wrap">
+    <div class="bildblock{% cycle '', ' bildblock--gedreht' %}" data-reveal>
+      {%- render 'bw-produkt-bild', bild: b.bild.value %}
+      <div>
+        {%- if b.eyebrow.value != blank %}
+        <span class="eyebrow">{{ b.eyebrow.value }}</span>
+        {%- endif %}
+        <h3>{{ b.titel.value }}</h3>
+        {%- render 'bw-absaetze', text: b.text.value %}
+        {%- assign pillen = b.pillen.value %}
+        {%- if pillen.size > 0 %}
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:22px">
+          {%- for n in pillen %}<span class="pill">{{ n }}</span>{% endfor -%}
+        </div>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endfor %}
+
+{%- if mf.autor_name.value != blank %}
+<section class="sektion" id="autor"{% if bloecke.size > 0 %} style="padding-top:0"{% endif %}>
+  <div class="wrap wrap--inhalt">
+    <div class="autorbox" data-reveal style="border-top:0;padding-top:0">
+      {%- if mf.autor_bild.value != blank %}
+      <div class="portrait">
+        {{ mf.autor_bild.value | image_url: width: 400 | image_tag: loading: 'lazy', widths: '200, 400', sizes: '140px', alt: mf.autor_bild.value.alt }}
+      </div>
+      {%- endif %}
+      <div>
+        <span class="rolle">{{ 'produkt.autor_rolle' | t }}</span>
+        <h3>{{ mf.autor_name.value }}</h3>
+        {%- if mf.autor_text.value != blank %}{{ mf.autor_text | metafield_tag }}{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<section class="sektion verwandt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'produkt.passt_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'produkt.weiterlesen_titel_html' | t }}</h2>
+      </div>
+      {%- if blogs['kaffeewissen'] != blank %}
+      <a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}" data-pfeil>{{ 'produkt.alles_wissen' | t }}</a>
+      {%- endif %}
+    </div>
+    <div class="beitraege" id="verwandt-raster">
+      {%- render 'bw-verwandte', themen: themen, anzahl: 3, art: 'wissen' -%}
+    </div>
+  </div>
+</section>
+
+{% render 'bw-beitraege-daten' %}
+{% render 'bw-produkt-schema', p: product, buch: ist_buch %}
+
+<script src="{{ 'produkt.js' | asset_url }}" defer></script>
+<script src="{{ 'wissen.js' | asset_url }}" defer></script>
+<script src="{{ 'beitrag.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWProdukt) BWProdukt.start();
+    if (window.BWBeitrag) BWBeitrag.verwandte('#verwandt-raster', {{ themen | json }}, 3, null, 'wissen');
+  });
+</script>
+
 {% schema %}
-{ "name": "Produkt (Rohbau)", "settings": [] }
+{
+  "name": "Produkt (Buch, Zubehör)",
+  "settings": [
+    { "type": "text", "id": "themen", "label": "Themen für «Passt dazu»", "info": "Durch Kommas getrennt, etwa grundlagen oder espresso,milch. Gezeigt werden Wissensartikel.", "default": "grundlagen" }
+  ]
+}
 {% endschema %}

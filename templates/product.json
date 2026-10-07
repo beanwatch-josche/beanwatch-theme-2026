@@ -2,7 +2,9 @@
   "sections": {
     "haupt": {
       "type": "bw-produkt",
-      "settings": {}
+      "settings": {
+        "themen": "grundlagen"
+      }
     }
   },
   "order": [

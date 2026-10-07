@@ -4,9 +4,14 @@
   Aufruf: {%- render 'bw-absaetze', text: mf.kaffeeursprung_beschreibung.value -%}
 {%- endcomment -%}
 {%- assign zeilen = text | newline_to_br | split: '<br />' -%}
+{%- comment -%}
+  Eigener Name für die gekürzte Zeile: Ein assign auf die Schleifenvariable
+  wirkt nicht, die Zeile behielte sonst ihren Zeilenumbruch, und eine
+  Leerzeile ergäbe einen leeren Absatz (behoben 07.10.2026).
+{%- endcomment -%}
 {%- for z in zeilen -%}
-  {%- assign z = z | strip -%}
-  {%- if z != blank %}
-<p>{{ z | escape }}</p>
+  {%- assign zeile = z | strip -%}
+  {%- if zeile != blank %}
+<p>{{ zeile | escape }}</p>
   {%- endif -%}
 {%- endfor -%}

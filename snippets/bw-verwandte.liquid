@@ -8,10 +8,22 @@
 
   themen   Liste, etwa ['espresso', 'milch']
   anzahl   höchstens so viele Karten
+  art      optional nur eine Art wie im Prototyp, etwa 'wissen' (Buch)
   Aufruf: {%- render 'bw-verwandte', themen: themen, anzahl: 3 -%}
 {%- endcomment -%}
 {%- liquid
   assign quellen = 'brew-guides:guide,barista-guides:baristaguide,kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  if art != blank
+    assign alle = quellen
+    assign quellen = ''
+    for q in alle
+      assign teile = q | split: ':'
+      if teile[1] == art
+        assign quellen = q
+      endif
+    endfor
+    assign quellen = quellen | split: ','
+  endif
   assign gezeigt = 0
   assign stufen = themen.size
 -%}
