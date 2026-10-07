@@ -1,13 +1,39 @@
-<p>{{ section.settings.artikel.size }}</p>
+{%- liquid
+  assign seite_wasser = pages['wasserhaerte']
+  assign finder = pages['welche-filtermethode']
+  assign hat_guides = false
+  assign themen = 'filter' | split: ','
+  capture wissen
+    render 'bw-verwandte', themen: themen, anzahl: 3, art: 'wissen'
+  endcapture
+  assign stufen = '14,15,16,16.7,17,18,20' | split: ','
+  assign start_charakter = 'hub_filter.charakter_4' | t
+  assign erster = start_charakter | slice: 0 | downcase
+  assign rest = start_charakter | slice: 1, 200
+-%}
+{%- capture spur -%}<div class="szene-spur tasse-spur"></div>{%- endcapture -%}
+{% render 'bw-sonne-wellen', teil: 'wellen', spur: spur %}
+{%- for i in (1..5) -%}
+  {%- liquid
+    assign k = 'hub_filter.schritt_' | append: i
+    assign bild_id = 'routine_bild_' | append: i
+    assign bild = section.settings[bild_id]
+    capture tiefer
+      if i == 1
+        if seite_wasser != blank
+          echo '<li><a href="' | append: seite_wasser.url | append: '">'
+          echo 'hub_filter.tiefer_wasser' | t
+          echo '</a></li>'
+        endif
+      elsif i == 4
+        if hat_guides
+          echo '<li><a href="#brewguides">'
+        endif
+      endif
+    endcapture
+  -%}
+<p>{{ k }} {{ tiefer }}</p>
+{%- endfor %}
 {% schema %}
-{
-  "name": "Prüfung",
-  "settings": [
-    { "type": "header", "content": "Fotos der Espresso-Routine" },
-    { "type": "paragraph", "content": "Platzhalter aus den Rezepten, bis es eigene Aufnahmen gibt. Den Ausschnitt setzt der Fokuspunkt des Bildes." },
-    { "type": "image_picker", "id": "routine_bild_1", "label": "Schritt 1: Aufheizen und spülen" },
-    { "type": "header", "content": "Tiefer rein" },
-    { "type": "article_list", "id": "artikel", "label": "Artikel", "limit": 3, "info": "Leer: Flat White, Welche Milch und Café Crème wie im Prototyp, sonst die neusten Wissensartikel zum Thema Espresso." }
-  ]
-}
+{ "name": "Prüfung", "settings": [ { "type": "image_picker", "id": "routine_bild_1", "label": "Bild" } ] }
 {% endschema %}
