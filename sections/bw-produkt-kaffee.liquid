@@ -12,7 +12,8 @@
     in neuen Feldern: kurzbeschrieb, geschichte_titel, aufbereitung_text
     und _merkmale, varietaet_text, fermentation_ und
     entkoffeinierung_merkmale und _bild, farm_titel, die zwei Legenden,
-    zubereitung_text und zubereitung_werte (Metaobjekt zubereitungswert).
+    zubereitung_text und zubereitung_werte (Metaobjekt zubereitungswert),
+    seit 07.10.2026 farm_bilder (Auswahl und Reihenfolge des Prototyps).
     Hergeleitet werden die Titel der Meter (aus dem Wert), die Themen für
     «Passt dazu» und das Ziel von «Zur Rezeptur».
 
@@ -153,7 +154,14 @@
   if werte.size > 0 or mf.zubereitung_text.value != blank
     assign hat_zubereitung = true
   endif
+  # Die Karte im Kaufbereich: das Schwesterprodukt (dieselbe Bohne), sonst
+  # wie im Prototyp bei Jaguara Summer der Kombi-Partner («Passt gut dazu»).
   assign schwester = mf.schwesterprodukt.value
+  assign schwester_rolle = 'produkt.schwester' | t
+  if schwester == blank and mf.kombi_partner.value != blank
+    assign schwester = mf.kombi_partner.value
+    assign schwester_rolle = 'produkt.partner' | t
+  endif
   assign hat_geschichte = false
   if mf.geschichte_titel.value != blank or geschichte != blank or mf.best_for.value != blank
     assign hat_geschichte = true
@@ -211,7 +219,7 @@
           {{ schwester.featured_image | image_url: width: 120 | image_tag: loading: 'lazy', alt: '' }}
           {%- endif %}
           <span class="text">
-            <span class="rolle">{{ 'produkt.schwester' | t }}</span>
+            <span class="rolle">{{ schwester_rolle }}</span>
             <h4>{{ schwester.title }}</h4>
           </span>
           <span class="hin">{{ 'produkt.ansehen' | t }}
@@ -424,7 +432,21 @@
         {%- endif %}
       </div>
 
-      {%- comment -%} Vier Bilder wie im Prototyp (Raster 2 × 2), auch wenn der Shop sechs hat. {%- endcomment -%}
+      {%- comment -%}
+        Vier Bilder im Raster 2 × 2. Auswahl und Reihenfolge wie im Prototyp
+        stehen seit 07.10.2026 in custom.farm_bilder; fehlt das Feld, die
+        ersten vier von kaffeeproduzent_bild_1 bis 6.
+      {%- endcomment -%}
+      {%- assign farm_liste = mf.farm_bilder.value -%}
+      {%- if farm_liste.size > 0 %}
+      <div class="farm-bilder" data-batch>
+        {%- for b in farm_liste limit: 4 %}
+        <div class="farm-bild">
+          {{ b | image_url: width: 900 | image_tag: loading: 'lazy', widths: '450, 700, 900', sizes: '(min-width: 900px) 25vw, 100vw', alt: b.alt }}
+        </div>
+        {%- endfor %}
+      </div>
+      {%- else -%}
       {%- capture farmbilder -%}
         {%- for i in (1..6) -%}
           {%- assign k = 'kaffeeproduzent_bild_' | append: i -%}
@@ -442,6 +464,7 @@
         </div>
         {%- endfor %}
       </div>
+      {%- endif %}
       {%- endif %}
     </div>
   </div>
@@ -467,7 +490,9 @@
     <div class="rezeptur" data-batch style="margin-top:0">
       {%- for w in werte %}
       <div class="rezeptur-wert">
-        <span class="zahl" data-zaehler="{{ w.zahl.value }}"{% if w.einheit.value != blank %} data-suffix=" {{ w.einheit.value | escape }}"{% endif %}></span>
+        {%- comment -%} wert ist eine Dezimalzahl (seit 07.10.2026, etwa 2.5 min); mit Nachkommastellen zählt basis.js mit einer Stelle. {%- endcomment -%}
+        {%- assign rest = w.wert.value | modulo: 1 %}
+        <span class="zahl" data-zaehler="{{ w.wert.value }}"{% if rest != 0 %} data-dezimal="1"{% endif %}{% if w.einheit.value != blank %} data-suffix=" {{ w.einheit.value | escape }}"{% endif %}></span>
         <span class="rolle">{{ w.rolle.value }}</span>
         {%- if w.text.value != blank %}
         <p>{{ w.text.value }}</p>

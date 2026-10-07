@@ -124,7 +124,8 @@
     "schema_aus": "en provenance de {{ land }}",
     "schema_farm": "de la ferme {{ ort }}",
     "schema_noten": "Notes de dégustation",
-    "schema_ideal": "Idéal pour"
+    "schema_ideal": "Idéal pour",
+    "partner": "Va bien avec"
   },
   "rohbau": {
     "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",

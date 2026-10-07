@@ -124,7 +124,8 @@
     "schema_aus": "from {{ land }}",
     "schema_farm": "from the {{ ort }} coffee farm",
     "schema_noten": "Tasting notes",
-    "schema_ideal": "Ideal for"
+    "schema_ideal": "Ideal for",
+    "partner": "Goes well with"
   },
   "rohbau": {
     "hinweis": "Under construction: this page gets its final design before launch. Content, prices and cart are already live data.",
