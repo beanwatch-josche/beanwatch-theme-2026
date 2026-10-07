@@ -1,0 +1,89 @@
+{%- comment -%}
+  «Gut zu wissen» auf den Hubs (seit 0.9.0, Entscheid Joscha 07.10.2026):
+  was die bisherigen Seiten Espresso und Filterkaffee aus dem Shop zeigten
+  und der Prototyp nicht kennt. Beides ist im Shop schon übersetzt.
+
+    «Was ist …»   custom.was_ist_eigentlich_ein_uberschrift (H2) und
+                  custom.text_was_ist_eigentlich_ein (Absätze)
+    FAQ           custom.faq_eintrag_1 bis _5, Metaobjekte faq_eintrag
+                  (frage, antwort als Rich Text). Steht derselbe Eintrag
+                  zweimal (Filterkaffee: 1 und 3), erscheint er einmal.
+
+  Markup aus bestehenden Klassen: Kopf wie jede .sektion, die Fragen wie
+  auf den Rezeptseiten (.faq details). Dazu FAQPage-JSON-LD wie im alten
+  Theme (sections/faq-accordion). Fehlt alles, gibt der Snippet nichts aus.
+  Aufruf: {%- render 'bw-hub-fragen' -%}
+{%- endcomment -%}
+{%- liquid
+  assign mf = page.metafields.custom
+  assign was_titel = mf.was_ist_eigentlich_ein_uberschrift.value
+  assign was_text = mf.text_was_ist_eigentlich_ein.value
+  assign gesehen = '|'
+  assign fragen = ''
+  assign schema = ''
+  for i in (1..5)
+    assign schluessel = 'faq_eintrag_' | append: i
+    assign f = mf[schluessel].value
+    if f == blank or f.frage.value == blank or f.antwort.value == blank
+      continue
+    endif
+    assign marke = '|' | append: f.system.handle | append: '|'
+    if gesehen contains marke
+      continue
+    endif
+    assign gesehen = gesehen | append: f.system.handle | append: '|'
+    capture antwort
+      echo f.antwort | metafield_tag
+    endcapture
+    capture eintrag
+      echo '<details><summary>'
+      echo f.frage.value | escape
+      echo '</summary><div class="antwort">'
+      echo antwort
+      echo '</div></details>'
+    endcapture
+    assign fragen = fragen | append: eintrag
+    assign text_ld = antwort | replace: '</p>', '</p> ' | strip_html | strip_newlines | replace: '  ', ' ' | strip
+    capture eintrag_ld
+      if schema != blank
+        echo ','
+      endif
+      echo '{"@type":"Question","name":'
+      echo f.frage.value | strip | json
+      echo ',"acceptedAnswer":{"@type":"Answer","text":'
+      echo text_ld | json
+      echo '}}'
+    endcapture
+    assign schema = schema | append: eintrag_ld
+  endfor
+-%}
+{%- if was_titel != blank or fragen != blank -%}
+<section class="sektion" id="fragen" style="padding-top:clamp(40px,5vw,70px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'hub.fragen_eyebrow' | t }}</span>
+        {%- if was_titel != blank %}
+        <h2>{{ was_titel | escape }}</h2>
+        {%- render 'bw-absaetze', text: was_text -%}
+        {%- else %}
+        <h2>{{ 'rezept.fragen' | t }}</h2>
+        {%- endif %}
+      </div>
+    </div>
+    {%- if fragen != blank %}
+    {%- if was_titel != blank %}
+    <h3>{{ 'rezept.fragen' | t }}</h3>
+    {%- endif %}
+    <div class="faq" style="max-width:var(--textbreite)">
+      {{ fragen }}
+    </div>
+    {%- endif %}
+  </div>
+</section>
+{%- endif -%}
+{%- if schema != blank %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{{ schema }}]}
+</script>
+{%- endif -%}

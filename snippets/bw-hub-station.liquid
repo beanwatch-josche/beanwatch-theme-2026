@@ -1,0 +1,46 @@
+{%- comment -%}
+  Eine Station des Wegweisers auf den Hubs (seit 0.9.0), Markup wie
+  ol.wegweiser in espresso.html und filterkaffee.html der Werkstatt. Die
+  Ziffer setzt der CSS-Zähler; eine Station steht nur, wenn ihr Abschnitt
+  steht, die Zählung bleibt also lückenlos.
+
+  ziel   Anker des Abschnitts, etwa '#rezeptur'
+  icon   rezeptur-espresso, rezeptur-filter, bohne-voll, bohne, getraenk,
+         coldbrew, maschine, methode, wissen (die SVGs aus dem Prototyp)
+  titel  Titel der Station
+  satz   Satz darunter
+  Aufruf: {%- render 'bw-hub-station', ziel: '#bohnen', icon: 'bohne', titel: t1, satz: t2 -%}
+{%- endcomment -%}
+<li>
+        <a class="station" href="{{ ziel }}">
+          <span class="marke">
+            <span class="nummer" aria-hidden="true"></span>
+            <span class="icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                {%- case icon -%}
+                  {%- when 'rezeptur-espresso' -%}
+                <path d="M15.4 8.4h7.2"/><path d="M15.9 8.4c0 2.9 1.4 4.5 3.1 4.5s3.1-1.6 3.1-4.5"/><rect x="15.7" y="12.2" width="2.6" height="4.4" rx="1.3"/><path d="M13.9 12.1l2.3-.7M13.7 10.6v2.8"/><path d="M12.6 10.8 3 12.9a1.85 1.85 0 0 0 0 3.7l9.6-3Z"/>
+                  {%- when 'rezeptur-filter' -%}
+                <rect x="2" y="3.5" width="20" height="17" rx="2.5"/><path d="M2 14.5h20"/><path d="M4.4 5.8h15.2M4.4 7.8h15.2M4.4 9.8h15.2M4.4 11.8h15.2" stroke-width="1"/><g stroke-width="1"><circle cx="6.4" cy="17.7" r="1.3"/><path d="M6.4 16.4v-.5M6.4 17.7l.6-.6M7.32 16.78l.38-.38"/><rect x="14.2" y="16.3" width="1.6" height="2.8" rx=".7"/><rect x="17.6" y="16.3" width="1.6" height="2.8" rx=".7"/></g><circle cx="16.7" cy="18.8" r=".4" fill="currentColor" stroke="none"/>
+                  {%- when 'bohne-voll' -%}
+                <g transform="translate(12 12) rotate(25)"><mask id="bw-48-kerbe" maskUnits="userSpaceOnUse" x="-10" y="-10" width="20" height="20"><rect x="-10" y="-10" width="20" height="20" fill="#fff"/><path d="M0-8.5c-3 4 3 13 0 17" fill="none" stroke="#000" stroke-width="1.6"/></mask><ellipse rx="6" ry="8.5" fill="currentColor" mask="url(#bw-48-kerbe)"/></g>
+                  {%- when 'bohne' -%}
+                <g transform="translate(12 12) rotate(25)"><ellipse rx="6" ry="8.5"/><path d="M0-8.5c-3 4 3 13 0 17"/></g>
+                  {%- when 'getraenk' -%}
+                <circle cx="11" cy="12" r="8"/><path d="M19 12h1.6" stroke-width="2.4"/><g transform="translate(11 12) scale(1.25) translate(-12 -12)" stroke-width="1.2"><path d="M12 14.9c-2.1-1.3-3.2-2.5-3.2-3.8 0-1 .7-1.7 1.6-1.7.7 0 1.3.4 1.6 1 .3-.6.9-1 1.6-1 .9 0 1.6.7 1.6 1.7 0 1.3-1.1 2.5-3.2 3.8Zm0 0v1.3"/></g>
+                  {%- when 'coldbrew' -%}
+                <rect x="6" y="2.5" width="12" height="3" rx=".8"/><path d="M7.2 5.5v1.3c-1.7.6-2.7 1.8-2.7 3.5v9.2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-9.2c0-1.7-1-2.9-2.7-3.5V5.5"/><path d="M9.8 5.5v11.2a1 1 0 0 0 1 1h2.4a1 1 0 0 0 1-1V5.5"/><path d="M11.2 8.4h1.6M11.2 10.4h1.6M11.2 12.4h1.6M11.2 14.4h1.6" stroke-width="1" stroke-dasharray="0 1.6"/><path d="M5.5 10.5h2.8M15.7 10.5h2.8" stroke-width="1.3"/><g stroke-width="1.1"><rect x="6.1" y="12.2" width="2.1" height="2.1" rx=".4" transform="rotate(-14 7.15 13.25)"/><rect x="15.9" y="13.4" width="2.1" height="2.1" rx=".4" transform="rotate(12 16.95 14.45)"/><rect x="6.3" y="16.3" width="1.9" height="1.9" rx=".4" transform="rotate(10 7.25 17.25)"/></g>
+                  {%- when 'maschine' -%}
+                <g transform="translate(.6 0)"><path d="M4 20.5V4.5A1.5 1.5 0 0 1 5.5 3h9A1.5 1.5 0 0 1 16 4.5v6H5.8v10"/><path d="M2.8 20.5h14.4"/><circle cx="10" cy="6.7" r="1.9"/><path d="M10 6.7l.9-.8"/><path d="M8.2 10.5v1h3.6v-1"/><path d="M8 12.4h4l-.5 1.5h-3Z"/><path d="M12 13.1h2"/><path d="M14.2 13.1h5.3" stroke-width="2.6"/><path d="M9.3 14.2v.5M10.7 14.2v.5" stroke-width="1"/><path d="M8 16.8h4v1.6a1.6 1.6 0 0 1-1.6 1.6h-.8A1.6 1.6 0 0 1 8 18.4Z"/><path d="M12 17.3h.6a1.1 1.1 0 0 1 0 2.2h-.8" stroke-width="1.5"/></g>
+                  {%- when 'methode' -%}
+                <path d="M9.7 8.4c-.4.5-.6 1-.6 1.7 0 .4.2.6.2.9 0 .5-.7 1-.7 1.7 0 .4.2.6.2.9 0 .6-.7 1.1-.7 1.9 0 .8-.3 1.4-.3 2h10.1c0-.6-.3-1.2-.3-2 0-.8-.7-1.3-.7-1.9 0-.3.2-.5.2-.9 0-.7-.7-1.2-.7-1.7 0-.3.2-.5.2-.9 0-.7-.2-1.2-.6-1.7Z"/><path d="M7.4 18.3h10.9"/><path d="M9.4 8.6c.2-.9 1.6-1.2 3.4-1.2s3.2.3 3.4 1.2"/><path d="M11.3 6.5c0-.8.7-1.3 1.55-1.3s1.55.5 1.55 1.3ZM12.85 6.5v.9"/><path d="M16.2 8.6l.8-1.1c.5-.5 1.1-.3 1.6.2"/><path d="M18.6 7.7c.24.32.18.74.42 1.06.24.32.9.2 1.14.52.24.32-.06.92.18 1.24.24.32.9.2 1.14.52.24.32-.06.92.18 1.24.24.32.66.38.9.7" stroke-width="2.4"/><path d="M8 15c-1.4 0-2.8-.8-3.15-2.35-.35-1.55-.25-2.65-.45-3.75-.2-1.1-1.6-2-3.2-2" stroke-width="1.5"/>
+                  {%- when 'wissen' -%}
+                <path d="M4.5 22c2-4.5 5-7 8-9.2 3-2.2 5.2-5 6.3-10.3"/><g transform="translate(7.3 17.45) rotate(200)"><path d="M0 0Q2.5-1.8 5 0Q2.5 1.8 0 0" stroke-width="1.4"/><path d="M0.8 0h3.4" stroke-width=".9"/></g><g transform="translate(12.5 12.8) rotate(15)"><path d="M0 0Q3-2.16 6 0Q3 2.16 0 0" stroke-width="1.4"/><path d="M0.9 0h4.2" stroke-width=".9"/></g><g transform="translate(17 7.8) rotate(215)"><path d="M0 0Q2.5-1.8 5 0Q2.5 1.8 0 0" stroke-width="1.4"/><path d="M0.8 0h3.4" stroke-width=".9"/></g><g transform="translate(17 7.8) rotate(-10)"><path d="M0 0Q2.25-1.62 4.5 0Q2.25 1.62 0 0" stroke-width="1.4"/><path d="M0.7 0h3" stroke-width=".9"/></g><g stroke-width="1.3"><circle cx="9.6" cy="18.6" r="1.35"/><circle cx="8.4" cy="20.7" r="1.35"/><circle cx="10.9" cy="20.6" r="1.35"/><circle cx="9.8" cy="11" r="1.35"/><circle cx="10.6" cy="8.7" r="1.35"/><circle cx="8" cy="9.6" r="1.35"/><path d="M12.5 12.8l-1.5-1"/></g>
+                {%- endcase %}
+              </svg>
+            </span>
+          </span>
+          <span class="titel">{{ titel }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          <span class="satz">{{ satz }}</span>
+        </a>
+      </li>

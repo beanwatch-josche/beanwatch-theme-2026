@@ -1,0 +1,15 @@
+{%- comment -%}
+  Brotkrumen der Hubs als BreadcrumbList (seit 0.9.0): Start › Seite, wie
+  im alten Theme (microdata-schema) und wie die Brotkrumen im Kopf.
+  Aufruf: {%- render 'bw-hub-schema' -%}
+{%- endcomment -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": {{ 'rezept.schema_start' | t | json }}, "item": {{ request.origin | append: routes.root_url | json }} },
+    { "@type": "ListItem", "position": 2, "name": {{ page.title | json }}, "item": {{ request.origin | append: page.url | json }} }
+  ]
+}
+</script>

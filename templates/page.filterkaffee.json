@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-hub-filter",
+      "settings": {
+        "routine_bild_1": "shopify://shop_images/coldbrew-mit-chemex-filtern.webp",
+        "routine_bild_2": "shopify://shop_images/kaffee-fuer-coldbrew-grob-mahlen.webp",
+        "routine_bild_3": "shopify://shop_images/filterkaffee-wiegen.webp",
+        "routine_bild_4": "shopify://shop_images/cold-brew-mit-chemex-filtern.webp",
+        "routine_bild_5": "shopify://shop_images/4-cold-brew-glaeser-in-der-kueche.webp"
+      }
+    }
+  },
+  "order": ["haupt"]
+}

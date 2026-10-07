@@ -18,6 +18,15 @@ window.BWHub = (function () {
   const eintrag = (e) => !S || S.eintrag(e);
   const vorschau = !S || S.vorschau;
 
+  // Wortlaut aus data-text-<name> am Element, im Theme aus den
+  // Sprachdateien; ohne Attribut der deutsche wie im Prototyp. Platzhalter
+  // in geschweiften Klammern ({n}, {v}) werden ersetzt.
+  function wortlaut(el, name, deutsch, werte) {
+    const s = (el && el.dataset['text' + name]) || deutsch;
+    return werte ? s.replace(/\{(\w+)\}/g, (m, k) => (k in werte ? werte[k] : m)) : s;
+  }
+  const gross = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
   /* ======================================================================
      Getränkedaten
      Anteile beziehen sich auf die Innenhöhe des Gefässes, von unten nach oben.
@@ -497,6 +506,8 @@ window.BWHub = (function () {
     const wertZeit = document.getElementById('wert-zeit');
     const wertTemp = document.getElementById('wert-temperatur');
     if (!regler || !schalter || !bezugGruppe || !wertMehl) return;
+    // Im Theme: Dezimalzeichen und Sätze der Sprache (data-text-* an .rezeptur-fluss).
+    const dez = fluss.dataset.textDezimal || ',';
 
     let bezug = 'doppelt';
     let stufe = BEZUG[bezug].standard;
@@ -509,7 +520,7 @@ window.BWHub = (function () {
 
     const zahl = (n) => {
       const g = Math.round(n * 2) / 2;
-      return g % 1 === 0 ? g.toFixed(0) : g.toFixed(1).replace('.', ',');
+      return g % 1 === 0 ? g.toFixed(0) : g.toFixed(1).replace('.', dez);
     };
     const setze = (el, text, einheit) => {
       el.innerHTML = text + '<span class="einheit"> ' + einheit + '</span>';
@@ -532,13 +543,18 @@ window.BWHub = (function () {
       const r = ROESTUNG[art];
       anzeige.textContent = gramm() + ' g';
       regler.value = String(stufe);
-      regler.setAttribute('aria-valuetext', gramm() + ' Gramm');
-      verhaeltnisZahl.textContent = r.anzeige;
-      hinweisTemp.textContent = r.hinweis;
-      zielSatz.textContent = zahl(gramm() * r.verhaeltnis) + ' g in der Tasse nach 25 bis 30 Sekunden.';
+      regler.setAttribute('aria-valuetext', wortlaut(fluss, 'Gramm', gramm() + ' Gramm', { n: gramm() }));
+      verhaeltnisZahl.textContent = r.anzeige.replace(',', dez);
+      hinweisTemp.textContent = wortlaut(fluss, 'Hinweis' + gross(art), r.hinweis);
+      const tasse = zahl(gramm() * r.verhaeltnis);
+      zielSatz.textContent = wortlaut(fluss, 'Ziel', tasse + ' g in der Tasse nach 25 bis 30 Sekunden.', { n: tasse });
       // Nur die beiden diskreten Entscheidungen, nicht die Grammzahl: Die
       // ändert sich beim Ziehen am Regler laufend und steht gross darüber.
-      if (satz) satz.textContent = 'Grundrezept für ' + BEZUG[bezug].wort + ' bei ' + r.wort + '.';
+      // Im Theme vier ganze Sätze, weil die Beugung je Sprache anders ist.
+      if (satz) {
+        satz.textContent = wortlaut(fluss, 'Satz' + gross(bezug) + gross(art),
+          'Grundrezept für ' + BEZUG[bezug].wort + ' bei ' + r.wort + '.');
+      }
       gsap.utils.toArray('span', stufenleiste)
         .forEach((s, i) => s.classList.toggle('ist-aktiv', i === stufe));
     }
@@ -708,6 +724,10 @@ window.BWHub = (function () {
     const wertTemp = el('wert-temperatur');
     const wertBloom = el('wert-bloom');
     if (!regler || !schalter || !verhRegler || !wertMehl) return;
+    // Im Theme: Dezimalzeichen und Sätze der Sprache (data-text-* an
+    // #filter-rezeptur), die Charaktere als data-charakter an den Stufen.
+    const dez = fluss.dataset.textDezimal || ',';
+    const dz = (t) => t.replace(',', dez);
 
     let gramm = FILTER_MENGE.standard;
     let stufe = FILTER_VERHAELTNIS_START;
@@ -743,25 +763,27 @@ window.BWHub = (function () {
       const z = ziel();
       anzeige.textContent = gramm + ' g';
       regler.value = String(gramm);
-      regler.setAttribute('aria-valuetext', gramm + ' Gramm');
-      verhaeltnisZahl.textContent = v.anzeige;
-      if (verhLiter) verhLiter.textContent = v.proLiter + ' Kaffee pro Liter';
-      if (verhCharakter) verhCharakter.textContent = v.charakter;
-      if (verhAnzeige) verhAnzeige.textContent = v.anzeige;
+      const st = verhStufen && verhStufen.children[stufe];
+      const charakter = (st && st.dataset.charakter) || v.charakter;
+      regler.setAttribute('aria-valuetext', wortlaut(fluss, 'Gramm', gramm + ' Gramm', { n: gramm }));
+      verhaeltnisZahl.textContent = dz(v.anzeige);
+      if (verhLiter) verhLiter.textContent = wortlaut(fluss, 'Liter', v.proLiter + ' Kaffee pro Liter', { n: dz(v.proLiter) });
+      if (verhCharakter) verhCharakter.textContent = charakter;
+      if (verhAnzeige) verhAnzeige.textContent = dz(v.anzeige);
       verhRegler.value = String(stufe);
       verhRegler.setAttribute('aria-valuetext',
-        v.anzeige.replace(' : ', ' zu ') + ', ' + v.charakter.charAt(0).toLowerCase() + v.charakter.slice(1));
+        dz(v.anzeige).replace(' : ', wortlaut(fluss, 'Zu', ' zu ')) + ', ' + charakter.charAt(0).toLowerCase() + charakter.slice(1));
       if (verhStufen) {
         gsap.utils.toArray('span', verhStufen).forEach((st, i) => st.classList.toggle('ist-aktiv', i === stufe));
       }
-      hinweisTemp.textContent = r.hinweis;
+      hinweisTemp.textContent = wortlaut(fluss, 'Hinweis' + gross(art), r.hinweis);
       // Die beiden Sätze in den Schrittkarten 03 und 04. Sie laufen auch
       // mit, wenn die Karte unter 860 px gerade eingeklappt ist.
-      if (bloomSatz) bloomSatz.textContent = z.bloom + ' g Wasser angiessen, dann 30 bis 45 Sekunden warten.';
-      if (gussSatz) gussSatz.textContent = 'Auf insgesamt ' + z.wasser + ' g aufgiessen.';
+      if (bloomSatz) bloomSatz.textContent = wortlaut(fluss, 'Bloom', z.bloom + ' g Wasser angiessen, dann 30 bis 45 Sekunden warten.', { n: z.bloom });
+      if (gussSatz) gussSatz.textContent = wortlaut(fluss, 'Guss', 'Auf insgesamt ' + z.wasser + ' g aufgiessen.', { n: z.wasser });
       // Wie auf espresso.html nur die Entscheidungen, nicht die Grammzahl:
       // Die ändert sich beim Ziehen laufend und steht gross darüber.
-      if (satz) satz.textContent = 'Grundrezept für ' + r.wort + ' im Verhältnis ' + v.anzeige + '.';
+      if (satz) satz.textContent = wortlaut(fluss, 'Satz' + gross(art), 'Grundrezept für ' + r.wort + ' im Verhältnis ' + v.anzeige + '.', { v: dz(v.anzeige) });
       if (stufenleiste) {
         gsap.utils.toArray('span', stufenleiste)
           .forEach((st) => st.classList.toggle('ist-aktiv', Number(st.textContent) === gramm));
@@ -914,8 +936,10 @@ window.BWHub = (function () {
     const zellen = gsap.utils.toArray(":scope > *", raster);
     const animiert = !ruhig && !!window.gsap;
     const gilt = o.gilt || (() => true);
-    const wortZu = o.zu || "Alles anzeigen";
-    const wortAuf = o.auf || "Weniger anzeigen";
+    // Ohne Option liest es die Wörter am Knopf (data-text-zu mit {n} für die
+    // Zahl der Zellen, data-text-auf), im Theme aus den Sprachdateien.
+    const wortZu = o.zu || wortlaut(mehr, "Zu", "Alles anzeigen", { n: zellen.length });
+    const wortAuf = o.auf || wortlaut(mehr, "Auf", "Weniger anzeigen");
     // hart: Kein Anschnitt, sondern eine saubere Kante. Das CSS nimmt dann
     // Maske und max-height zurueck, display:none regelt die Hoehe allein.
     // Gemessen werden muss dafuer nichts, und vor allem darf es keine
@@ -1042,16 +1066,24 @@ window.BWHub = (function () {
     let aktiv = "alle";
     let ausblenden = null;
 
-    leiste.hidden = false;
+    // «Alle» und eine einzige Gruppe sind kein Filter: Im Theme stehen nur
+    // Knöpfe für Gruppen mit Rezepten, vor dem Start nur die Signature Drinks.
+    leiste.hidden = knoepfe.length < 3;
 
     /* Das Klappen sitzt in einer eigenen Funktion, weil das Maschinenraster
        ohne Filter dasselbe braucht. Die einzige Verbindung hierher ist
        gilt(): Nur bei "alle" gibt es ueberhaupt etwas zu klappen, die drei
        Gruppen haben sechs, sechs und eine Karte. */
+    // Eingeklappt lässt das CSS 8 Karten stehen, bis 1080 px 6 (seiten.css,
+    // .rezepte-raster--vier.ist-eingeklappt). Sind es nicht mehr, gibt es
+    // nichts aufzuklappen, im Theme etwa vor dem Start mit 6 Rezepten.
+    const schmal = window.matchMedia("(max-width:1080px)");
+    const mehrKnopf = zielMehr ? document.querySelector(zielMehr) : null;
     const klapp = klappRaster(zielRaster, zielMehr, {
-      gilt: () => aktiv === "alle",
-      zu: "Alle 13 Rezepte anzeigen"
+      gilt: () => aktiv === "alle" && kacheln.length > (schmal.matches ? 6 : 8),
+      zu: wortlaut(mehrKnopf, "Zu", "Alle {n} Rezepte anzeigen", { n: kacheln.length })
     });
+    if (klapp && schmal.addEventListener) schmal.addEventListener("change", klapp.neuBewerten);
 
     function umschalten() {
       kacheln.forEach((k) => {
@@ -1481,7 +1513,9 @@ window.BWHub = (function () {
     gsap.set(dreh, { svgOrigin: hand.punkt, rotation: 0, y: 0 });
 
     const B = window.BWFaehren;
-    const gedanke = B ? B.gedankeAnhaengen(weg, 'rechts', o.gedanke) : null;
+    // Im Theme kommt der Gedanke übersetzt aus data-text-gedanke am Kopf;
+    // ein Zeilenumbruch darin bleibt (white-space:pre-line).
+    const gedanke = B ? B.gedankeAnhaengen(weg, 'rechts', wortlaut(kopf, 'Gedanke', o.gedanke)) : null;
 
     if (ruhig) {
       // Keine Fahrt. Anders als bei den Faehren ist ueber dem Sticker Platz,

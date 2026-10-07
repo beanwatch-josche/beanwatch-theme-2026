@@ -1,0 +1,559 @@
+{%- comment -%}
+  Der Espresso-Hub (seit 0.9.0), Vorlage page.espresso, übertragen aus
+  espresso.html der Werkstatt: Markup, Klassen und IDs wie dort, denn
+  hubs.js (Rechner, Routine, Filter, Sticker) und seiten.css brauchen sie.
+  Feste Texte aus den Sprachdateien (hub, hub_espresso), die Sätze der
+  Rechner als data-text-* für hubs.js.
+
+  Woher die Inhalte kommen:
+    Kopf, Wegweiser, Grundrezept, Routine, Band   Sprachdateien; die fünf
+                  Routine-Fotos sind Einstellungen der Sektion
+    02 Bohnen     die Kollektion espresso, ganz und in Shop-Reihenfolge
+                  (Entscheid Joscha 07.10.2026), Karten wie im Shop
+    03 Rezepte    veröffentlichte Rezepte aus kaffeerezepte mit
+                  custom.getraenkegruppe (klassiker, signature, spirits),
+                  in dieser Reihenfolge, je neuste zuerst. Filterknöpfe nur
+                  für Gruppen mit Rezepten.
+    04 Maschinen  die Box zum Maschinenfinder, wenn es die Seite
+                  welche-espressomaschine gibt; die Guide-Karten hängt
+                  hubs.js an, sobald Barista Guides veröffentlicht sind
+    05 Wissen     die Artikel der Einstellung «Artikel», sonst die drei
+                  wie im Prototyp, sonst die neusten zum Thema espresso
+    Gut zu wissen «Was ist ein Espresso?» und die FAQ aus den Feldern der
+                  Seite (bw-hub-fragen)
+  Fehlt ein Abschnitt, fällt auch seine Station im Wegweiser weg, und die
+  Nummern zählen weiter. Links auf Tools, Finder und Artikel stehen nur,
+  wenn das Ziel veröffentlicht ist.
+{%- endcomment -%}
+{%- liquid
+  assign dez = 'rezept.dezimal' | t
+
+  # 02 Bohnen
+  assign kollektion = collections['espresso']
+  assign n_bohnen = 0
+  if kollektion != blank
+    assign n_bohnen = kollektion.products.size
+  endif
+
+  # 03 Rezepte
+  assign gruppen = 'klassiker,signature,spirits' | split: ','
+  assign n_kacheln = 0
+  assign gruppen_da = ','
+  capture kacheln
+    if blogs['kaffeerezepte'] != blank
+      for g in gruppen
+        for a in blogs['kaffeerezepte'].articles
+          if a.metafields.custom.getraenkegruppe.value == g
+            render 'bw-rezept-kachel', a: a, gruppe: g
+            assign n_kacheln = n_kacheln | plus: 1
+            assign marke = ',' | append: g | append: ','
+            unless gruppen_da contains marke
+              assign gruppen_da = gruppen_da | append: g | append: ','
+            endunless
+          endif
+        endfor
+      endfor
+    endif
+  endcapture
+
+  # 04 Maschinen
+  assign finder = pages['welche-espressomaschine']
+  assign hat_guides = false
+  if blogs['barista-guides'] != blank
+    assign n_guides = blogs['barista-guides'].articles_count | plus: 0
+    if n_guides > 0
+      assign hat_guides = true
+    endif
+  endif
+  assign hat_maschinen = false
+  if finder != blank or hat_guides
+    assign hat_maschinen = true
+  endif
+
+  # 05 Wissen
+  capture wissen
+    if section.settings.artikel != blank and section.settings.artikel.size > 0
+      for a in section.settings.artikel limit: 3
+        render 'bw-beitrag', a: a, art: 'wissen'
+      endfor
+    else
+      assign vorgabe = 'kaffeewissen/flat-white-guide-und-rezept,kaffeewissen/welche-milch-schaeumt-am-besten,kaffeewissen/cafe-creme-siebtrager-rezept' | split: ','
+      assign gefunden = 0
+      for h in vorgabe
+        assign a = articles[h]
+        if a != blank
+          render 'bw-beitrag', a: a, art: 'wissen'
+          assign gefunden = gefunden | plus: 1
+        endif
+      endfor
+      if gefunden == 0
+        assign themen = 'espresso' | split: ','
+        render 'bw-verwandte', themen: themen, anzahl: 3, art: 'wissen'
+      endif
+    endif
+  endcapture
+  assign wissen = wissen | strip
+
+  # Ziele für «Tiefer rein» in der Routine
+  assign seite_wasser = pages['wasserhaerte']
+  assign seite_koffein = pages['koffeinrechner']
+  assign artikel_koffein = articles['kaffeewissen/koffein-im-kaffee-wie-viel-steckt-drin-wie-wirkt-es-und-wie-lange-halt-es-an']
+
+  # Nummern der Abschnitte, lückenlos
+  assign nr = 1
+  assign nr_bohnen = 0
+  assign nr_rezepte = 0
+  assign nr_maschinen = 0
+  assign nr_wissen = 0
+  if n_bohnen > 0
+    assign nr = nr | plus: 1
+    assign nr_bohnen = nr
+  endif
+  if n_kacheln > 0
+    assign nr = nr | plus: 1
+    assign nr_rezepte = nr
+  endif
+  if hat_maschinen
+    assign nr = nr | plus: 1
+    assign nr_maschinen = nr
+  endif
+  if wissen != blank
+    assign nr = nr | plus: 1
+    assign nr_wissen = nr
+  endif
+
+  capture anzahl_wort
+    render 'bw-zahlwort', n: n_bohnen
+  endcapture
+  assign anzahl_wort = anzahl_wort | strip | capitalize
+-%}
+
+{%- capture spur -%}<div class="szene-spur sticker-spur"><div class="sticker-weg"><div class="sticker-welle"></div></div></div>{%- endcapture -%}
+<section class="seitenkopf seitenkopf--hell seitenkopf--wasser seitenkopf--sticker" id="kopf-espresso" data-text-gedanke="{{ 'hub_espresso.gedanke' | t }}">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <div>
+      <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+        <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ page.title | escape }}</span>
+      </nav>
+      <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'hub_espresso.eyebrow' | t }}</span>
+      <h1 data-split="zeilen">{{ 'hub_espresso.titel_html' | t }}</h1>
+      <p class="lead">{{ 'hub_espresso.lead' | t }}</p>
+      <div class="kopf-aktionen-reihe">
+        <a class="btn btn--primaer" href="#rezeptur" data-pfeil>{{ 'hub.zum_grundrezept' | t }}</a>
+        {%- if n_bohnen > 0 %}
+        <a class="btn btn--linie" href="#bohnen">{{ 'hub_espresso.knopf_bohnen' | t }}</a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen', spur: spur %}
+</section>
+
+<section class="sektion" id="wegweiser" style="padding-top:clamp(48px,6vw,84px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'hub.wegweiser_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'hub_espresso.wegweiser_titel_html' | t }}</h2>
+        <p>{{ 'hub.wegweiser_text' | t }}</p>
+      </div>
+    </div>
+
+    <ol class="wegweiser" role="list" data-batch>
+      {%- assign t1 = 'hub.station_rezept_titel' | t -%}
+      {%- assign t2 = 'hub_espresso.station_rezept_satz' | t -%}
+      {%- render 'bw-hub-station', ziel: '#rezeptur', icon: 'rezeptur-espresso', titel: t1, satz: t2 -%}
+      {%- if n_bohnen > 0 -%}
+        {%- assign t1 = 'hub_espresso.station_bohnen_titel' | t -%}
+        {%- if n_bohnen == 1 -%}
+          {%- assign t2 = 'hub_espresso.station_bohnen_satz_eins' | t -%}
+        {%- else -%}
+          {%- assign t2 = 'hub_espresso.station_bohnen_satz' | t: anzahl: anzahl_wort -%}
+        {%- endif -%}
+        {%- render 'bw-hub-station', ziel: '#bohnen', icon: 'bohne-voll', titel: t1, satz: t2 -%}
+      {%- endif -%}
+      {%- if n_kacheln > 0 -%}
+        {%- assign t1 = 'hub_espresso.station_rezepte_titel' | t -%}
+        {%- assign t2 = 'hub_espresso.station_rezepte_satz' | t -%}
+        {%- render 'bw-hub-station', ziel: '#getraenke', icon: 'getraenk', titel: t1, satz: t2 -%}
+      {%- endif -%}
+      {%- if hat_maschinen -%}
+        {%- assign t1 = 'hub_espresso.station_maschinen_titel' | t -%}
+        {%- if hat_guides -%}
+          {%- assign t2 = 'hub_espresso.station_maschinen_satz_guides' | t -%}
+        {%- else -%}
+          {%- assign t2 = 'hub_espresso.station_maschinen_satz' | t -%}
+        {%- endif -%}
+        {%- render 'bw-hub-station', ziel: '#baristaguides', icon: 'maschine', titel: t1, satz: t2 -%}
+      {%- endif -%}
+      {%- if wissen != blank -%}
+        {%- assign t1 = 'hub.station_wissen_titel' | t -%}
+        {%- assign t2 = 'hub_espresso.station_wissen_satz' | t -%}
+        {%- render 'bw-hub-station', ziel: '#espresso-wissen', icon: 'wissen', titel: t1, satz: t2 -%}
+      {%- endif -%}
+    </ol>
+  </div>
+</section>
+
+<section class="sektion" id="rezeptur" style="background:var(--dunkelblau);color:var(--hellorange)">
+  <div class="atmo" data-atmo="dampf" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow" style="color:var(--cyanblau)">01 · {{ 'hub.grundrezept' | t }}</span>
+        <h2 data-split="zeilen">{{ 'hub_espresso.rezeptur_titel_html' | t }}</h2>
+      </div>
+      <p style="opacity:.86">{{ 'hub_espresso.rezeptur_text' | t }}</p>
+    </div>
+
+    <div class="rezeptur-fluss rezeptur-fluss--breit"
+         data-text-dezimal="{{ dez }}"
+         data-text-gramm="{{ 'hub.gramm' | t: n: '{n}' }}"
+         data-text-ziel="{{ 'hub_espresso.ziel' | t: n: '{n}' }}"
+         data-text-hinweis-hell="{{ 'hub_espresso.hinweis_hell' | t }}"
+         data-text-hinweis-dunkel="{{ 'hub_espresso.hinweis_dunkel' | t }}"
+         data-text-satz-einfach-hell="{{ 'hub_espresso.satz_einfach_hell' | t }}"
+         data-text-satz-einfach-dunkel="{{ 'hub_espresso.satz_einfach_dunkel' | t }}"
+         data-text-satz-doppelt-hell="{{ 'hub_espresso.satz_doppelt_hell' | t }}"
+         data-text-satz-doppelt-dunkel="{{ 'hub_espresso.satz_doppelt_dunkel' | t }}">
+
+      <div class="rezeptur-ergebnis rezeptur-ergebnis--breit" data-reveal>
+        <span class="eyebrow">{{ 'hub.dein_rezept' | t }}</span>
+
+        <div class="rezeptur" aria-live="polite">
+          <div class="rezeptur-wert">
+            <span class="zahl" id="wert-mehl"></span>
+            <span class="rolle">{{ 'hub.kaffeemehl' | t }}</span>
+          </div>
+          <div class="rezeptur-wert">
+            <span class="zahl" id="wert-tasse"></span>
+            <span class="rolle">{{ 'hub_espresso.in_der_tasse' | t }}</span>
+          </div>
+          <div class="rezeptur-wert">
+            <span class="zahl" id="wert-zeit"></span>
+            <span class="rolle">{{ 'hub_espresso.bezugszeit' | t }}</span>
+          </div>
+          <div class="rezeptur-wert">
+            <span class="zahl" id="wert-temperatur"></span>
+            <span class="rolle">{{ 'hub_espresso.temperatur' | t }}</span>
+          </div>
+        </div>
+
+        <div class="rezeptur-regler">
+          <p class="rezeptur-regler-satz">{{ 'hub_espresso.regler_satz' | t }}</p>
+          <div class="rezeptur-regler-raster">
+
+            <div class="wahl-feld">
+              <span class="rolle" id="bezug-titel">{{ 'hub_espresso.bezug_frage' | t }}</span>
+              <div class="wahl-optionen" id="bezug" role="group" aria-labelledby="bezug-titel">
+                <button type="button" data-bezug="einfach" aria-pressed="false">{{ 'hub_espresso.einfach' | t }}</button>
+                <button type="button" class="ist-aktiv" data-bezug="doppelt" aria-pressed="true">{{ 'hub_espresso.doppelt' | t }}</button>
+              </div>
+            </div>
+
+            <div class="wahl-feld">
+              <div class="rezeptur-menge rechner-feld">
+                <label for="mehlmenge">{{ 'hub.kaffeemehl' | t }} <span class="wertanzeige" id="mehlmenge-anzeige">18 g</span></label>
+                <input type="range" id="mehlmenge" min="0" max="3" step="1" value="1" aria-valuetext="{{ 'hub.gramm' | t: n: 18 }}">
+                <div class="mengen-stufen" id="mengen-stufen" aria-hidden="true"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="rezeptur-regler-raster rezeptur-regler-raster--verhaeltnis">
+
+            <div class="ergebnis-verhaeltnis">
+              <span class="rolle">{{ 'hub.verhaeltnis' | t }}</span>
+              <span class="verhaeltnis-zahl" id="verhaeltnis-zahl">1 : 2{{ dez }}5</span>
+              <div class="verhaeltnis-balken" aria-hidden="true">
+                <span class="teil teil--mehl" id="teil-mehl"></span>
+                <span class="teil teil--tasse" id="teil-tasse"></span>
+              </div>
+              <div class="verhaeltnis-skala"><span>{{ 'hub.kaffeemehl' | t }}</span><span>{{ 'hub_espresso.in_der_tasse' | t }}</span></div>
+            </div>
+
+            <div class="wahl-feld">
+              <span class="rolle" id="roestung-titel">{{ 'hub.roestung_frage' | t }}</span>
+              <div class="roestgrad-schalter" id="roestung" role="group" aria-labelledby="roestung-titel">
+                <span class="schalter-fuellung" id="schalter-fuellung" aria-hidden="true"></span>
+                <button type="button" class="ist-aktiv" data-roestung="hell" aria-pressed="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <g transform="translate(12 12) rotate(25)"><ellipse rx="6" ry="8.5"/><path d="M0-8.5c-3 4 3 13 0 17"/></g>
+                  </svg>
+                  <span>{{ 'hub.eher_hell' | t }}</span>
+                </button>
+                <button type="button" data-roestung="dunkel" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <mask id="rez-kerbe" maskUnits="userSpaceOnUse" x="-10" y="-10" width="20" height="20">
+                      <rect x="-10" y="-10" width="20" height="20" fill="#fff"/>
+                      <path d="M0-8.5c-3 4 3 13 0 17" fill="none" stroke="#000" stroke-width="1.6"/>
+                    </mask>
+                    <g transform="translate(12 12) rotate(25)"><ellipse rx="6" ry="8.5" fill="currentColor" stroke="none" mask="url(#rez-kerbe)"/></g>
+                  </svg>
+                  <span>{{ 'hub.eher_dunkel' | t }}</span>
+                </button>
+              </div>
+              <p class="schritt-hinweis">{{ 'hub_espresso.temperatur_vor' | t }} <strong id="hinweis-temperatur">{{ 'hub_espresso.hinweis_hell' | t }}</strong>{{ 'hub_espresso.temperatur_nach' | t }}</p>
+            </div>
+
+          </div>
+        </div>
+
+        <p class="rezeptur-satz" id="rezeptur-satz"></p>
+      </div>
+
+      <div class="raster-kopf">
+        <div>
+          <h3 class="raster-titel">{{ 'hub_espresso.routine_titel' | t }}</h3>
+          <p class="raster-lead">{{ 'hub_espresso.routine_lead' | t }}</p>
+        </div>
+        <div class="reihe-knoepfe reihe-knoepfe--hell" id="routine-pfeile" hidden>
+          <button class="reihe-knopf" type="button" data-richtung="-1" aria-label="{{ 'hub.zurueck' | t }}" aria-controls="routine-raster" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <button class="reihe-knopf" type="button" data-richtung="1" aria-label="{{ 'hub.weiter' | t }}" aria-controls="routine-raster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+      </div>
+
+      <div class="schritte-raster schritte-raster--routine" id="routine-raster"
+           tabindex="0" role="region" aria-label="{{ 'hub_espresso.routine_aria' | t }}">
+        {%- for i in (1..5) -%}
+          {%- liquid
+            assign k = 'hub_espresso.schritt_' | append: i
+            assign k_titel = k | append: '_titel'
+            assign k_text = k | append: '_text'
+            assign k_alt = k | append: '_alt'
+            assign bild_id = 'routine_bild_' | append: i
+            assign bild = section.settings[bild_id]
+            assign alt = k_alt | t
+            capture tiefer
+              if i == 1
+                if hat_guides
+                  echo '<li><a href="#baristaguides">'
+                  echo 'hub_espresso.tiefer_guides' | t
+                  echo '</a></li>'
+                elsif finder != blank
+                  echo '<li><a href="' | append: finder.url | append: '">'
+                  echo 'hub_espresso.station_maschinen_titel' | t
+                  echo '</a></li>'
+                endif
+                if seite_wasser != blank
+                  echo '<li><a href="' | append: seite_wasser.url | append: '">'
+                  echo 'hub_espresso.tiefer_wasser' | t
+                  echo '</a></li>'
+                endif
+              elsif i == 5
+                if seite_koffein != blank
+                  echo '<li><a href="' | append: seite_koffein.url | append: '">'
+                  echo 'hub_espresso.tiefer_koffein' | t
+                  echo '</a></li>'
+                endif
+                if artikel_koffein != blank
+                  echo '<li><a href="' | append: artikel_koffein.url | append: '">'
+                  echo 'hub.koffein_artikel' | t
+                  echo '</a></li>'
+                endif
+              endif
+            endcapture
+          -%}
+        <article class="schritt-karte">
+          <div class="schritt-karte-bild"><span class="nummer">0{{ i }}</span>
+            {%- if bild != blank %}
+            {{ bild | image_url: width: 900 | image_tag: loading: 'lazy', widths: '450, 600, 900', sizes: '(min-width: 860px) 30vw, 100vw', alt: alt }}
+            {%- endif %}
+          </div>
+          <div class="schritt-karte-koerper">
+            <h4>{{ k_titel | t }}</h4>
+            <p>
+              {%- if i == 5 -%}
+              <strong id="ziel-satz">{{ 'hub_espresso.ziel' | t: n: 45 }}</strong>
+              {% endif -%}
+              {{ k_text | t }}</p>
+            {%- if tiefer != blank %}
+            <ul class="schritt-tiefer">{{ tiefer }}</ul>
+            {%- endif %}
+          </div>
+        </article>
+        {%- endfor %}
+      </div>
+
+      <button class="btn btn--hell mehr-knopf" type="button" id="routine-mehr"
+              aria-expanded="false" aria-controls="routine-raster"
+              data-text-zu="{{ 'hub.alle_schritte' | t }}" data-text-auf="{{ 'hub.weniger' | t }}" hidden>
+        <span class="wort">{{ 'hub.alle_schritte' | t }}</span>
+      </button>
+    </div>
+
+    <div class="merksatz" data-reveal style="max-width:none">
+      {{ 'hub_espresso.merksatz_html' | t }}
+    </div>
+  </div>
+</section>
+
+{%- if n_bohnen > 0 %}
+<section class="sektion" id="bohnen">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{% if nr_bohnen < 10 %}0{% endif %}{{ nr_bohnen }} · {{ 'hub_espresso.bohnen_eyebrow' | t }}</span>
+        <h2 class="titel-breit" data-split="zeilen">{{ 'hub_espresso.bohnen_titel_html' | t }}</h2>
+        <p>{{ 'hub_espresso.bohnen_text' | t }}</p>
+      </div>
+      <a class="btn btn--linie" href="{{ kollektion.url }}" data-pfeil>{{ 'hub.alle_anzeigen' | t }}</a>
+    </div>
+
+    <div class="produkt-raster" data-batch>
+      {%- for p in kollektion.products -%}
+      {%- render 'bw-produkt-karte', p: p -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if n_kacheln > 0 %}
+<section class="sektion" id="getraenke" style="padding-top:clamp(40px,5vw,70px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{% if nr_rezepte < 10 %}0{% endif %}{{ nr_rezepte }} · {{ 'hub_espresso.rezepte_eyebrow' | t }}</span>
+        <h2 class="titel-breit" data-split="zeilen">{{ 'hub_espresso.rezepte_titel_html' | t }}</h2>
+        <p>{{ 'hub_espresso.rezepte_text' | t }}</p>
+      </div>
+      <a class="btn btn--linie" href="{{ blogs['kaffeerezepte'].url }}" data-pfeil>{{ 'hub.alle_rezepte' | t }}</a>
+    </div>
+
+    <div class="filterleiste" id="getraenke-filter" role="group" aria-label="{{ 'hub_espresso.filter_aria' | t }}" hidden>
+      <button class="filter-knopf ist-aktiv" type="button" data-filter="alle" aria-pressed="true">{{ 'hub_espresso.filter_alle' | t }}</button>
+      {%- for g in gruppen -%}
+        {%- assign marke = ',' | append: g | append: ',' -%}
+        {%- if gruppen_da contains marke -%}
+        {%- assign k = 'hub_espresso.gruppe_' | append: g %}
+      <button class="filter-knopf" type="button" data-filter="{{ g }}" aria-pressed="false">{{ k | t }}</button>
+        {%- endif -%}
+      {%- endfor %}
+    </div>
+
+    <div class="rezepte-raster rezepte-raster--filterbar rezepte-raster--vier" id="getraenke-raster">
+      {{- kacheln -}}
+    </div>
+
+    <button class="btn btn--linie mehr-knopf" type="button" id="getraenke-mehr"
+            aria-expanded="false" aria-controls="getraenke-raster"
+            data-text-zu="{{ 'hub_espresso.alle_rezepte_zahl' | t: n: '{n}' }}" data-text-auf="{{ 'hub.weniger' | t }}" hidden>
+      <span class="wort">{{ 'hub_espresso.alle_rezepte_zahl' | t: n: n_kacheln }}</span>
+    </button>
+  </div>
+</section>
+{%- endif %}
+
+{%- if hat_maschinen %}
+<section class="sektion" id="baristaguides" style="padding-top:clamp(40px,5vw,70px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{% if nr_maschinen < 10 %}0{% endif %}{{ nr_maschinen }} · {{ 'hub_espresso.maschinen_eyebrow' | t }}</span>
+        <h2 class="titel-breit" data-split="zeilen">{{ 'hub_espresso.maschinen_titel_html' | t }}</h2>
+        <p>{{ 'hub_espresso.maschinen_text' | t }}{% if hat_guides %} {{ 'hub_espresso.maschinen_text_guides' | t }}{% endif %}</p>
+      </div>
+    </div>
+
+    <div class="brewguides brewguides--vier" id="barista-raster" data-batch>
+      {%- if finder != blank %}
+      <div class="seitenbox">
+        <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+        <span class="eyebrow">{{ 'hub.finder' | t }}</span>
+        <h4>{{ 'hub_espresso.finder_titel' | t }}</h4>
+        <p>{% if hat_guides %}{{ 'hub_espresso.finder_text_guides' | t }}{% else %}{{ 'hub_espresso.finder_text' | t }}{% endif %}</p>
+        <a class="btn btn--hell" href="{{ finder.url }}" data-pfeil>{{ 'hub_espresso.finder_knopf' | t }}</a>
+      </div>
+      {%- endif %}
+    </div>
+
+    <button class="btn btn--linie mehr-knopf" type="button" id="barista-mehr"
+            aria-expanded="false" aria-controls="barista-raster"
+            data-text-zu="{{ 'hub_espresso.alle_bauarten' | t }}" data-text-auf="{{ 'hub.weniger' | t }}" hidden>
+      <span class="wort">{{ 'hub_espresso.alle_bauarten' | t }}</span>
+    </button>
+  </div>
+</section>
+{%- endif %}
+
+{%- if wissen != blank %}
+<section class="sektion wissen" id="espresso-wissen">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{% if nr_wissen < 10 %}0{% endif %}{{ nr_wissen }} · {{ 'hub_espresso.wissen_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'hub.tiefer_titel' | t }}</h2>
+        <p>{{ 'hub.wissen_text' | t }}</p>
+      </div>
+      {%- if blogs['kaffeewissen'] != blank %}
+      <a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}" data-pfeil>{{ 'hub.alle_beitraege' | t }}</a>
+      {%- endif %}
+    </div>
+
+    <div class="beitraege" data-batch>
+      {{ wissen }}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{% render 'bw-hub-fragen' %}
+
+{%- assign andere = pages['filterkaffee'] -%}
+{%- if andere != blank %}
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <div class="hub-band" data-reveal>
+      <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+      <div>
+        <span class="eyebrow" style="opacity:.85">{{ 'hub.band_eyebrow' | t }}</span>
+        <h2 style="margin-top:14px">{{ 'hub_espresso.band_titel_html' | t }}</h2>
+        <p>{{ 'hub_espresso.band_text' | t }}</p>
+      </div>
+      <a class="btn btn--hell" href="{{ andere.url }}" data-pfeil>{{ 'shop.filter_knopf' | t }}</a>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{% render 'bw-hub-schema' %}
+
+{{ 'faehren.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faehren.js' | asset_url }}" defer></script>
+<script src="{{ 'hubs.js' | asset_url }}" defer></script>
+<script src="{{ 'atmosphaere.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.BWHub) return;
+    BWHub.espresso();
+    BWHub.klappRaster('#routine-raster', '#routine-mehr', { hart: true });
+    BWHub.schritteBand('#routine-raster', '#routine-pfeile');
+    BWHub.getraenkeFilter('#getraenke-raster', '#getraenke-filter', '#getraenke-mehr');
+    BWHub.baristaRaster('#barista-raster');
+    // Aufklappen erst ab drei Guide-Karten, wie im Prototyp.
+    BWHub.klappRaster('#barista-raster', '#barista-mehr', {
+      gilt: function () { return document.querySelectorAll('#barista-raster > .brewguide').length > 2; }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Espresso-Hub",
+  "settings": [
+    { "type": "header", "content": "Fotos der Espresso-Routine" },
+    { "type": "paragraph", "content": "Platzhalter aus den Rezepten, bis es eigene Aufnahmen gibt. Den Ausschnitt setzt der Fokuspunkt des Bildes." },
+    { "type": "image_picker", "id": "routine_bild_1", "label": "Schritt 1: Aufheizen und spülen" },
+    { "type": "image_picker", "id": "routine_bild_2", "label": "Schritt 2: Mahlen und wiegen" },
+    { "type": "image_picker", "id": "routine_bild_3", "label": "Schritt 3: Verteilen und tampern" },
+    { "type": "image_picker", "id": "routine_bild_4", "label": "Schritt 4: Einspannen und starten" },
+    { "type": "image_picker", "id": "routine_bild_5", "label": "Schritt 5: Wiegen, probieren, anpassen" },
+    { "type": "header", "content": "Tiefer rein" },
+    { "type": "article_list", "id": "artikel", "label": "Artikel", "limit": 3, "info": "Leer: Flat White, Welche Milch und Café Crème wie im Prototyp, sonst die neusten Wissensartikel zum Thema Espresso." }
+  ]
+}
+{% endschema %}

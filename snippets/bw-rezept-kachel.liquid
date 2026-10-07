@@ -1,0 +1,51 @@
+{%- comment -%}
+  Rezeptkarte der Hubs (seit 0.9.0), Markup wie im Raster #getraenke von
+  espresso.html und #rezepte von filterkaffee.html der Werkstatt: Bild,
+  Bewertung (nur mit Stimmen) und Dauer, Kurztitel, «Rezept ansehen».
+
+  a       das Rezept (Artikel aus kaffeerezepte)
+  gruppe  optional klassiker, signature oder spirits: Dann steht die Karte
+          in div.rezept-kachel[data-art] wie auf dem Espresso-Hub, wo
+          BWHub.getraenkeFilter danach filtert. Ohne Gruppe steht der Anker
+          allein (Filter-Hub). Keine weitere Hülle, die Karten bleiben
+          direkte Kinder des Rasters.
+  Aufruf: {%- render 'bw-rezept-kachel', a: artikel, gruppe: 'signature' -%}
+{%- endcomment -%}
+{%- liquid
+  assign mf = a.metafields.custom
+  assign titel = mf.kurztitel.value | default: a.title
+  assign basis = mf.recipe_base.value
+  assign iso = basis.iso_total_time.value | default: basis.prep_time_iso.value
+  capture dauer
+    render 'bw-dauer', iso: iso
+  endcapture
+  assign dauer = dauer | strip
+  assign stimmen = mf.rating_count.value | default: 0 | plus: 0
+  assign bewertung = ''
+  if stimmen > 0 and mf.rating_average.value != blank
+    capture bewertung
+      render 'bw-zahl', wert: mf.rating_average.value, stellen: 1
+    endcapture
+  endif
+-%}
+{%- if gruppe != blank -%}
+<div class="rezept-kachel" data-art="{{ gruppe }}">
+{%- endif %}
+        <a class="rezept" href="{{ a.url }}">
+          <div class="rezept-bild">
+            {%- if a.image %}
+            {{ a.image | image_url: width: 640 | image_tag: loading: 'lazy', widths: '320, 480, 640', sizes: '(min-width: 1080px) 25vw, (min-width: 620px) 50vw, 100vw', alt: a.image.alt }}
+            {%- endif %}
+          </div>
+          <div class="rezept-koerper">
+            <div class="rezept-meta">
+              {%- if bewertung != blank -%}<span class="sterne">★ {{ bewertung }}</span>{%- endif -%}
+              {%- if dauer != blank -%}<span class="dauer">{{ dauer }}</span>{%- endif -%}
+            </div>
+            <h3>{{ titel | escape }}</h3>
+            <span class="mehr">{{ 'hub.rezept_ansehen' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+{%- if gruppe != blank %}
+      </div>
+{%- endif -%}

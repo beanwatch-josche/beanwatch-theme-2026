@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "haupt": {
+      "type": "bw-hub-espresso",
+      "settings": {
+        "routine_bild_1": "shopify://shop_images/espresso-tonic-recipe-step2.webp",
+        "routine_bild_2": "shopify://shop_images/mahlgrad-anpassen.webp",
+        "routine_bild_3": "shopify://shop_images/beanwatch-julia-extrahiert-espresso-fuer-cappuccino-freddo.webp",
+        "routine_bild_4": "shopify://shop_images/bw-iced-latte-step2.webp",
+        "routine_bild_5": "shopify://shop_images/cafe-creme-mit-kaffeewaage.webp"
+      }
+    }
+  },
+  "order": ["haupt"]
+}
