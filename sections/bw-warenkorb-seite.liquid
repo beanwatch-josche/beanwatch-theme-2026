@@ -10,7 +10,7 @@
   <div class="wrap">
     {%- if cart.item_count == 0 %}
     <p>{{ 'warenkorb.leer' | t }}</p>
-    <p><a class="btn btn--primaer" href="{{ routes.all_products_collection_url }}" data-pfeil>{{ 'warenkorb.weiter_einkaufen' | t }}</a></p>
+    <p><a class="btn btn--primaer" href="{{ routes.collections_url }}" data-pfeil>{{ 'warenkorb.weiter_einkaufen' | t }}</a></p>
     {%- else %}
     <form action="{{ routes.cart_url }}" method="post" class="bw-warenkorb-form">
       <ul class="bw-zeilen">

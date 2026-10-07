@@ -7,6 +7,24 @@
 {%- liquid
   assign marke = 'Beanwatch'
   assign titel = page_title
+  assign beschreibung = page_description
+  # Die Shop-Seite (bw-shop) gibt es unter /collections und
+  # /collections/all. Wie im bisherigen Shop zeigt das Menü auf
+  # /collections; beide tragen den Titel des Prototyps und die
+  # Meta-Beschreibung aus dem Shop-Metafeld seo.collections_description.
+  assign ist_shop = false
+  if request.page_type == 'list-collections'
+    assign ist_shop = true
+  elsif request.page_type == 'collection' and collection.handle == 'all'
+    assign ist_shop = true
+  endif
+  if ist_shop
+    assign titel = 'shop.seitentitel' | t
+    assign beschreibung = shop.metafields.seo.collections_description.value
+    if beschreibung == blank
+      assign beschreibung = 'shop.meta' | t
+    endif
+  endif
   if current_tags
     assign schlagworte = current_tags | join: ', '
     assign titel = titel | append: ' · ' | append: schlagworte
@@ -15,14 +33,18 @@
     assign seite = 'allgemein.seite' | t: nummer: current_page
     assign titel = titel | append: ' · ' | append: seite
   endif
-  comment
-    Getaggte Blogseiten (/blogs/kaffeerezepte/tagged/…) zeigen auf die
-    Blogseite, wie im bisherigen Shop. Sonst zählt Google jede Tag-Seite
-    als eigene Seite mit fast gleichem Inhalt.
-  endcomment
+  # Getaggte Blog- und Kollektionsseiten (/blogs/kaffeerezepte/tagged/…)
+  # zeigen auf die Blog- oder Kollektionsseite, wie im bisherigen Shop.
+  # Sonst zählt Google jede Tag-Seite als eigene Seite mit fast gleichem
+  # Inhalt.
   assign kanonisch = canonical_url
   if request.page_type == 'blog' and current_tags
     assign kanonisch = request.origin | append: blog.url
+  elsif request.page_type == 'collection' and current_tags
+    assign kanonisch = request.origin | append: collection.url
+  endif
+  if ist_shop
+    assign kanonisch = request.origin | append: routes.collections_url
   endif
   if request.page_type == 'index'
     assign voll = shop.name
@@ -33,8 +55,8 @@
   endif
 -%}
 <title>{{ voll | escape }}</title>
-{%- if page_description != blank %}
-<meta name="description" content="{{ page_description | escape }}">
+{%- if beschreibung != blank %}
+<meta name="description" content="{{ beschreibung | escape }}">
 {%- endif %}
 <link rel="canonical" href="{{ kanonisch }}">
 {%- if settings.favicon != blank %}
@@ -46,7 +68,7 @@
 <meta property="og:url" content="{{ kanonisch }}">
 <meta property="og:title" content="{{ voll | escape }}">
 <meta property="og:type" content="{% if request.page_type == 'product' %}product{% elsif request.page_type == 'article' %}article{% else %}website{% endif %}">
-<meta property="og:description" content="{{ page_description | default: shop.description | escape }}">
+<meta property="og:description" content="{{ beschreibung | default: shop.description | escape }}">
 {%- if page_image %}
 <meta property="og:image" content="https:{{ page_image | image_url: width: 1200 }}">
 <meta property="og:image:width" content="1200">

@@ -1,0 +1,32 @@
+{%- comment -%}
+  Sonne und Wellen des hellen Seitenkopfs (.seitenkopf--hell), wie in
+  rezepte.html und shop.html der Werkstatt. basis.js lässt die Strahlen
+  drehen und die Wellen laufen.
+  teil   'sonne' (vor dem .wrap) oder 'wellen' (nach dem .wrap)
+  Aufruf: {%- render 'bw-sonne-wellen', teil: 'sonne' -%}
+{%- endcomment -%}
+{%- if teil == 'sonne' -%}
+<svg class="kopf-sonne" data-sonne viewBox="0 0 200 200" fill="none" aria-hidden="true">
+    <g data-strahlen stroke="#FF4612" stroke-width="3" stroke-linecap="round" opacity=".45">
+      <path d="M100.0 34.0L100.0 10.0"/><path d="M126.8 35.3L131.8 23.3"/><path d="M146.7 53.3L163.6 36.4"/><path d="M164.7 73.2L176.7 68.2"/>
+      <path d="M166.0 100.0L190.0 100.0"/><path d="M164.7 126.8L176.7 131.8"/><path d="M146.7 146.7L163.6 163.6"/><path d="M126.8 164.7L131.8 176.7"/>
+      <path d="M100.0 166.0L100.0 190.0"/><path d="M73.2 164.7L68.2 176.7"/><path d="M53.3 146.7L36.4 163.6"/><path d="M35.3 126.8L23.3 131.8"/>
+      <path d="M34.0 100.0L10.0 100.0"/><path d="M35.3 73.2L23.3 68.2"/><path d="M53.3 53.3L36.4 36.4"/><path d="M73.2 35.3L68.2 23.3"/>
+    </g>
+    <circle data-kern cx="100" cy="100" r="46" fill="#FF4612" opacity=".14"/>
+    <circle cx="100" cy="100" r="46" stroke="#FF4612" stroke-width="2.5" opacity=".5"/>
+  </svg>
+{%- elsif teil == 'wellen' -%}
+{%- comment -%} Drei Schichten Cyanblau, 32 %, 55 % und deckend, wie im Hero der Startseite. {%- endcomment -%}
+<div class="kopf-wellen" data-wellen aria-hidden="true">
+    <svg class="welle-hinten" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path d="M0,62 C240,30 480,94 720,62 C960,30 1200,94 1440,62 C1680,30 1920,94 2160,62 C2400,30 2640,94 2880,62 L2880,120 L0,120 Z" fill="#4FC4E2"/>
+    </svg>
+    <svg class="welle-mitte" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path d="M0,80 C240,54 480,106 720,80 C960,54 1200,106 1440,80 C1680,54 1920,106 2160,80 C2400,54 2640,106 2880,80 L2880,120 L0,120 Z" fill="#4FC4E2"/>
+    </svg>
+    <svg class="welle-vorne" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path d="M0,98 C240,80 480,116 720,98 C960,80 1200,116 1440,98 C1680,80 1920,116 2160,98 C2400,80 2640,116 2880,98 L2880,120 L0,120 Z" fill="#4FC4E2"/>
+    </svg>
+  </div>
+{%- endif -%}

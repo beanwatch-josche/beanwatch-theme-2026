@@ -1,0 +1,13 @@
+{%- comment -%}
+  Eine Zahl als Wort in der Sprache der Seite («zehn», «ten», «dix»), klein
+  geschrieben; ab 13 und bei 0 bleibt sie eine Ziffer.
+  Aufruf: {%- capture wort -%}{%- render 'bw-zahlwort', n: 10 -%}{%- endcapture -%}
+{%- endcomment -%}
+{%- liquid
+  if n > 0 and n <= 12
+    assign schluessel = 'shop.zahl_' | append: n
+    echo schluessel | t
+  else
+    echo n
+  endif
+-%}

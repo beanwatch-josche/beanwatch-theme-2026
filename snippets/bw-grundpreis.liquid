@@ -4,6 +4,7 @@
   preis   in Rappen: variant.price oder selling_plan_allocation.price
   v       die Variante; die Menge in Gramm liefert bw-gramm. Ohne sie
           bleibt die Ausgabe leer.
+  kurz    true für die Produktkarten: nur «CHF 9.60 / 100 g»
 
   Aufruf: {%- render 'bw-grundpreis', preis: variante.price, v: variante -%}
 {%- endcomment -%}
@@ -12,7 +13,11 @@
   assign gramm = gramm | strip | plus: 0
   if gramm > 0
     assign je_100 = preis | times: 100.0 | divided_by: gramm | round | money
-    assign menge = gramm | append: ' g'
-    echo 'produkt.grundpreis' | t: menge: menge, preis: je_100
+    if kurz
+      echo 'produkt.grundpreis_kurz' | t: preis: je_100
+    else
+      assign menge = gramm | append: ' g'
+      echo 'produkt.grundpreis' | t: menge: menge, preis: je_100
+    endif
   endif
 -%}

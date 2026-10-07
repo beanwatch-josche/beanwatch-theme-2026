@@ -1,21 +1,10 @@
-{%- assign titel = 'kopf.shop' | t -%}
-{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel -%}
-<section class="sektion">
-  <div class="wrap">
-    <ul class="bw-rohbau-raster">
-      {%- for c in collections %}
-      {%- if c.all_products_count > 0 %}
-      <li>
-        <a href="{{ c.url }}">
-          {%- if c.featured_image %}{{ c.featured_image | image_url: width: 600 | image_tag: loading: 'lazy', alt: c.title }}{% endif %}
-          <span class="bw-rohbau-titel">{{ c.title }}</span>
-        </a>
-      </li>
-      {%- endif %}
-      {%- endfor %}
-    </ul>
-  </div>
-</section>
+{%- comment -%}
+  /collections: die Shop-Seite (bw-shop). Im Menü des bisherigen Shops
+  zeigt «Shop» hierher, deshalb ist das die kanonische Adresse; die
+  Meta-Beschreibung kommt wie bisher aus shop.metafields.seo
+  .collections_description (bw-kopfdaten).
+{%- endcomment -%}
+{% render 'bw-shop' %}
 {% schema %}
-{ "name": "Kollektionen (Rohbau)", "settings": [] }
+{ "name": "Shop", "settings": [] }
 {% endschema %}

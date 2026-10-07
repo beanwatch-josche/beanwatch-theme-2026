@@ -107,6 +107,14 @@
   .bw-schublade-schleier,.bw-schublade-panel{transition:none;}
 }
 
+/* --- Produktkarten und Kollektionen (seit 0.5.0) -------------------------- */
+/* Das «+» der Karte ist im Theme ein Formular auf /cart/add. Ausverkauft
+   ist der Knopf gesperrt und färbt sich beim Überfahren nicht. */
+.produkt-kaufform{margin:0;}
+.produkt-kaufen:disabled,
+.produkt:hover .produkt-kaufen:disabled{background:var(--hellorange);color:var(--redorange);opacity:.4;cursor:not-allowed;transform:none;}
+.bw-blaettern{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;margin-top:clamp(32px,4vw,48px);}
+
 /* --- Rohbau-Vorlagen ------------------------------------------------------ */
 .bw-rohbau-links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:12px;}
 .bw-rohbau-raster{

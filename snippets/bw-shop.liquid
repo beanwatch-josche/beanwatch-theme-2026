@@ -1,0 +1,264 @@
+{%- comment -%}
+  Die ganze Shop-Seite, übertragen aus shop.html der Werkstatt. Gerendert
+  von bw-kollektionen (/collections, im Menü «Shop» wie im bisherigen
+  Shop) und von bw-kollektion für /collections/all.
+
+  Heller Kopf mit Sonne und Wellen, dann vier Abschnitte aus den
+  Kollektionen, jeweils in ihrer Reihenfolge im Shop:
+    #espresso      Kollektion espresso ohne Decaf, Knopf zur Espresso-Welt
+    #filterkaffee  Kollektion filterkaffee ohne Decaf, Knopf zur
+                   Filterkaffee-Welt, dazu die Karte «Noch mehr?», wenn in
+                   der Reihe Platz ist
+    #decaf         Kollektion decaf-coffee, dunkel mit Sternen
+                   (atmosphaere.js), «Koffein ausrechnen» nur, wenn es die
+                   Seite koffeinrechner gibt
+    #zubehoer      Kollektion zubehor
+  Ein Abschnitt ohne Karten fällt weg, ebenso sein Sprungknopf im Kopf.
+  Die Hub-Knöpfe erscheinen nur, wenn es die Seiten espresso und
+  filterkaffee gibt.
+
+  Die Überschrift zählt mit, was die Seite zeigt: Kaffees (alle Karten in
+  Espresso, Filter und Decaf) und Bücher (Karten aus Zubehör, die auch in
+  der Kollektion bucher stehen), in Zahlwörtern bis zwölf. Heute:
+  «Zehn Kaffees, ein Buch.»
+
+  Schema: BreadcrumbList und ItemList aller Produkte der Seite.
+{%- endcomment -%}
+{%- liquid
+  assign k_espresso = collections['espresso']
+  assign k_filter = collections['filterkaffee']
+  assign k_decaf = collections['decaf-coffee']
+  assign k_zubehoer = collections['zubehor']
+  assign decaf_ids = ''
+  if k_decaf != blank
+    assign decaf_ids = k_decaf.products | map: 'id'
+  endif
+  assign buch_id = collections['bucher'].id
+
+  assign n_kaffees = 0
+  assign n_buecher = 0
+  assign n_filter = 0
+  assign urls = ''
+
+  capture karten_espresso
+    for p in k_espresso.products
+      unless decaf_ids contains p.id
+        render 'bw-produkt-karte', p: p
+        assign n_kaffees = n_kaffees | plus: 1
+        assign urls = urls | append: p.url | append: '|'
+      endunless
+    endfor
+  endcapture
+
+  capture karten_filter
+    for p in k_filter.products
+      unless decaf_ids contains p.id
+        render 'bw-produkt-karte', p: p
+        assign n_kaffees = n_kaffees | plus: 1
+        assign n_filter = n_filter | plus: 1
+        assign urls = urls | append: p.url | append: '|'
+      endunless
+    endfor
+  endcapture
+
+  capture karten_decaf
+    for p in k_decaf.products
+      render 'bw-produkt-karte', p: p
+      assign n_kaffees = n_kaffees | plus: 1
+      assign urls = urls | append: p.url | append: '|'
+    endfor
+  endcapture
+
+  capture karten_zubehoer
+    for p in k_zubehoer.products
+      render 'bw-produkt-karte', p: p
+      assign p_ids = p.collections | map: 'id'
+      if buch_id != blank and p_ids contains buch_id
+        assign n_buecher = n_buecher | plus: 1
+      endif
+      assign urls = urls | append: p.url | append: '|'
+    endfor
+  endcapture
+
+  # Überschrift «Zehn Kaffees, ein Buch.»
+  capture wort
+    render 'bw-zahlwort', n: n_kaffees
+  endcapture
+  if n_kaffees == 1
+    assign teil_kaffees = 'shop.kaffees_eins' | t: zahl: wort
+  else
+    assign teil_kaffees = 'shop.kaffees_mehr' | t: zahl: wort
+  endif
+  capture wort
+    render 'bw-zahlwort', n: n_buecher
+  endcapture
+  if n_buecher == 1
+    assign teil_buecher = 'shop.buecher_eins' | t: zahl: wort
+  else
+    assign teil_buecher = 'shop.buecher_mehr' | t: zahl: wort
+  endif
+  if n_kaffees > 0 and n_buecher > 0
+    assign titel = 'shop.titel_zwei' | t: a: teil_kaffees, b: teil_buecher
+  elsif n_kaffees > 0
+    assign titel = 'shop.titel_eins' | t: a: teil_kaffees
+  elsif n_buecher > 0
+    assign titel = 'shop.titel_eins' | t: a: teil_buecher
+  else
+    assign titel = 'shop.titel_leer' | t
+  endif
+  assign erstes = titel | slice: 0 | upcase
+  assign titel = titel | slice: 1, 200 | prepend: erstes
+
+  # Die Karte «Noch mehr?» füllt nur eine Lücke in der Viererreihe.
+  assign rest = n_filter | modulo: 4
+  assign seite = request.origin | append: routes.collections_url
+-%}
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {%- render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'produkt.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'produkt.brot_start' | t }}</a><span class="teiler">·</span><span>{{ 'kopf.shop' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'shop.eyebrow' | t }}</span>
+    <h1 data-split="zeilen" style="max-width:15ch">{{ titel }}</h1>
+    <p class="lead">{{ 'shop.lead' | t }}</p>
+    <div class="kopf-aktionen-reihe">
+      {%- if karten_espresso != blank %}
+      <a class="btn btn--linie" href="#espresso">{{ 'kopf.espresso' | t }}</a>
+      {%- endif %}
+      {%- if karten_filter != blank %}
+      <a class="btn btn--linie" href="#filterkaffee">{{ 'kopf.filterkaffee' | t }}</a>
+      {%- endif %}
+      {%- if karten_decaf != blank %}
+      <a class="btn btn--linie" href="#decaf">{{ 'kopf.decaf' | t }}</a>
+      {%- endif %}
+      {%- if karten_zubehoer != blank %}
+      <a class="btn btn--linie" href="#zubehoer">{{ 'shop.zubehoer' | t }}</a>
+      {%- endif %}
+    </div>
+  </div>
+  {%- render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+{%- if karten_espresso != blank %}
+<section class="sektion" id="espresso" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'shop.espresso_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'shop.espresso_titel_html' | t }}</h2>
+        <p>{{ 'shop.espresso_text' | t }}</p>
+      </div>
+      {%- if pages['espresso'] != blank %}
+      <a class="btn btn--linie" href="{{ pages['espresso'].url }}" data-pfeil>{{ 'shop.espresso_knopf' | t }}</a>
+      {%- endif %}
+    </div>
+
+    <div class="produkt-raster" data-batch>
+      {{ karten_espresso }}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if karten_filter != blank %}
+<section class="sektion" id="filterkaffee" style="background:#fff;border-block:1px solid var(--linie)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'shop.filter_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'shop.filter_titel_html' | t }}</h2>
+        <p>{{ 'shop.filter_text' | t }}</p>
+      </div>
+      {%- if pages['filterkaffee'] != blank %}
+      <a class="btn btn--linie" href="{{ pages['filterkaffee'].url }}" data-pfeil>{{ 'shop.filter_knopf' | t }}</a>
+      {%- endif %}
+    </div>
+
+    <div class="produkt-raster" data-batch>
+      {{ karten_filter }}
+      {%- if rest != 0 %}
+      <article class="produkt" style="border-style:dashed;display:grid;place-items:center;min-height:240px">
+        <div style="text-align:center;padding:30px">
+          <p style="font-weight:700;margin-bottom:8px">{{ 'shop.mehr_titel' | t }}</p>
+          <p style="font-size:.88rem;opacity:.7;margin-bottom:18px">{{ 'shop.mehr_text' | t }}</p>
+          <a class="btn btn--linie" href="{{ routes.root_url }}#newsletter">{{ 'shop.mehr_knopf' | t }}</a>
+        </div>
+      </article>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{%- if karten_decaf != blank %}
+<section class="sektion decaf" id="decaf">
+  <div class="atmo" data-atmo="sterne" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'shop.decaf_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'shop.decaf_titel_html' | t }}</h2>
+        <p style="opacity:.88">{{ 'shop.decaf_text' | t }}</p>
+      </div>
+    </div>
+
+    <div class="produkt-raster" data-batch style="grid-template-columns:repeat(2,1fr);max-width:760px">
+      {{ karten_decaf }}
+    </div>
+    {%- if pages['koffeinrechner'] != blank %}
+
+    <div style="margin-top:clamp(28px,3.4vw,44px)">
+      <a class="btn btn--hell" href="{{ pages['koffeinrechner'].url }}" data-pfeil>{{ 'shop.decaf_knopf' | t }}</a>
+    </div>
+    {%- endif %}
+  </div>
+</section>
+{%- endif %}
+
+{%- if karten_zubehoer != blank %}
+<section class="sektion" id="zubehoer">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'shop.zubehoer_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'shop.zubehoer_titel_html' | t }}</h2>
+        <p>{{ 'shop.zubehoer_text' | t }}</p>
+      </div>
+    </div>
+
+    <div class="produkt-raster" data-batch>
+      {{ karten_zubehoer }}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": {{ 'rezept.schema_start' | t | json }}, "item": {{ request.origin | append: routes.root_url | json }} },
+    { "@type": "ListItem", "position": 2, "name": {{ 'kopf.shop' | t | json }}, "item": {{ seite | json }} }
+  ]
+}
+</script>
+{%- assign urls = urls | split: '|' %}
+{%- if urls.size > 0 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": [
+    {%- for u in urls %}
+    { "@type": "ListItem", "position": {{ forloop.index }}, "url": {{ request.origin | append: u | json }} }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]
+}
+</script>
+{%- endif %}
+{%- if karten_decaf != blank %}
+<script src="{{ 'atmosphaere.js' | asset_url }}" defer></script>
+{%- endif %}

@@ -1,0 +1,112 @@
+{%- comment -%}
+  Produktkarte wie article.produkt in shop.html der Werkstatt.
+
+  p   das Produkt
+
+  Kartentexte (seit 07.10.2026) aus custom.karte_fahne, karte_herkunft und
+  karte_noten (Liste). Fehlen sie, gilt: Herkunft aus ursprungsland und
+  region, Noten aus den ersten zwei product_icon_N_label, keine Fahne.
+
+  Farben wie im Prototyp: Fahne und Pillen in Pink bei «Neu» (auch «New»
+  und «Nouveau», damit es vor und nach der Übersetzung des Felds passt),
+  Pillen in Cyan bei Decaf und bei allem, was nicht in der Kollektion
+  alle-kaffees steht (Buch, später Zubehör). Verglichen über IDs, die
+  Handles sind übersetzt.
+
+  Fuss: Preis mit Grundpreis je 100 g. Ohne Gramm-Angabe (Buch) steht dort
+  «Nur noch N Stück», wenn Shopify das Lager führt und höchstens 10 übrig
+  sind. «+» ist ein Formular auf /cart/add mit der ersten verfügbaren
+  Variante; bw-theme.js fängt es ab und öffnet die Schublade, ohne
+  JavaScript führt es zum Warenkorb. Ausverkauft ist der Knopf gesperrt.
+
+  Aufruf: {%- render 'bw-produkt-karte', p: produkt -%}
+{%- endcomment -%}
+{%- liquid
+  assign mf = p.metafields.custom
+  assign v = p.selected_or_first_available_variant
+  assign ids = p.collections | map: 'id'
+  assign ist_kaffee = false
+  if collections['alle-kaffees'] != blank and ids contains collections['alle-kaffees'].id
+    assign ist_kaffee = true
+  endif
+  assign ist_decaf = false
+  if collections['decaf-coffee'] != blank and ids contains collections['decaf-coffee'].id
+    assign ist_decaf = true
+  endif
+
+  assign fahne = mf.karte_fahne.value
+  assign pinke_fahnen = 'Neu,New,Nouveau' | split: ','
+  assign ist_neu = false
+  if fahne != blank and pinke_fahnen contains fahne
+    assign ist_neu = true
+  endif
+  assign pille = 'pill'
+  if ist_neu
+    assign pille = 'pill pill--pink'
+  elsif ist_decaf or ist_kaffee == false
+    assign pille = 'pill pill--cyan'
+  endif
+
+  assign herkunft = mf.karte_herkunft.value
+  if herkunft == blank
+    assign herkunft = mf.ursprungsland.value
+    if mf.region.value != blank
+      if herkunft != blank
+        assign herkunft = herkunft | append: ' · '
+      endif
+      assign herkunft = herkunft | append: mf.region.value
+    endif
+  endif
+
+  assign noten = mf.karte_noten.value
+  if noten == blank
+    assign noten = ''
+    if mf.product_icon_1_label.value != blank
+      assign noten = mf.product_icon_1_label.value
+    endif
+    if mf.product_icon_2_label.value != blank
+      if noten != ''
+        assign noten = noten | append: '|'
+      endif
+      assign noten = noten | append: mf.product_icon_2_label.value
+    endif
+    assign noten = noten | split: '|'
+  endif
+-%}
+<article class="produkt">
+  <div class="produkt-bild">
+    {%- if fahne != blank %}
+    <span class="produkt-fahne{% if ist_neu %} produkt-fahne--pink{% endif %}">{{ fahne | escape }}</span>
+    {%- endif %}
+    {%- if p.featured_image %}
+    {{ p.featured_image | image_url: width: 720 | image_tag: loading: 'lazy', widths: '360, 540, 720', sizes: '(max-width: 620px) calc(100vw - 32px), (max-width: 1080px) 50vw, 300px', alt: p.featured_image.alt | default: p.title }}
+    {%- endif %}
+  </div>
+  <div class="produkt-koerper">
+    {%- if herkunft != blank %}
+    <span class="produkt-herkunft">{{ herkunft | escape }}</span>
+    {%- endif %}
+    <h3><a class="produkt-link" href="{{ p.url }}">{{ p.title | escape }}</a></h3>
+    {%- if noten.size > 0 %}
+    <div class="produkt-noten">{% for n in noten %}<span class="{{ pille }}">{{ n | escape }}</span>{% endfor %}</div>
+    {%- endif %}
+    <div class="produkt-fuss">
+      {%- capture grund -%}
+        {%- if ist_kaffee -%}
+          {%- render 'bw-grundpreis', preis: v.price, v: v, kurz: true -%}
+        {%- endif -%}
+      {%- endcapture -%}
+      {%- liquid
+        assign grund = grund | strip
+        if grund == blank and v.inventory_management == 'shopify' and v.inventory_policy == 'deny' and v.inventory_quantity > 0 and v.inventory_quantity <= 10
+          assign grund = 'shop.nur_noch' | t: anzahl: v.inventory_quantity
+        endif
+      -%}
+      <span class="produkt-preis">{{ v.price | money }}{% if grund != blank %}<span class="grund">{{ grund }}</span>{% endif %}</span>
+      {%- form 'product', p, class: 'produkt-kaufform' %}
+        <input type="hidden" name="id" value="{{ v.id }}">
+        <button class="produkt-kaufen" type="submit" aria-label="{% if v.available %}{{ 'shop.in_den_warenkorb' | t: titel: p.title }}{% else %}{{ 'shop.ausverkauft' | t: titel: p.title }}{% endif %}"{% unless v.available %} disabled{% endunless %}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      {%- endform %}
+    </div>
+  </div>
+</article>

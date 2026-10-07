@@ -20,7 +20,7 @@
   {%- if blogs['kaffeewissen'] != blank -%}
     <a href="{{ blogs['kaffeewissen'].url }}"{% if aktiv == 'wissen' %} class="ist-aktiv" aria-current="page"{% endif %}>{{ 'kopf.wissen' | t }}</a>
   {%- endif -%}
-  <a href="{{ routes.all_products_collection_url }}"{% if aktiv == 'shop' %} class="ist-aktiv" aria-current="page"{% endif %}>{{ 'kopf.shop' | t }}</a>
+  <a href="{{ routes.collections_url }}"{% if aktiv == 'shop' %} class="ist-aktiv" aria-current="page"{% endif %}>{{ 'kopf.shop' | t }}</a>
 {%- endcapture -%}
 
 <div class="fortschritt" id="fortschritt"></div>
