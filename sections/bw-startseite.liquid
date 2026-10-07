@@ -335,7 +335,8 @@
     {%- assign marke = 'start.marke_artikel' | t -%}
     {%- assign cta = 'start.cta_artikel' | t -%}
     {%- assign alle = 'start.alle_artikel' | t -%}
-    {%- render 'bw-beitrag', a: blogs['kaffeewissen'].articles.first, art: 'wissen', modus: 'besser', form: 'breit', marke: marke, cta: cta, alle_url: blogs['kaffeewissen'].url, alle_text: alle -%}
+    {%- assign alle_url = blogs['kaffeewissen'].url | append: '?thema=art:wissen#alles' -%}
+    {%- render 'bw-beitrag', a: blogs['kaffeewissen'].articles.first, art: 'wissen', modus: 'besser', form: 'breit', marke: marke, cta: cta, alle_url: alle_url, alle_text: alle -%}
   {%- endif -%}
   {%- if hat_brew -%}
     {%- assign marke = 'start.marke_brew' | t -%}

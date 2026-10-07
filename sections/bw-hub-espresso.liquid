@@ -493,7 +493,7 @@
         <p>{{ 'hub.wissen_text' | t }}</p>
       </div>
       {%- if blogs['kaffeewissen'] != blank %}
-      <a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}" data-pfeil>{{ 'hub.alle_beitraege' | t }}</a>
+      <a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}?thema=espresso" data-pfeil>{{ 'hub.alle_beitraege' | t }}</a>
       {%- endif %}
     </div>
 

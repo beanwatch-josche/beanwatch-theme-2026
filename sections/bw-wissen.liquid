@@ -1,0 +1,280 @@
+{%- comment -%}
+  Der Wissen-Hub (seit 0.12.0), Vorlage blog (gilt für jeden Blog ohne
+  eigene Vorlage: kaffeewissen, nach dem Start brew-guides und
+  barista-guides), übertragen aus wissen.html der Werkstatt: Markup,
+  Klassen und IDs wie dort, denn hubs.js (Jetski-Sticker), wissen.js
+  (Filter und Raster) und seiten.css brauchen sie.
+
+  Woher die Inhalte kommen:
+    Kopf, Kacheln, Band   Sprachdateien (wissen); der Gedanke des Stickers
+                  als data-text-gedanke für hubs.js
+    Kacheln       Artikel und Rezepte mit der Zahl der veröffentlichten
+                  Beiträge, Brew und Barista Guides nur mit Artikeln, Tools
+                  mit der Zahl der Tool-Seiten; was es nicht gibt, fehlt
+    Bestand       der Datenblock bw-beitraege-daten (alle Blogs und die
+                  Tool-Seiten); Liquid zeichnet die Beiträge dieses Blogs
+                  schon ins HTML (Google, ohne JavaScript), wissen.js
+                  danach alles mit Filterleiste
+  Vorwahl des Filters (Entscheid 07.10.2026): ?thema= wie im Prototyp,
+  sonst nach Blog: brew-guides «Brew Guides», barista-guides «Barista
+  Guides», sonst «Alles». Seitentitel und Meta-Beschreibung aus dem Shop.
+{%- endcomment -%}
+{%- liquid
+  assign blog_wissen = blogs['kaffeewissen']
+  assign blog_rezepte = blogs['kaffeerezepte']
+  assign seite_tools = pages['tools']
+
+  assign n_artikel = 0
+  if blog_wissen != blank
+    assign n_artikel = blog_wissen.articles.size
+  endif
+  assign n_rezepte = 0
+  if blog_rezepte != blank
+    assign n_rezepte = blog_rezepte.articles.size
+  endif
+  assign hat_brew = false
+  if blogs['brew-guides'] != blank and blogs['brew-guides'].articles.size > 0
+    assign hat_brew = true
+  endif
+  assign hat_barista = false
+  if blogs['barista-guides'] != blank and blogs['barista-guides'].articles.size > 0
+    assign hat_barista = true
+  endif
+  assign tool_seiten = 'welche-espressomaschine,welcher-kaffee,welche-filtermethode,koffeinrechner,wasserhaerte' | split: ','
+  assign n_tools = 0
+  for h in tool_seiten
+    if pages[h] != blank
+      assign n_tools = n_tools | plus: 1
+    endif
+  endfor
+
+  if n_artikel == 1
+    assign anzahl_artikel = 'wissen.artikel_anzahl_eins' | t: n: n_artikel
+  else
+    assign anzahl_artikel = 'wissen.artikel_anzahl' | t: n: n_artikel
+  endif
+  if n_rezepte == 1
+    assign anzahl_rezepte = 'wissen.rezepte_anzahl_eins' | t: n: n_rezepte
+  else
+    assign anzahl_rezepte = 'wissen.rezepte_anzahl' | t: n: n_rezepte
+  endif
+  if n_tools == 1
+    assign anzahl_tools = 'wissen.tools_anzahl_eins' | t: n: n_tools
+  else
+    assign anzahl_tools = 'wissen.tools_anzahl' | t: n: n_tools
+  endif
+
+  case blog.handle
+    when 'brew-guides'
+      assign vorwahl = 'art:guide'
+    when 'barista-guides'
+      assign vorwahl = 'art:baristaguide'
+    else
+      assign vorwahl = 'alle'
+  endcase
+  assign ist_wissen = true
+  if blog_wissen != blank and blog.id != blog_wissen.id
+    assign ist_wissen = false
+  endif
+  assign art = 'wissen'
+  if vorwahl == 'art:guide'
+    assign art = 'guide'
+  elsif vorwahl == 'art:baristaguide'
+    assign art = 'baristaguide'
+  endif
+-%}
+
+{%- capture spur -%}<div class="szene-spur sticker-spur sticker-spur--links"><div class="sticker-weg"><div class="sticker-welle"></div></div></div>{%- endcapture -%}
+<section class="seitenkopf seitenkopf--hell seitenkopf--wasser seitenkopf--sticker seitenkopf--jetski" id="kopf-wissen" data-text-gedanke="{{ 'wissen.gedanke' | t }}">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if ist_wissen -%}
+      <span>{{ 'rezept.brot_wissen' | t }}</span>
+      {%- else %}
+      {%- if blog_wissen != blank %}
+      <a href="{{ blog_wissen.url }}">{{ 'rezept.brot_wissen' | t }}</a><span class="teiler">·</span>
+      {%- endif -%}
+      <span>{{ blog.title | escape }}</span>
+      {%- endif %}
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'wissen.eyebrow' | t }}</span>
+    <h1 data-split="zeilen">{{ 'wissen.titel_html' | t }}</h1>
+    <p class="lead">{% if hat_brew %}{{ 'wissen.lead_guides' | t }}{% else %}{{ 'wissen.lead' | t }}{% endif %}</p>
+    <div class="kopf-aktionen-reihe">
+      <a class="btn btn--primaer" href="#alles" data-pfeil>{{ 'wissen.knopf_stoebern' | t }}</a>
+      {%- if seite_tools != blank %}
+      <a class="btn btn--linie" href="{{ seite_tools.url }}">{{ 'wissen.knopf_tools' | t }}</a>
+      {%- endif %}
+    </div>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen', spur: spur %}
+</section>
+
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px);padding-bottom:clamp(30px,4vw,50px)">
+  <div class="wrap">
+    <div class="einstiege" data-batch>
+      {%- if n_artikel > 0 %}
+      <a class="einstieg" href="#alles" data-schnellfilter="art:wissen">
+        <span class="icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 1-2-2Z"/><path d="M20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 0 2-2Z"/>
+          </svg>
+        </span>
+        <h3>{{ 'wissen.artikel_titel' | t }}</h3>
+        <p>{{ 'wissen.artikel_text' | t }}</p>
+        <span class="mehr">{{ anzahl_artikel }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if n_rezepte > 0 %}
+      <a class="einstieg" href="{{ blogs['kaffeerezepte'].url }}">
+        <span class="icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 3v7a5 5 0 0 0 10 0V3"/><path d="M12 15v6"/><path d="M8 21h8"/>
+          </svg>
+        </span>
+        <h3>{{ 'wissen.rezepte_titel' | t }}</h3>
+        <p>{{ 'wissen.rezepte_text' | t }}</p>
+        <span class="mehr">{{ anzahl_rezepte }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if hat_brew %}
+      <a class="einstieg" href="#alles" data-schnellfilter="art:guide">
+        <span class="icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 5h16l-6 10v5l-4 2v-7Z"/>
+          </svg>
+        </span>
+        <h3>{{ 'wissen.brew_titel' | t }}</h3>
+        <p>{{ 'wissen.brew_text' | t }}</p>
+        <span class="mehr">{{ 'wissen.brew_mehr' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if hat_barista %}
+      <a class="einstieg" href="#alles" data-schnellfilter="art:baristaguide">
+        <span class="icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 7h11v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M15 9h2a2 2 0 0 1 0 4h-2"/><path d="M6 21h11"/>
+          </svg>
+        </span>
+        <h3>{{ 'wissen.barista_titel' | t }}</h3>
+        <p>{{ 'wissen.barista_text' | t }}</p>
+        <span class="mehr">{{ 'wissen.barista_mehr' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+
+      {%- if seite_tools != blank and n_tools > 0 %}
+      <a class="einstieg" href="{{ seite_tools.url }}">
+        <span class="icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="15" cy="17" r="2.4"/>
+          </svg>
+        </span>
+        <h3>{{ 'wissen.tools_titel' | t }}</h3>
+        <p>{{ 'wissen.tools_text' | t }}</p>
+        <span class="mehr">{{ anzahl_tools }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+<section class="sektion" id="alles" style="padding-top:clamp(30px,4vw,52px)">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'wissen.alles_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'wissen.alles_titel' | t }}</h2>
+      </div>
+      <p>{% if hat_brew %}{{ 'wissen.alles_text_guides' | t }}{% else %}{{ 'wissen.alles_text' | t }}{% endif %}</p>
+    </div>
+
+    <div class="filterleiste" id="filterleiste"></div>
+    <div class="beitraege" id="beitraege-raster">
+      {%- for a in blog.articles -%}
+        {% render 'bw-beitrag', a: a, art: art %}
+      {%- else -%}
+        <p style="opacity:.7">{{ 'beitraege.leer' | t }}</p>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{%- assign hub_espresso = pages['espresso'] -%}
+{%- assign hub_filter = pages['filterkaffee'] -%}
+{%- if hub_espresso != blank or hub_filter != blank %}
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <div class="hub-band" data-reveal>
+      <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+      <div>
+        <span class="eyebrow" style="opacity:.85">{{ 'wissen.band_eyebrow' | t }}</span>
+        <h2 style="margin-top:14px">{{ 'wissen.band_titel_html' | t }}</h2>
+        <p>{{ 'wissen.band_text' | t }}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        {%- if hub_espresso != blank %}
+        <a class="btn btn--hell" href="{{ hub_espresso.url }}" data-pfeil>{{ 'wissen.band_espresso' | t }}</a>
+        {%- endif %}
+        {%- if hub_filter != blank %}
+        <a class="btn btn--hell" href="{{ hub_filter.url }}" data-pfeil>{{ 'wissen.band_filter' | t }}</a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{% render 'bw-beitraege-daten' %}
+{%- liquid
+  assign wissen_name = 'rezept.brot_wissen' | t
+  if ist_wissen
+    render 'bw-brot-schema', name_ende: blog.title, url_ende: blog.url
+  else
+    render 'bw-brot-schema', name_1: wissen_name, url_1: blog_wissen.url, name_ende: blog.title, url_ende: blog.url
+  endif
+-%}
+{%- if blog.articles.size > 0 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": [
+    {%- for a in blog.articles %}
+    { "@type": "ListItem", "position": {{ forloop.index }}, "url": {{ request.origin | append: a.url | json }} }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]
+}
+</script>
+{%- endif %}
+
+{{ 'faehren.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faehren.js' | asset_url }}" defer></script>
+<script src="{{ 'hubs.js' | asset_url }}" defer></script>
+<script src="{{ 'wissen.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWHub) BWHub.wissen();
+    if (!window.BWWissen) return;
+    // Thema aus der Adresse, damit die Hubs gezielt herüberverlinken
+    // können; sonst die Vorwahl des Blogs.
+    var thema = new URLSearchParams(location.search).get('thema');
+    BWWissen.raster('#beitraege-raster', '#filterleiste', thema || {{ vorwahl | json }});
+    // Die Einstiegskacheln setzen den Filter direkt.
+    document.querySelectorAll('[data-schnellfilter]').forEach(function (kachel) {
+      kachel.addEventListener('click', function () {
+        var knopf = document.querySelector('[data-filter="' + kachel.dataset.schnellfilter + '"]');
+        if (knopf) knopf.click();
+      });
+    });
+  });
+</script>
+
+{% schema %}
+{ "name": "Wissen-Hub", "settings": [] }
+{% endschema %}

@@ -4,9 +4,15 @@
   die Seite selbst, wie bei bw-hub-schema.
   name_1, url_1   erste Zwischenstufe (optional)
   name_2, url_2   zweite Zwischenstufe (optional)
+  name_ende, url_ende   die letzte Stufe, wenn es keine Seite ist (seit
+                  0.12.0, etwa der Blog beim Wissen-Hub); sonst page
   Aufruf: {%- render 'bw-brot-schema', name_1: shop_name, url_1: routes.collections_url -%}
 {%- endcomment -%}
-{%- assign pos = 2 -%}
+{%- liquid
+  assign pos = 2
+  assign ende_name = name_ende | default: page.title
+  assign ende_url = url_ende | default: page.url
+-%}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -21,7 +27,7 @@
     { "@type": "ListItem", "position": {{ pos }}, "name": {{ name_2 | json }}, "item": {{ request.origin | append: url_2 | json }} },
     {%- assign pos = pos | plus: 1 -%}
     {%- endif %}
-    { "@type": "ListItem", "position": {{ pos }}, "name": {{ page.title | json }}, "item": {{ request.origin | append: page.url | json }} }
+    { "@type": "ListItem", "position": {{ pos }}, "name": {{ ende_name | json }}, "item": {{ request.origin | append: ende_url | json }} }
   ]
 }
 </script>

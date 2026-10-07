@@ -3,15 +3,19 @@
   JSON-Block. Im Prototyp steht dieselbe Liste fest in wissen.js
   (BEITRAEGE); liegt dieser Block in der Seite, nimmt wissen.js ihn.
 
-  Reihenfolge wie im Prototyp: Brew Guides, Barista Guides, Wissen,
+  Reihenfolge wie im Prototyp: Brew Guides, Barista Guides, Tools, Wissen,
   Rezepte, je neuste zuerst. blogs[…].articles liefert nur Veröffentlichtes,
-  ein fehlender Blog liefert nichts. Tools kommen mit ihren Seiten.
+  ein fehlender Blog liefert nichts. Tools (seit 0.12.0) sind die Seiten
+  welche-espressomaschine, welcher-kaffee, welche-filtermethode,
+  koffeinrechner und wasserhaerte, soweit es sie gibt, mit Text, Themen und
+  Illustration wie in wissen.js.
 
   texte  übersetzte Labels für Arten, Filter und den Leertext.
   Aufruf: {%- render 'bw-beitraege-daten' -%}
 {%- endcomment -%}
 {%- liquid
-  assign quellen = 'brew-guides:guide,barista-guides:baristaguide,kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  assign quellen = 'brew-guides:guide,barista-guides:baristaguide,tools:tool,kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  assign tool_seiten = 'welche-espressomaschine,welcher-kaffee,welche-filtermethode,koffeinrechner,wasserhaerte' | split: ','
   assign arten = 'wissen,rezept,guide,baristaguide,tool' | split: ','
   assign filter = 'alle,art:wissen,art:rezept,art:guide,art:baristaguide,art:tool,espresso,filter,milch,kalt,koffein,grundlagen' | split: ','
   assign erste = true
@@ -20,11 +24,57 @@
 {"beitraege":[
 {%- for q in quellen -%}
   {%- assign teile = q | split: ':' -%}
-  {%- for a in blogs[teile[0]].articles -%}
-    {%- unless erste %},{% endunless -%}
-    {%- render 'bw-beitrag', a: a, art: teile[1], modus: 'json' -%}
-    {%- assign erste = false -%}
-  {%- endfor -%}
+  {%- if teile[0] == 'tools' -%}
+    {%- for h in tool_seiten -%}
+      {%- assign seite = pages[h] -%}
+      {%- if seite != blank -%}
+        {%- liquid
+          case h
+            when 'welche-espressomaschine'
+              assign t_titel = 'finder.maschinen_eyebrow' | t
+              assign t_text = 'beitraege.tool_maschinen' | t
+              assign t_themen = 'espresso,zubereitung'
+              assign t_dauer = 'beitraege.dauer_fragebogen' | t
+              assign t_bild = '"maschine":"zweikreiser"'
+            when 'welcher-kaffee'
+              assign t_titel = 'finder.kaffee_eyebrow' | t
+              assign t_text = 'beitraege.tool_kaffee' | t
+              assign t_themen = 'grundlagen'
+              assign t_dauer = 'beitraege.dauer_fragebogen' | t
+              assign t_bild = ''
+            when 'welche-filtermethode'
+              assign t_titel = 'finder.methoden_eyebrow' | t
+              assign t_text = 'beitraege.tool_methoden' | t
+              assign t_themen = 'filter,zubereitung'
+              assign t_dauer = 'beitraege.dauer_fragebogen' | t
+              assign t_bild = '"geraet":"v60"'
+            when 'koffeinrechner'
+              assign t_titel = 'tools.koffein_titel' | t
+              assign t_text = 'start.tool_koffeinrechner' | t
+              assign t_themen = 'koffein'
+              assign t_dauer = 'beitraege.dauer_rechner' | t
+              assign t_bild = ''
+            else
+              assign t_titel = 'tools.wasser_karte_titel' | t
+              assign t_text = 'start.tool_wasserhaerte' | t
+              assign t_themen = 'wasser,zubereitung'
+              assign t_dauer = 'beitraege.dauer_rechner' | t
+              assign t_bild = ''
+          endcase
+          assign t_themen = t_themen | split: ','
+        -%}
+        {%- unless erste %},{% endunless -%}
+        {"art":"tool","titel":{{ t_titel | json }},"text":{{ t_text | json }},"themen":{{ t_themen | json }},"datum":"","dauer":{{ t_dauer | json }},"bewertung":null,"ziel":{{ seite.url | json }},"bild":null,"stand":"live"{% if t_bild != blank %},{{ t_bild }}{% endif %}}
+        {%- assign erste = false -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- else -%}
+    {%- for a in blogs[teile[0]].articles -%}
+      {%- unless erste %},{% endunless -%}
+      {%- render 'bw-beitrag', a: a, art: teile[1], modus: 'json' -%}
+      {%- assign erste = false -%}
+    {%- endfor -%}
+  {%- endif -%}
 {%- endfor -%}
 ],"texte":{"arten":{
 {%- for k in arten -%}
