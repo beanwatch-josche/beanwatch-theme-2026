@@ -5,6 +5,9 @@
 
   Heller Kopf mit Sonne und Wellen, dann vier Abschnitte aus den
   Kollektionen, jeweils in ihrer Reihenfolge im Shop:
+    #probierset    Band «Zum Kennenlernen» mit dem Produkt probierset
+                   (seit 0.15.0, all_products, also auch solange es nicht
+                   gelistet ist), nur wenn es verfügbar ist
     #espresso      Kollektion espresso ohne Decaf, Knopf zur Espresso-Welt
     #filterkaffee  Kollektion filterkaffee ohne Decaf, Knopf zur
                    Filterkaffee-Welt, dazu die Karte «Noch mehr?», wenn in
@@ -39,6 +42,12 @@
   assign n_buecher = 0
   assign n_filter = 0
   assign urls = ''
+  assign probierset = all_products['probierset']
+  assign mit_set = false
+  if probierset != blank and probierset.available
+    assign mit_set = true
+    assign urls = urls | append: probierset.url | append: '|'
+  endif
 
   capture karten_espresso
     for p in k_espresso.products
@@ -140,6 +149,31 @@
   </div>
   {%- render 'bw-sonne-wellen', teil: 'wellen' %}
 </section>
+
+{%- if mit_set %}
+{%- assign set_kaffees = probierset.selected_or_first_available_variant.metafields.custom.set_inhalt.value %}
+{%- assign preis_ab = probierset.price_min | money %}
+<section class="sektion" id="probierset" style="padding-top:clamp(48px,6vw,80px);padding-bottom:0">
+  <div class="wrap">
+    <div class="set-band" data-batch>
+      <div class="set-band-bild" aria-hidden="true">
+        {%- for k in set_kaffees limit: 3 %}
+        {{ k.featured_image | image_url: width: 300 | image_tag: alt: '', loading: 'lazy' }}
+        {%- endfor %}
+      </div>
+      <div class="set-band-text">
+        <span class="eyebrow">{{ 'probierset.band_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'probierset.band_titel_html' | t }}</h2>
+        <p>{{ 'probierset.band_text' | t }}</p>
+        <div class="set-band-fuss">
+          <span class="set-band-preis">{{ 'probierset.band_preis' | t: preis: preis_ab }}</span>
+          <a class="btn btn--primaer" href="{{ probierset.url }}" data-pfeil>{{ 'probierset.band_knopf' | t }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{%- endif %}
 
 {%- if karten_espresso != blank %}
 <section class="sektion" id="espresso" style="padding-top:clamp(48px,6vw,80px)">

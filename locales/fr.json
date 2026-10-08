@@ -1079,5 +1079,23 @@
     "danke": "Merci, nous avons bien reçu ton message. Nous te répondons dès que possible.",
     "kasten_eyebrow": "Pour nous joindre",
     "marke": "Beanwatch est une marque de la Kaffeerösterei Gewinner."
+  },
+  "probierset": {
+    "kaffees": "{{ anzahl }} cafés",
+    "menge": "3 × 250 g",
+    "satz_espresso": "Trois espressos pour machine à espresso et machine automatique.",
+    "satz_filter": "Trois cafés filtre pour filtre à main et cafetière filtre.",
+    "hinweis_titel": "Livraison offerte",
+    "hinweis_text": "On t’envoie le coffret découverte sans frais de port.",
+    "drin_eyebrow": "Dans le coffret",
+    "drin_titel_html": "Trois origines,<br>trois caractères.",
+    "drin_text": "Chaque café du coffret existe aussi seul. Si l’un d’eux te plaît, tu le retrouves ici.",
+    "band_eyebrow": "Pour découvrir",
+    "band_titel_html": "Trois cafés,<br>un coffret.",
+    "band_text": "Un sachet de trois cafés, en espresso ou en café filtre. La livraison est offerte.",
+    "band_preis": "dès {{ preis }}",
+    "band_knopf": "Vers le coffret découverte",
+    "finder_espresso_html": "Tu hésites encore ? Le {{ link }} contient trois espressos à découvrir, la livraison est offerte.",
+    "finder_filter_html": "Tu hésites encore ? Le {{ link }} contient trois cafés filtre à découvrir, la livraison est offerte."
   }
 }

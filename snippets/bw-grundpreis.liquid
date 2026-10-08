@@ -5,6 +5,8 @@
   v       die Variante; die Menge in Gramm liefert bw-gramm. Ohne sie
           bleibt die Ausgabe leer.
   kurz    true für die Produktkarten: nur «CHF 9.60 / 100 g»
+  menge   statt «750 g» ein eigener Text für die Menge, etwa «3 × 250 g»
+          beim Probierset (seit 0.15.0)
 
   Aufruf: {%- render 'bw-grundpreis', preis: variante.price, v: variante -%}
 {%- endcomment -%}
@@ -16,7 +18,9 @@
     if kurz
       echo 'produkt.grundpreis_kurz' | t: preis: je_100
     else
-      assign menge = gramm | append: ' g'
+      if menge == blank
+        assign menge = gramm | append: ' g'
+      endif
       echo 'produkt.grundpreis' | t: menge: menge, preis: je_100
     endif
   endif

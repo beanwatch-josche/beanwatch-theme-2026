@@ -28,6 +28,12 @@
             wie im Prototyp, Autor aus custom.autor_name, ISBN und GTIN aus
             dem Barcode der Variante, Versand nach dem Versandprofil
             «Bücher» (B-Post bis 2 kg, CHF 8.50)
+  gratis_versand  true beim Probierset (seit 0.15.0): Versand 0, wie im
+                  Versandprofil «Probierset» im Shop
+  alle_varianten  true beim Probierset: ein Angebot je Variante (Name,
+                  Adresse mit ?variant=, Preis, Verfügbarkeit) statt eines
+                  einzigen; die Beschreibung kommt dann wie beim Buch aus
+                  dem ersten Absatz
   Produkte ohne Kaffeefelder (Buch, Zubehör) bekommen die Beschreibung aus
   dem ersten Absatz der Produktbeschreibung, wie ihn die Seite im Kopf
   zeigt (seit 0.7.0, vorher custom.kurzbeschrieb), und die Eigenschaften
@@ -44,6 +50,9 @@
   assign transit_max = 2
   if buch
     assign versand = 8.50
+  endif
+  if gratis_versand
+    assign versand = 0
   endif
 
   assign mf = p.metafields.custom
@@ -107,7 +116,7 @@
 {%- if ideal != blank %} {{ 'produkt.schema_ideal' | t }}: {{ ideal }}.{% endif %}
 {%- if roest != blank %} {{ 'produkt.meter_roest' | t }}: {{ roest }}.{% endif %}
 {%- endcapture -%}
-{%- if fakten.size > 0 -%}
+{%- if fakten.size > 0 or alle_varianten -%}
   {%- assign erster = p.description | split: '</p>' | first -%}
   {%- capture beschreibung -%}{{ erster | strip_html | truncatewords: 60 }}{%- endcapture -%}
 {%- endif -%}
@@ -127,6 +136,33 @@
   ]
 }
 </script>
+{%- comment -%} Gemeinsamer Teil jedes Angebots: Zustand, Verkäufer, Versand, Rückgabe. {%- endcomment -%}
+{%- capture angebot_rest %}
+    "itemCondition": "https://schema.org/NewCondition",
+    "seller": { "@type": "Organization", "name": {{ shop.name | json }} },
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": { "@type": "MonetaryAmount", "value": {{ versand | json }}, "currency": {{ versand_waehrung | json }} },
+      "shippingDestination": [
+        { "@type": "DefinedRegion", "addressCountry": "CH" },
+        { "@type": "DefinedRegion", "addressCountry": "LI" }
+      ],
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": {{ bearbeitung_min | json }}, "maxValue": {{ bearbeitung_max | json }}, "unitCode": "DAY" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": {{ transit_min | json }}, "maxValue": {{ transit_max | json }}, "unitCode": "DAY" }
+      }
+    },
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": ["CH", "LI"],
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": {{ rueckgabe_tage | json }},
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility",
+      "merchantReturnLink": {{ request.origin | append: '/policies/refund-policy' | json }}
+    }
+{%- endcapture %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -181,36 +217,30 @@
       {%- endif -%}
     {%- endfor %}
   ],
+  {%- if alle_varianten %}
+  "offers": [
+    {%- for w in p.variants %}
+    {
+    "@type": "Offer",
+    "name": {{ w.title | json }},
+    "url": {{ seite | append: '?variant=' | append: w.id | json }},
+    {%- if w.sku != blank %}
+    "sku": {{ w.sku | json }},
+    {%- endif %}
+    "priceCurrency": {{ cart.currency.iso_code | json }},
+    "price": {{ w.price | divided_by: 100.0 | json }},
+    "availability": "https://schema.org/{% if w.available %}InStock{% else %}OutOfStock{% endif %}",{{ angebot_rest }}
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]
+  {%- else %}
   "offers": {
     "@type": "Offer",
     "url": {{ seite | json }},
     "priceCurrency": {{ cart.currency.iso_code | json }},
     "price": {{ v.price | divided_by: 100.0 | json }},
-    "availability": "https://schema.org/{% if v.available %}InStock{% else %}OutOfStock{% endif %}",
-    "itemCondition": "https://schema.org/NewCondition",
-    "seller": { "@type": "Organization", "name": {{ shop.name | json }} },
-    "shippingDetails": {
-      "@type": "OfferShippingDetails",
-      "shippingRate": { "@type": "MonetaryAmount", "value": {{ versand | json }}, "currency": {{ versand_waehrung | json }} },
-      "shippingDestination": [
-        { "@type": "DefinedRegion", "addressCountry": "CH" },
-        { "@type": "DefinedRegion", "addressCountry": "LI" }
-      ],
-      "deliveryTime": {
-        "@type": "ShippingDeliveryTime",
-        "handlingTime": { "@type": "QuantitativeValue", "minValue": {{ bearbeitung_min | json }}, "maxValue": {{ bearbeitung_max | json }}, "unitCode": "DAY" },
-        "transitTime": { "@type": "QuantitativeValue", "minValue": {{ transit_min | json }}, "maxValue": {{ transit_max | json }}, "unitCode": "DAY" }
-      }
-    },
-    "hasMerchantReturnPolicy": {
-      "@type": "MerchantReturnPolicy",
-      "applicableCountry": ["CH", "LI"],
-      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-      "merchantReturnDays": {{ rueckgabe_tage | json }},
-      "returnMethod": "https://schema.org/ReturnByMail",
-      "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility",
-      "merchantReturnLink": {{ request.origin | append: '/policies/refund-policy' | json }}
-    }
+    "availability": "https://schema.org/{% if v.available %}InStock{% else %}OutOfStock{% endif %}",{{ angebot_rest }}
   }
+  {%- endif %}
 }
 </script>

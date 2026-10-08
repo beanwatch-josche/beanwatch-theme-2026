@@ -1079,5 +1079,23 @@
     "danke": "Danke, Deine Nachricht ist bei uns. Wir melden uns so bald wie möglich.",
     "kasten_eyebrow": "So erreichst Du uns",
     "marke": "Beanwatch ist eine Marke der Kaffeerösterei Gewinner."
+  },
+  "probierset": {
+    "kaffees": "{{ anzahl }} Kaffees",
+    "menge": "3 × 250 g",
+    "satz_espresso": "Drei Espressi für Espressomaschine und Vollautomat.",
+    "satz_filter": "Drei Filterkaffees für Handfilter und Filtermaschine.",
+    "hinweis_titel": "Versand geschenkt",
+    "hinweis_text": "Das Probierset schicken wir Dir ohne Versandkosten.",
+    "drin_eyebrow": "Drin steckt",
+    "drin_titel_html": "Drei Herkünfte,<br>drei Charaktere.",
+    "drin_text": "Jeden Kaffee aus dem Set gibt es auch einzeln. Wenn Dir einer besonders schmeckt, findest Du ihn hier wieder.",
+    "band_eyebrow": "Zum Kennenlernen",
+    "band_titel_html": "Drei Kaffees,<br>ein Set.",
+    "band_text": "Je ein Beutel von drei Kaffees, als Espresso oder als Filterkaffee. Den Versand übernehmen wir.",
+    "band_preis": "ab {{ preis }}",
+    "band_knopf": "Zum Probierset",
+    "finder_espresso_html": "Noch unentschlossen? Im {{ link }} stecken drei Espressi zum Kennenlernen, den Versand übernehmen wir.",
+    "finder_filter_html": "Noch unentschlossen? Im {{ link }} stecken drei Filterkaffees zum Kennenlernen, den Versand übernehmen wir."
   }
 }

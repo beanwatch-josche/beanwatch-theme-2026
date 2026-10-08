@@ -1,0 +1,252 @@
+{%- comment -%}
+  Probierset (seit 0.15.0), Vorlage product.probierset, übertragen aus
+  products/probierset.html der Werkstatt: Markup, Klassen und IDs wie dort,
+  denn seiten.css und produkt.js (zusammenstellung) brauchen sie.
+
+  Woher die Inhalte kommen:
+    Zusammenstellung  die Varianten des Produkts (Option «Zusammenstellung»,
+                      Espresso und Filterkaffee), als Radio-Knöpfe name="id"
+                      im Produktformular: Die Wahl gilt auch ohne JavaScript.
+                      Vorgewählt ist selected_or_first_available_variant,
+                      also auch ?variant= aus dem Kaffeefinder.
+    Inhalt            je Variante custom.set_inhalt (Liste von Produkten,
+                      seit 08.10.2026): Beutel im Bild aus deren Hauptbild,
+                      Herkunftszeile aus custom.ursprungsland, Liste «Drin
+                      steckt» mit Herkunft (Land · Aufbereitung ohne
+                      Zusatz) und Noten (product_icon_*_label)
+    Satz              Sprachdateien, Espresso oder Filter je nachdem, ob ein
+                      Kaffee der Zusammenstellung in der Kollektion
+                      filterkaffee steht
+    Preis             Preis der Variante, dazu der Grundpreis mit
+                      «3 × 250 g» (bw-grundpreis, Menge 750 g aus der
+                      Grundpreis-Angabe der Variante)
+    Hinweiszeile      Sprachdateien. Den Gratisversand macht das
+                      Versandprofil «Probierset» im Shop.
+  Kein Abo: Das Set gehört zu keinem Abo-Plan (Entscheid 06.10.2026).
+  Beim Wechsel tauscht produkt.js alles aus dem Datenblock #bw-set; ohne
+  JavaScript zeigt die Seite die vorgewählte Zusammenstellung.
+{%- endcomment -%}
+{%- liquid
+  assign gewaehlt = product.selected_or_first_available_variant
+  assign id_filter = collections['filterkaffee'].id
+  assign menge = 'probierset.menge' | t
+  assign trenner = ' · '
+  capture anzahl_wort
+    render 'bw-zahlwort', n: 3
+  endcapture
+-%}
+
+{%- comment -%} Je Variante: Kaffees, Herkunftszeile, Satz und Zusatz, für
+  das HTML (vorgewählte Variante) und den Datenblock. {%- endcomment -%}
+{%- capture set_json -%}
+{%- for v in product.variants -%}
+  {%- liquid
+    assign kaffees = v.metafields.custom.set_inhalt.value
+    assign laender = ''
+    assign art = 'espresso'
+    for k in kaffees
+      assign l = k.metafields.custom.ursprungsland.value | strip
+      assign suche = '|' | append: l | append: '|'
+      if l != blank
+        unless laender contains suche
+          assign laender = laender | append: suche
+        endunless
+      endif
+      assign ids = k.collections | map: 'id'
+      if ids contains id_filter
+        assign art = 'filter'
+      endif
+    endfor
+    assign laender = laender | replace: '||', trenner | remove: '|'
+    assign wort = anzahl_wort | strip
+    if kaffees.size != 3
+      capture wort
+        render 'bw-zahlwort', n: kaffees.size
+      endcapture
+    endif
+    assign wort = wort | strip | capitalize
+    assign herkunft = 'probierset.kaffees' | t: anzahl: wort
+    if laender != blank
+      assign herkunft = laender | append: trenner | append: herkunft
+    endif
+    assign satz_schluessel = 'probierset.satz_' | append: art
+    assign satz = satz_schluessel | t
+    # Ohne Inhalt (Feld leer) weder Herkunft noch Satz, statt «0 Kaffees».
+    if kaffees.size == 0
+      assign herkunft = ''
+      assign satz = ''
+    endif
+  -%}
+  {%- capture zusatz -%}{%- render 'bw-grundpreis', preis: v.price, v: v, menge: menge -%}{%- endcapture -%}
+  {%- unless forloop.first %},{% endunless %}
+    {
+      "id": {{ v.id | json }},
+      "set": {{ art | json }},
+      "preis": {{ v.price | money | json }},
+      "zusatz": {{ zusatz | strip | json }},
+      "verfuegbar": {{ v.available | json }},
+      "url": {{ product.url | append: '?variant=' | append: v.id | json }},
+      "satz": {{ satz | json }},
+      "herkunft": {{ herkunft | json }},
+      "kaffees": [
+        {%- for k in kaffees %}
+        {%- liquid
+          assign kmf = k.metafields.custom
+          assign auf = kmf.processing.value | split: ',' | first | split: ' (' | first | strip
+          assign k_herkunft = kmf.ursprungsland.value | strip
+          if auf != blank
+            assign k_herkunft = k_herkunft | append: trenner | append: auf
+          endif
+          assign noten = ''
+          for i in (1..6)
+            assign schluessel = 'product_icon_' | append: i | append: '_label'
+            assign n = kmf[schluessel].value | strip
+            if n != blank
+              if noten != blank
+                assign noten = noten | append: trenner
+              endif
+              assign noten = noten | append: n
+            endif
+          endfor
+        -%}
+        { "name": {{ k.title | json }}, "url": {{ k.url | json }}, "bild": {{ k.featured_image | image_url: width: 600 | json }}, "bild_klein": {{ k.featured_image | image_url: width: 160 | json }}, "herkunft": {{ k_herkunft | json }}, "noten": {{ noten | json }} }{% unless forloop.last %},{% endunless %}
+        {%- endfor %}
+      ]
+    }
+  {%- if v.id == gewaehlt.id -%}
+    {%- assign g_kaffees = kaffees -%}
+    {%- assign g_herkunft = herkunft -%}
+    {%- assign g_satz = satz -%}
+    {%- assign g_zusatz = zusatz | strip -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- endcapture -%}
+
+<section class="produktkopf">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'produkt.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'produkt.brot_start' | t }}</a><span class="teiler">·</span>
+      <a href="{{ routes.collections_url }}">{{ 'kopf.shop' | t }}</a><span class="teiler">·</span><span>{{ product.title }}</span>
+    </nav>
+
+    <div class="produktkopf-raster">
+
+      <div class="galerie-haupt set-bild" id="set-bild">
+        {%- for k in g_kaffees limit: 3 %}
+        {%- assign klasse = 'set-beutel set-beutel--' | append: forloop.index %}
+        {{ k.featured_image | image_url: width: 600 | image_tag: class: klasse, alt: k.title, srcset: nil, loading: 'eager' }}
+        {%- endfor %}
+      </div>
+
+      <div class="produkt-kauf">
+        <span class="herkunftszeile" id="set-herkunft">{{ g_herkunft }}</span>
+        <h1 data-split="zeilen">{{ product.title }}</h1>
+
+        {%- if product.description != blank %}
+        <div class="produkt-beschreibung">{{ product.description }}</div>
+        {%- endif %}
+
+        {%- form 'product', product, id: 'produkt-form', class: 'bw-kaufform' %}
+        <div class="mahlgrad">
+          <span class="rolle" id="set-wahl-titel">{{ product.options.first }}</span>
+          <div class="mahlgrad-optionen set-wahl" id="set-wahl" role="radiogroup" aria-labelledby="set-wahl-titel">
+            {%- for v in product.variants %}
+            <label class="set-option"><input type="radio" name="id" value="{{ v.id }}"{% if v.id == gewaehlt.id %} checked{% endif %}><span>{{ v.title }}</span></label>
+            {%- endfor %}
+          </div>
+          <p class="set-satz" id="set-satz">{{ g_satz }}</p>
+        </div>
+
+        <div class="preiszeile">
+          <span class="preis" data-set-preis>{{ gewaehlt.price | money }}</span>
+          <span class="grundpreis" data-set-zusatz>{{ g_zusatz }}</span>
+        </div>
+
+        <div class="kaufreihe">
+          <button type="submit" class="btn btn--primaer" data-set-knopf data-pfeil{% unless gewaehlt.available %} disabled aria-disabled="true"{% endunless %}>
+            {%- if gewaehlt.available %}{{ 'produkt.in_den_warenkorb' | t }}{% else %}{{ 'produkt.ausverkauft' | t }}{% endif -%}
+          </button>
+        </div>
+        {%- endform %}
+        <p class="kaufhinweis"><strong>{{ 'probierset.hinweis_titel' | t }}.</strong> {{ 'probierset.hinweis_text' | t }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{%- if g_kaffees.size > 0 %}
+<section class="sektion" id="drin">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'probierset.drin_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'probierset.drin_titel_html' | t }}</h2>
+      </div>
+      <p>{{ 'probierset.drin_text' | t }}</p>
+    </div>
+
+    <div class="set-liste" id="set-liste">
+      {%- for k in g_kaffees %}
+      {%- liquid
+        assign kmf = k.metafields.custom
+        assign auf = kmf.processing.value | split: ',' | first | split: ' (' | first | strip
+        assign k_herkunft = kmf.ursprungsland.value | strip
+        if auf != blank
+          assign k_herkunft = k_herkunft | append: trenner | append: auf
+        endif
+        assign noten = ''
+        for i in (1..6)
+          assign schluessel = 'product_icon_' | append: i | append: '_label'
+          assign n = kmf[schluessel].value | strip
+          if n != blank
+            if noten != blank
+              assign noten = noten | append: trenner
+            endif
+            assign noten = noten | append: n
+          endif
+        endfor
+      -%}
+      <a class="schwester" href="{{ k.url }}">
+        {%- if k.featured_image %}
+        {{ k.featured_image | image_url: width: 160 | image_tag: loading: 'lazy', alt: '' }}
+        {%- endif %}
+        <span class="text">
+          <span class="rolle">{{ k_herkunft }}</span>
+          <h4>{{ k.title }}</h4>
+          {%- if noten != blank %}
+          <span class="noten-kurz">{{ noten }}</span>
+          {%- endif %}
+        </span>
+        <span class="hin">{{ 'produkt.ansehen' | t }}
+          <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+<script type="application/json" id="bw-set">
+{
+  "varianten": [{{ set_json }}
+  ],
+  "texte": {
+    "ansehen": {{ 'produkt.ansehen' | t | json }},
+    "in_den_warenkorb": {{ 'produkt.in_den_warenkorb' | t | json }},
+    "ausverkauft": {{ 'produkt.ausverkauft' | t | json }}
+  }
+}
+</script>
+
+{% render 'bw-produkt-schema', p: product, gratis_versand: true, alle_varianten: true %}
+<script src="{{ 'produkt.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWProdukt) BWProdukt.start();
+  });
+</script>
+
+{% schema %}
+{ "name": "Probierset", "settings": [] }
+{% endschema %}

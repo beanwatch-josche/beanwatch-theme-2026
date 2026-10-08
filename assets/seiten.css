@@ -3551,3 +3551,84 @@
 @media (max-width:900px){
   .kontakt-raster{grid-template-columns:1fr;}
 }
+
+/* Probierset (08.10.2026). Bisher stand das als Inline-Style in
+   probierset.html; im Theme braucht es das gemeinsame CSS.
+   Kopf: die drei Beutel der gewählten Zusammenstellung, rund und flach, im
+   Galeriefeld der übrigen Produktseiten. */
+.set-bild .set-beutel{
+  inset:auto;
+  width:46%;height:auto;
+  aspect-ratio:1;
+  object-fit:cover;
+  border-radius:50%;
+  border:3px solid var(--hellorange);
+}
+.set-bild .set-beutel--1{top:6%;left:27%;}
+.set-bild .set-beutel--2{top:47%;left:4%;}
+.set-bild .set-beutel--3{top:47%;left:50%;}
+/* Die Wahl als Radio-Knöpfe im Stil der Auswahl-Chips: Das Feld selbst ist
+   unsichtbar, der Chip daneben zeigt Wahl und Fokus. */
+.set-option{position:relative;cursor:pointer;}
+.set-option input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;}
+.set-option span{
+  display:inline-block;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--linie-stark);
+  padding:9px 17px;
+  font-weight:600;font-size:.84rem;
+  transition:background-color .3s ease,color .3s ease,border-color .3s ease;
+}
+.set-option:hover span{border-color:var(--redorange);color:var(--redorange);}
+.set-option input:checked + span{background:var(--redorange);border-color:var(--redorange);color:var(--hellorange);}
+.set-option input:focus-visible + span{outline:2px solid var(--dunkelblau);outline-offset:3px;}
+.set-satz{margin-top:14px;font-size:.95rem;opacity:.85;max-width:44ch;}
+.kaufreihe .btn[aria-disabled="true"],
+.kaufreihe .btn:disabled{opacity:.45;pointer-events:none;}
+/* Drin steckt: die drei Kaffees als Schwesterkarten. */
+.set-liste{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);}
+.set-liste .schwester{margin-top:0;}
+.set-liste .noten-kurz{display:block;margin-top:5px;font-size:.84rem;opacity:.75;}
+@media (max-width:1080px){ .set-liste{grid-template-columns:1fr;} }
+/* Noch nicht festgelegt: deutlich als Platzhalter markiert (CI-Guide 32). */
+.platzhalter{
+  display:inline-flex;align-items:center;
+  border:1.5px dashed var(--redorange);
+  color:var(--redorange);
+  border-radius:var(--radius-pill);
+  padding:5px 13px;
+  font-weight:700;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.12em;
+}
+/* Band «Zum Kennenlernen» auf der Shop-Seite, zwischen Kopf und Espresso:
+   links die drei Beutel auf dem Grund der Galerie, rechts Text, Preis und
+   Knopf. */
+.set-band{
+  display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  overflow:hidden;
+}
+.set-band-bild{
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(22px,3vw,40px) clamp(18px,2.4vw,32px);
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+}
+.set-band-bild img{
+  width:36%;height:auto;aspect-ratio:1;object-fit:cover;
+  border-radius:50%;border:3px solid #fff;
+}
+.set-band-bild img + img{margin-left:-7%;}
+.set-band-text{padding:clamp(24px,3.4vw,44px);align-self:center;}
+.set-band-text .eyebrow{color:var(--redorange);display:block;margin-bottom:12px;}
+.set-band-text h2{max-width:14ch;}
+.set-band-text p{margin-top:14px;max-width:46ch;}
+.set-band-fuss{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:22px;}
+.set-band-preis{font-weight:700;font-size:1.05rem;}
+@media (max-width:760px){
+  .set-band{grid-template-columns:1fr;}
+}
+/* Im Kaffeefinder unter jedem Ergebnis: der Weg zum Probierset. */
+.finder-set{margin-top:clamp(18px,2.4vw,26px);font-weight:500;max-width:60ch;}
+.finder-set a{color:var(--redorange);text-decoration:underline;text-underline-offset:3px;}

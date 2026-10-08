@@ -14,6 +14,9 @@
     filter     die Kollektion filterkaffee ohne Decaf
   Die Ergebnisse #klassisch, #fruchtig und #filter öffnet kaffeefinder.js
   auch direkt, die Startseite verlinkt sie.
+  Unter jedem Ergebnis der Weg zum Probierset (seit 0.15.0), zur
+  Zusammenstellung Espresso bzw. Filterkaffee (?variant=), nur wenn es das
+  Produkt probierset gibt und die Variante verfügbar ist.
 {%- endcomment -%}
 {%- liquid
   # Platzhalter für «Frage {n}». Eine «}» in einem Text beendet in Shopify
@@ -23,6 +26,33 @@
   assign fahne_decaf = 'finder.auch_ohne_koffein' | t
   assign espresso = collections['espresso']
   assign filter = collections['filterkaffee']
+
+  # Probierset: je Art die erste verfügbare Variante. Filter ist eine
+  # Zusammenstellung, wenn einer ihrer Kaffees (custom.set_inhalt) in der
+  # Kollektion filterkaffee steht; so hängt es nicht am übersetzten Namen.
+  assign set_url_espresso = ''
+  assign set_url_filter = ''
+  assign probierset = all_products['probierset']
+  if probierset != blank
+    for v in probierset.variants
+      unless v.available
+        continue
+      endunless
+      assign set_art = 'espresso'
+      for k in v.metafields.custom.set_inhalt.value
+        assign set_ids = k.collections | map: 'id'
+        if set_ids contains filter.id
+          assign set_art = 'filter'
+        endif
+      endfor
+      assign set_adresse = probierset.url | append: '?variant=' | append: v.id
+      if set_art == 'filter' and set_url_filter == blank
+        assign set_url_filter = set_adresse
+      elsif set_art == 'espresso' and set_url_espresso == blank
+        assign set_url_espresso = set_adresse
+      endif
+    endfor
+  endif
 
   capture karten_klassisch
     if espresso != blank
@@ -138,6 +168,19 @@
           <div class="produkt-raster">
             {{ karten }}
           </div>
+          {%- endif %}
+          {%- liquid
+            if e == 'filter'
+              assign set_url = set_url_filter
+              assign set_text = 'probierset.finder_filter_html'
+            else
+              assign set_url = set_url_espresso
+              assign set_text = 'probierset.finder_espresso_html'
+            endif
+          -%}
+          {%- if set_url != blank %}
+          {%- capture set_link %}<a href="{{ set_url }}">{{ probierset.title }}</a>{% endcapture %}
+          <p class="finder-set">{{ set_text | t: link: set_link }}</p>
           {%- endif %}
         </article>
         {%- endfor %}
