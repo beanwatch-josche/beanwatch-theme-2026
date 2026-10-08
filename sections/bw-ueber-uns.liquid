@@ -1,0 +1,213 @@
+{%- comment -%}
+  Über uns (seit 0.13.0), Vorlage page.ueber-uns, übertragen aus
+  ueber-uns.html der Werkstatt: Markup, Klassen und IDs wie dort, denn
+  animationen.js, faehren.js und ueberuns-hero.js hängen an ihnen.
+
+  Woher die Inhalte kommen:
+    Texte         Sprachdateien (ueber), der Wortlaut des Prototyps; das ist
+                  der Text der bisherigen Seite mit korrigierten Tippfehlern
+    Fähre, Läufer Schiffsname aus start.faehre_roesterei, Gedanken aus den
+                  Sprachdateien; gezeichnet von ueberuns-hero.js. Die Fähre
+                  fährt sechs Beutel wie im Prototyp (Entscheid Joscha
+                  08.10.2026), die Startseite die Haufen.
+    Porträts      Einstellungen der Sektion, Vorgabe in der Vorlage
+    Links         «Was ist Specialty Coffee?» nur, wenn der Artikel
+                  veröffentlicht ist; das Buch im Text von Joscha nur als
+                  Link, wenn es das Produkt gibt; «Zum Kaffeefinder» nur mit
+                  der Seite welcher-kaffee
+  Seitentitel und Meta-Beschreibung kommen aus dem Shop (bw-kopfdaten). Der
+  Seiteninhalt im Shop erscheint nicht, wie auf der bisherigen Seite.
+{%- endcomment -%}
+{%- liquid
+  assign specialty = articles['kaffeewissen/was-ist-specialty-coffee']
+  assign buch_produkt = all_products['kaffee-erlebnis-schweiz']
+  assign buch = 'ueber.buch' | t
+  if buch_produkt != blank
+    assign buch = '<a href="' | append: buch_produkt.url | append: '">' | append: buch | append: '</a>'
+  endif
+  assign finder = pages['welcher-kaffee']
+-%}
+
+<section class="hero hero--faehren hero--ueberuns" id="hero">
+  <div class="hero-himmel" data-parallax="0.18"></div>
+
+  <svg class="hero-sonne" id="hero-sonne" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+    <g id="sonnen-strahlen" stroke="#FF4612" stroke-width="3" stroke-linecap="round" opacity=".5">
+      <path d="M100.0 34.0L100.0 10.0"/><path d="M126.8 35.3L131.8 23.3"/><path d="M146.7 53.3L163.6 36.4"/><path d="M164.7 73.2L176.7 68.2"/>
+      <path d="M166.0 100.0L190.0 100.0"/><path d="M164.7 126.8L176.7 131.8"/><path d="M146.7 146.7L163.6 163.6"/><path d="M126.8 164.7L131.8 176.7"/>
+      <path d="M100.0 166.0L100.0 190.0"/><path d="M73.2 164.7L68.2 176.7"/><path d="M53.3 146.7L36.4 163.6"/><path d="M35.3 126.8L23.3 131.8"/>
+      <path d="M34.0 100.0L10.0 100.0"/><path d="M35.3 73.2L23.3 68.2"/><path d="M53.3 53.3L36.4 36.4"/><path d="M73.2 35.3L68.2 23.3"/>
+    </g>
+    <circle id="sonnen-kern" cx="100" cy="100" r="46" fill="#FF4612" opacity=".16"/>
+    <circle cx="100" cy="100" r="46" stroke="#FF4612" stroke-width="2.5" opacity=".55"/>
+  </svg>
+
+  <div class="wrap">
+    <div class="hero-raster">
+      <div class="hero-text">
+        <nav class="brotkrumen hero-brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+          <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ page.title }}</span>
+        </nav>
+
+        <span class="hero-eyebrow eyebrow" data-hero="eyebrow">
+          <span class="punkt"></span> {{ 'ueber.eyebrow' | t }}
+        </span>
+
+        <h1 data-hero="headline">
+          <span class="zeile"><span class="inner-zeile">{{ 'ueber.titel_1' | t }}</span></span>
+          <span class="zeile"><span class="inner-zeile akzent">{{ 'ueber.titel_2' | t }}</span></span>
+          <span class="zeile"><span class="inner-zeile">{{ 'ueber.titel_3' | t }}</span></span>
+        </h1>
+
+        <p class="hero-sub lead" data-hero="sub">{{ 'ueber.lead' | t }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-wellen" aria-hidden="true">
+    <svg class="welle-hinten" id="welle-hinten" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,120 C240,60 480,180 720,120 C960,60 1200,180 1440,120 C1680,60 1920,180 2160,120 C2400,60 2640,180 2880,120 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+    <svg class="welle-mitte" id="welle-mitte" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,140 C240,90 480,190 720,140 C960,90 1200,190 1440,140 C1680,90 1920,190 2160,140 C2400,90 2640,190 2880,140 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+    <div class="faehre-spur faehre-spur--vorne" id="faehre-roesterei"
+         data-faehre="{{ 'start.faehre_roesterei' | t }}" data-ladung="beutel" data-akzent="kontur"
+         data-gedanke="{{ 'ueber.gedanke_faehre' | t }}"></div>
+    <svg class="welle-vorne" id="welle-vorne" viewBox="0 0 2880 200" preserveAspectRatio="none">
+      <path d="M0,165 C240,130 480,200 720,165 C960,130 1200,200 1440,165 C1680,130 1920,200 2160,165 C2400,130 2640,200 2880,165 L2880,200 L0,200 Z" fill="#4FC4E2"/>
+    </svg>
+    <div class="ufer" id="ufer"></div>
+    <div class="laeufer-spur" id="laeufer" data-gedanke="{{ 'ueber.gedanke_laeufer' | t }}"></div>
+  </div>
+
+  <div class="hero-scrollhinweis" id="scrollhinweis">
+    <span class="eyebrow">{{ 'start.scroll' | t }}</span>
+    <span class="linie"></span>
+  </div>
+</section>
+
+<section class="sektion">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'ueber.werte_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'ueber.werte_titel_html' | t }}</h2>
+      </div>
+    </div>
+
+    <div class="werte-raster" data-batch>
+      <article class="wert-karte">
+        <span class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21c3.9 0 7-2.9 7-6.6 0-3.6-2.6-5.4-3.7-8.4-1.8 1.6-2.8 3.4-2.8 5.4-1-1-1.7-2.3-1.9-3.9C8.3 9.4 5 12 5 14.4 5 18.1 8.1 21 12 21Z"/>
+          </svg>
+        </span>
+        <h3>{{ 'ueber.wert_1_titel' | t }}</h3>
+        <p>{{ 'ueber.wert_1_text' | t }}</p>
+      </article>
+
+      <article class="wert-karte">
+        <span class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 21c0-9 5-15 15-16-1 10-7 15-15 16Z"/><path d="M5 21 14 12"/>
+          </svg>
+        </span>
+        <h3>{{ 'ueber.wert_2_titel' | t }}</h3>
+        <p>{{ 'ueber.wert_2_text' | t }}</p>
+      </article>
+
+      <article class="wert-karte">
+        <span class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="9" r="6"/><path d="m8.5 13.8-1.5 7.2 5-2.6 5 2.6-1.5-7.2"/>
+          </svg>
+        </span>
+        <h3>{{ 'ueber.wert_3_titel' | t }}</h3>
+        <p>{{ 'ueber.wert_3_text' | t }}</p>
+        {%- if specialty != blank %}
+        <a class="wert-link" href="{{ specialty.url }}">{{ 'ueber.wert_3_link' | t }}</a>
+        {%- endif %}
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sektion team" style="padding-top:0">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'ueber.team_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'ueber.team_titel' | t }}</h2>
+      </div>
+    </div>
+
+    <div class="team-raster" data-batch>
+      <article class="team-karte">
+        <div class="portrait">
+          {%- if section.settings.bild_joscha != blank %}
+          {%- assign bild_alt = 'ueber.joscha_alt' | t %}
+          {{ section.settings.bild_joscha | image_url: width: 400 | image_tag: loading: 'lazy', widths: '200, 300, 400', sizes: '132px', alt: bild_alt }}
+          {%- endif %}
+        </div>
+        <div>
+          <span class="rolle">{{ 'ueber.joscha_rolle' | t }}</span>
+          <h3>{{ 'ueber.joscha_name' | t }}</h3>
+          <p>{{ 'ueber.joscha_text_html' | t: buch: buch }}</p>
+        </div>
+      </article>
+
+      <article class="team-karte">
+        <div class="portrait">
+          {%- if section.settings.bild_jennifer != blank %}
+          {%- assign bild_alt = 'ueber.jennifer_alt' | t %}
+          {{ section.settings.bild_jennifer | image_url: width: 400 | image_tag: loading: 'lazy', widths: '200, 300, 400', sizes: '132px', alt: bild_alt }}
+          {%- endif %}
+        </div>
+        <div>
+          <span class="rolle">{{ 'ueber.jennifer_rolle' | t }}</span>
+          <h3>{{ 'ueber.jennifer_name' | t }}</h3>
+          <p>{{ 'ueber.jennifer_text' | t }}</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sektion" style="padding-top:0">
+  <div class="wrap">
+    <div class="hub-band" data-reveal>
+      <img class="signet" src="{{ 'logo-hellorange-signet.svg' | asset_url }}" alt="" aria-hidden="true" width="764" height="923">
+      <div>
+        <span class="eyebrow" style="opacity:.85">{{ 'ueber.band_eyebrow' | t }}</span>
+        <h2 style="margin-top:14px">{{ 'ueber.band_titel_html' | t }}</h2>
+        <p>{{ 'ueber.band_text' | t }}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <a class="btn btn--hell" href="{{ routes.root_url }}#kaffees" data-pfeil>{{ 'ueber.band_kaffees' | t }}</a>
+        {%- if finder != blank %}
+        <a class="btn btn--hell" href="{{ finder.url }}" data-pfeil>{{ 'ueber.band_finder' | t }}</a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% render 'bw-brot-schema' %}
+
+{{ 'faehren.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'animationen.js' | asset_url }}" defer></script>
+<script src="{{ 'faehren.js' | asset_url }}" defer></script>
+<script src="{{ 'laeufer-signet.js' | asset_url }}" defer></script>
+<script src="{{ 'ueberuns-hero.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Über uns",
+  "settings": [
+    { "type": "header", "content": "Das Team" },
+    { "type": "image_picker", "id": "bild_joscha", "label": "Porträt Joscha", "info": "Rund beschnitten, den Ausschnitt setzt der Fokuspunkt des Bildes." },
+    { "type": "image_picker", "id": "bild_jennifer", "label": "Porträt Jennifer", "info": "Rund beschnitten, den Ausschnitt setzt der Fokuspunkt des Bildes." }
+  ]
+}
+{% endschema %}

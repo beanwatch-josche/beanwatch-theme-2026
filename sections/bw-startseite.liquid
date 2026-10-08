@@ -7,7 +7,9 @@
 
   Woher die Inhalte kommen:
     Kopf, Laufband, Prozessweg, Über uns, Newsletter   Sprachdateien; das
-                  Foto bei «Willkommen» ist eine Einstellung der Sektion
+                  Foto bei «Willkommen» ist eine Einstellung der Sektion.
+                  Die Röstereifähre fährt die Haufen aus beutel.js (seit
+                  0.13.0, vorher still sechs Beutel in einer Reihe)
     Unsere Kaffees  Kollektionen espresso und filterkaffee ohne Decaf, dann
                   decaf-coffee, je in Shop-Reihenfolge, wie auf der
                   Shop-Seite; data-art für den Filter von kaffees.js
@@ -456,6 +458,9 @@
 <link rel="stylesheet" href="{{ 'faehren.css' | asset_url }}">
 <script src="{{ 'atmosphaere.js' | asset_url }}" defer></script>
 <script src="{{ 'animationen.js' | asset_url }}" defer></script>
+{%- comment -%} beutel.js vor faehren.js: Die Röstereifähre fährt die Haufen
+  nur, wenn bwBeutel schon da ist, sonst sechs Beutel in einer Reihe. {%- endcomment %}
+<script src="{{ 'beutel.js' | asset_url }}" defer></script>
 <script src="{{ 'faehren.js' | asset_url }}" defer></script>
 <script src="{{ 'kaffees.js' | asset_url }}" defer></script>
 <script src="{{ 'besser.js' | asset_url }}" defer></script>

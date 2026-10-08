@@ -11,12 +11,12 @@
    der Zeichnung wie auf dem gedruckten Beutel, siehe ETIKETTEN unten und
    Packaging › Verpackungen im Sortiment.
 
-   bwBeutel(art)                       ein Beutel, 86 × 90 Einheiten, als <g>-Inhalt
-   bwBeutelStapel(art, n, o)           ein Stapel einer Röstung als <svg>
+   bwBeutel(art)                       ein Beutel, 86 × 90 Einheiten, als ‹g›-Inhalt
+   bwBeutelStapel(art, n, o)           ein Stapel einer Röstung als ‹svg›
                                        bis 10 einzeln (ab 6 in zwei Reihen),
                                        ab 11 ein Haufen, höchstens 21 gezeichnet,
                                        n = 0 ein gestrichelter leerer Beutel
-   bwRohkaffeesack(o)                  Jutesack mit Füllstand als <svg>
+   bwRohkaffeesack(o)                  Jutesack mit Füllstand als ‹svg›
 
    Pfade zu den Logos sind relativ zur Seite (assets/logos/...). Liegt die
    Seite in einem Unterordner ohne <base href="../">, den Präfix '../'
@@ -40,7 +40,19 @@
   // Werte auch in assets/css/diagramme.css (--jute-*).
   const JUTE = { hell: '#E8D6BC', mittel: '#CDB595', kante: '#B69C79', kopf: '#DCC6A6' };
 
-  const L = (p, motiv) => `${p}assets/logos/${motiv}`;
+  // Im Theme (theme-export.rb): die Logos der Etiketten mit ihrer
+  // Adresse bei Shopify, der Pfad wie in der Werkstatt nur als Rückfall.
+  const LOGO_ADRESSE = {
+    'cyanblau/fernglas-vertikal.svg': "{{ 'logo-cyanblau-fernglas-vertikal.svg' | asset_url }}",
+    'cyanblau/laeuferin-vertikal.svg': "{{ 'logo-cyanblau-laeuferin-vertikal.svg' | asset_url }}",
+    'cyanblau/standard-vertikal.svg': "{{ 'logo-cyanblau-standard-vertikal.svg' | asset_url }}",
+    'cyanblau/sup-vertikal.svg': "{{ 'logo-cyanblau-sup-vertikal.svg' | asset_url }}",
+    'hellorange/fernglas-vertikal.svg': "{{ 'logo-hellorange-fernglas-vertikal.svg' | asset_url }}",
+    'hellorange/jetski-vertikal.svg': "{{ 'logo-hellorange-jetski-vertikal.svg' | asset_url }}",
+    'hellorange/standard-vertikal.svg': "{{ 'logo-hellorange-standard-vertikal.svg' | asset_url }}",
+    'pink/jetski-vertikal.svg': "{{ 'logo-pink-jetski-vertikal.svg' | asset_url }}"
+  };
+  const L = (p, motiv) => LOGO_ADRESSE[motiv] || `${p}assets/logos/${motiv}`;
 
   // Schlüssel «Kaffee|Sorte». grund = Etikettfarbe, logo = Datei der Zeichnung
   // (null = altes Etikett ohne Logo), linien = Farbe von Zeichnung und Textlinien.
