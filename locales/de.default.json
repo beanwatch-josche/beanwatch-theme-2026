@@ -1063,5 +1063,21 @@
     "band_text": "Schau Dir unsere Kaffees an, oder lass Dir vom Kaffeefinder zeigen, welcher zu Dir passt.",
     "band_kaffees": "Unsere Kaffees",
     "band_finder": "Zum Kaffeefinder"
+  },
+  "kontakt": {
+    "eyebrow": "Kontakt",
+    "titel": "Sag hoi.",
+    "lead": "Fragen zu einer Bestellung, zum Abo, zum Buch oder einfach zum Kaffee? Schreib uns. Wir lesen jede Nachricht selbst und melden uns so bald wie möglich.",
+    "formular_eyebrow": "Nachricht",
+    "formular_titel": "Schreib uns direkt hier.",
+    "feld_name": "Name",
+    "feld_email": "E-Mail",
+    "feld_nachricht": "Nachricht",
+    "hinweis_html": "Wir nutzen Deine Angaben nur, um Dir zu antworten. Mehr dazu in unserer {{ datenschutz }}.",
+    "datenschutz": "Datenschutzerklärung",
+    "knopf": "Nachricht senden",
+    "danke": "Danke, Deine Nachricht ist bei uns. Wir melden uns so bald wie möglich.",
+    "kasten_eyebrow": "So erreichst Du uns",
+    "marke": "Beanwatch ist eine Marke der Kaffeerösterei Gewinner."
   }
 }

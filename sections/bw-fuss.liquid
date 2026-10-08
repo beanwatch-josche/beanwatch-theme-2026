@@ -13,12 +13,7 @@
         <div class="fuss-logo">
           <img src="{{ 'logo-hellorange-quer-einzeilig.svg' | asset_url }}" alt="Beanwatch" width="240" height="50" loading="lazy">
         </div>
-        <p class="fuss-adresse">
-          Kaffeerösterei Gewinner<br>
-          Tödistrasse 21<br>
-          CH-8810 Horgen<br>
-          <a href="mailto:hoi@beanwatch.ch">hoi@beanwatch.ch</a>
-        </p>
+        {% render 'bw-adresse', art: 'fuss' %}
         <span class="fuss-horgen">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF4612"
                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

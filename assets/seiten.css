@@ -3502,3 +3502,52 @@
    Rezeptur auf weissem Grund. */
 .produktkopf ~ .sektion .rezeptur ~ .merksatz,
 .produktkopf ~ .sektion .fakten ~ .merksatz{background:#fff;}
+
+/* Kontakt (08.10.2026): links das Formular, rechts Adresse und E-Mail, beide
+   als weisse Karte. Die Felder gleichen .rechner-feld, dazu E-Mail und
+   Textfeld. .formular-meldung zeigt im Theme, was Shopify nach dem Absenden
+   meldet (--ok, --fehler), .formular-feld--fehler markiert das Feld. */
+.kontakt-raster{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:var(--gap);align-items:start;}
+.kontakt-karte{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:clamp(24px,3vw,40px);
+}
+.kontakt-karte h2{margin:14px 0 clamp(20px,2.4vw,28px);font-size:clamp(1.7rem,3vw,2.5rem);}
+.kontakt-kasten h3{margin-top:14px;font-size:1.25rem;}
+.kontakt-kasten p{margin-top:10px;line-height:1.6;}
+.kontakt-kasten a{color:var(--redorange);font-weight:600;text-decoration:underline;text-underline-offset:3px;}
+.kontakt-kasten .klein{margin-top:18px;font-size:.86rem;opacity:.75;}
+.formular-feld{margin-bottom:22px;}
+.formular-feld label{
+  display:block;
+  font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.68rem;
+  margin-bottom:11px;
+}
+.formular-feld input,
+.formular-feld textarea{
+  width:100%;
+  padding:14px 18px;
+  border-radius:var(--radius-button);
+  border:1.5px solid var(--linie-stark);
+  background:#fff;
+  font:inherit;font-weight:500;
+  color:inherit;
+  outline:none;
+  transition:border-color .3s ease;
+}
+.formular-feld textarea{min-height:180px;resize:vertical;line-height:1.55;}
+.formular-feld input:focus,
+.formular-feld textarea:focus,
+.formular-feld--fehler input,
+.formular-feld--fehler textarea{border-color:var(--redorange);}
+.formular-hinweis{margin:-4px 0 22px;font-size:.86rem;line-height:1.5;opacity:.75;max-width:52ch;}
+.formular-hinweis a{color:inherit;text-decoration:underline;text-underline-offset:3px;}
+.formular-meldung{margin-bottom:22px;padding:14px 18px;border-radius:var(--radius-button);font-weight:500;line-height:1.5;}
+.formular-meldung--ok{background:rgba(79,196,226,.16);border-left:3px solid var(--cyanblau);}
+.formular-meldung--fehler{background:rgba(255,70,18,.08);border-left:3px solid var(--redorange);}
+@media (max-width:900px){
+  .kontakt-raster{grid-template-columns:1fr;}
+}

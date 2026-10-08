@@ -1,0 +1,24 @@
+{%- comment -%}
+  Adresse der Rösterei, an einer Stelle für Fuss und Kontaktseite (seit
+  0.14.0). Wie im Fuss von shell.js und in kontakt.html der Werkstatt.
+  art   'fuss'    der Absatz .fuss-adresse im Fuss
+        'kasten'  Firma als h3, Strasse und Ort, E-Mail für .kontakt-kasten
+{%- endcomment -%}
+{%- liquid
+  assign firma = 'Kaffeerösterei Gewinner'
+  assign strasse = 'Tödistrasse 21'
+  assign ort = 'CH-8810 Horgen'
+  assign mail = 'hoi@beanwatch.ch'
+-%}
+{%- if art == 'kasten' -%}
+<h3>{{ firma }}</h3>
+        <p>{{ strasse }}<br>{{ ort }}</p>
+        <p><a href="mailto:{{ mail }}">{{ mail }}</a></p>
+{%- else -%}
+<p class="fuss-adresse">
+          {{ firma }}<br>
+          {{ strasse }}<br>
+          {{ ort }}<br>
+          <a href="mailto:{{ mail }}">{{ mail }}</a>
+        </p>
+{%- endif -%}

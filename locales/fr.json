@@ -1063,5 +1063,21 @@
     "band_text": "Découvre nos cafés, ou réponds à quelques questions pour trouver celui qui te convient.",
     "band_kaffees": "Nos cafés",
     "band_finder": "Trouver mon café"
+  },
+  "kontakt": {
+    "eyebrow": "Contact",
+    "titel": "Dis bonjour.",
+    "lead": "Une question sur une commande, ton abonnement, le livre ou simplement sur le café ? Écris-nous. Nous lisons chaque message nous-mêmes et te répondons dès que possible.",
+    "formular_eyebrow": "Message",
+    "formular_titel": "Écris-nous directement ici.",
+    "feld_name": "Nom",
+    "feld_email": "E-mail",
+    "feld_nachricht": "Message",
+    "hinweis_html": "Nous utilisons tes données uniquement pour te répondre. Plus d’informations dans notre {{ datenschutz }}.",
+    "datenschutz": "politique de confidentialité",
+    "knopf": "Envoyer le message",
+    "danke": "Merci, nous avons bien reçu ton message. Nous te répondons dès que possible.",
+    "kasten_eyebrow": "Pour nous joindre",
+    "marke": "Beanwatch est une marque de la Kaffeerösterei Gewinner."
   }
 }

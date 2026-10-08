@@ -1,0 +1,101 @@
+{%- comment -%}
+  Kontakt (seit 0.14.0), Vorlage page.contact, übertragen aus kontakt.html
+  der Werkstatt (Entscheid Joscha 08.10.2026): heller Kopf, links das
+  Kontaktformular von Shopify, rechts Adresse und E-Mail.
+
+  Woher die Inhalte kommen:
+    Texte         Sprachdateien (kontakt); der Seitentitel aus dem Shop steht
+                  in den Brotkrumen, der Seiteninhalt unter dem Lead, wenn
+                  er gefüllt ist (heute leer)
+    Formular      {% form 'contact' %} mit festen Feldnamen contact[name],
+                  contact[email] und contact[body]. Im bisherigen Theme trug
+                  jedes Feld die übersetzte Beschriftung als Namen. Shopify
+                  schickt die Nachricht an die Adresse des Shops und setzt
+                  von sich aus hCaptcha ein.
+    Fehler        Meldung von Shopify (form.errors.messages), davor der
+                  Feldname aus den Sprachdateien statt translated_fields
+                  mit capitalize (das machte aus «E-Mail» «E-mail»)
+    Adresse       Snippet bw-adresse, dasselbe wie im Fuss
+  Seitentitel und Meta-Beschreibung kommen aus dem Shop (bw-kopfdaten).
+{%- endcomment -%}
+
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ page.title }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'kontakt.eyebrow' | t }}</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'kontakt.titel' | t }}</h1>
+    <p class="lead">{{ 'kontakt.lead' | t }}</p>
+    {%- if page.content != blank %}
+    <div class="lead">{{ page.content }}</div>
+    {%- endif %}
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <div class="kontakt-raster">
+      <div class="kontakt-karte" data-reveal>
+        <span class="eyebrow">{{ 'kontakt.formular_eyebrow' | t }}</span>
+        <h2>{{ 'kontakt.formular_titel' | t }}</h2>
+        {%- form 'contact', id: 'kontakt-formular', class: 'kontakt-formular' -%}
+          {%- if form.posted_successfully? %}
+          <p class="formular-meldung formular-meldung--ok" role="status">{{ 'kontakt.danke' | t }}</p>
+          {%- else -%}
+          {%- if form.errors %}
+          <p class="formular-meldung formular-meldung--fehler" role="alert">
+            {%- for feld in form.errors -%}
+              {%- case feld -%}
+                {%- when 'form' -%}{%- assign feldname = '' -%}
+                {%- when 'name' -%}{%- assign feldname = 'kontakt.feld_name' | t -%}
+                {%- when 'email' -%}{%- assign feldname = 'kontakt.feld_email' | t -%}
+                {%- when 'body' -%}{%- assign feldname = 'kontakt.feld_nachricht' | t -%}
+                {%- else -%}{%- assign feldname = form.errors.translated_fields[feld] | capitalize -%}
+              {%- endcase -%}
+            {% unless feldname == '' %}{{ feldname }} {% endunless %}{{ form.errors.messages[feld] }}{% unless forloop.last %}<br>{% endunless %}
+            {%- endfor -%}
+          </p>
+          {%- endif %}
+          <div class="formular-feld">
+            <label for="kontakt-name">{{ 'kontakt.feld_name' | t }}</label>
+            <input type="text" id="kontakt-name" name="contact[name]" autocomplete="name" value="{{ customer.name }}" required>
+          </div>
+          <div class="formular-feld{% if form.errors contains 'email' %} formular-feld--fehler{% endif %}">
+            <label for="kontakt-email">{{ 'kontakt.feld_email' | t }}</label>
+            <input type="email" id="kontakt-email" name="contact[email]" autocomplete="email" value="{{ form.email | default: customer.email }}" required{% if form.errors contains 'email' %} aria-invalid="true"{% endif %}>
+          </div>
+          <div class="formular-feld{% if form.errors contains 'body' %} formular-feld--fehler{% endif %}">
+            <label for="kontakt-nachricht">{{ 'kontakt.feld_nachricht' | t }}</label>
+            <textarea id="kontakt-nachricht" name="contact[body]" rows="7" required{% if form.errors contains 'body' %} aria-invalid="true"{% endif %}>{{ form.body }}</textarea>
+          </div>
+          {%- capture datenschutz -%}
+            {%- if shop.privacy_policy -%}
+              <a href="{{ shop.privacy_policy.url }}">{{ 'kontakt.datenschutz' | t }}</a>
+            {%- else -%}
+              {{ 'kontakt.datenschutz' | t }}
+            {%- endif -%}
+          {%- endcapture %}
+          <p class="formular-hinweis">{{ 'kontakt.hinweis_html' | t: datenschutz: datenschutz }}</p>
+          <button class="btn btn--primaer" type="submit" data-pfeil>{{ 'kontakt.knopf' | t }}</button>
+          {%- endif -%}
+        {%- endform -%}
+      </div>
+
+      <aside class="kontakt-karte kontakt-kasten" data-reveal>
+        <span class="eyebrow">{{ 'kontakt.kasten_eyebrow' | t }}</span>
+        {% render 'bw-adresse', art: 'kasten' %}
+        <p class="klein">{{ 'kontakt.marke' | t }}</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+{% render 'bw-brot-schema' %}
+
+{% schema %}
+{ "name": "Kontakt", "settings": [] }
+{% endschema %}
