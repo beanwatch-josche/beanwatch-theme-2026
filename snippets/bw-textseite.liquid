@@ -1,0 +1,160 @@
+{%- comment -%}
+  Textseite (seit 0.16.0, Entscheid Joscha 08.10.2026): die Rechtstexte aus
+  dem Shop (/policies/…) und einfache Seiten der Vorlage page wie die
+  Credits. Schlicht, ohne Sonne und Wellen: Brotkrumen und Titel über der
+  Lesespalte der Artikel, ab sechs Zwischentiteln mit dem Verzeichnis in
+  der Seitenspalte wie bei den Wissensartikeln (beitrag.js). Klassen in
+  seiten.css (.textseite, am Dateiende) und bw-theme.css (Shopifys Markup).
+
+  Rechtstexte haben keine Vorlage: Shopify gibt Titel und Text fertig in
+  content_for_layout aus (.shopify-policy__container mit __title und
+  __body), das Layout reicht dieses HTML hierher. Die erste H1 darin wird
+  zum Titel und fällt aus dem Text, Shopifys eigene <style>-Blöcke fallen
+  weg. Der Text bleibt, wie Shopify ihn liefert, in der Sprache der Seite.
+
+  Aufbereitet wird nach dem Aufbau, wie in bw-artikeltext:
+    Leerzeilen     <p>&nbsp;</p>, <p> </p>, <h2><br></h2> und <meta charset>
+                   fallen weg
+    Zwischentitel  H2 ohne ID bekommen eine (abschnitt-N)
+    Verzeichnis    ab sechs H2 mit Text; die H2, deren Liste nur Sprünge im
+                   Text enthält (die «Inhaltsübersicht» des Generators),
+                   fällt dann samt Liste weg. Mit weniger H2 bleibt sie.
+    Tabellen       .tabellenrahmen und .vergleichstabelle wie im Artikel
+
+  html        der Text (bei Rechtstexten content_for_layout)
+  titel       der Titel (bei Seiten page.title); bei Rechtstexten die H1
+  richtlinie  true auf /policies/…
+  Aufruf: {%- render 'bw-textseite', html: page.content, titel: page.title -%}
+{%- endcomment -%}
+{%- liquid
+  assign roh = html | remove: '<meta charset="utf-8">' | remove: '<p>&nbsp;</p>' | remove: '<p> </p>' | remove: '<h2><br></h2>'
+  assign seitentitel = titel
+  assign ziel_url = page.url
+
+  if richtlinie
+    assign ziel_url = request.path
+    # Shopifys Stilregeln für sein Markup (zentriert, schmal) gelten hier nicht.
+    if roh contains '<style'
+      assign stil_teile = roh | split: '<style'
+      assign roh = stil_teile.first
+      for s in stil_teile offset: 1
+        assign stil = s | split: '</style>' | first
+        assign nach_stil = s | remove_first: stil | remove_first: '</style>'
+        assign roh = roh | append: nach_stil
+      endfor
+    endif
+    if roh contains '<h1'
+      assign vor_h1 = roh | split: '<h1' | first
+      assign ab_h1 = roh | remove_first: vor_h1
+      assign h1 = ab_h1 | split: '</h1>' | first
+      assign nach_h1 = ab_h1 | remove_first: h1 | remove_first: '</h1>'
+      assign h1_text = h1 | append: '</h1>' | strip_html | strip
+      assign roh = vor_h1 | append: nach_h1
+      if h1_text != blank
+        assign seitentitel = h1_text
+      endif
+    endif
+    if seitentitel == blank
+      assign seitentitel = page_title
+    endif
+  endif
+
+  assign teile = roh | split: '<h2'
+  assign anzahl = teile.size | minus: 1
+
+  # Erst zählen: Zwischentitel mit Text, ohne die Inhaltsübersicht.
+  assign toc_nr = 0
+  assign titel_zahl = 0
+  if anzahl > 0
+    for i in (1..anzahl)
+      assign kopf = teile[i] | split: '</h2>' | first
+      assign rest = teile[i] | remove_first: kopf | remove_first: '</h2>'
+      assign punkte = rest | split: '<li' | size | minus: 1
+      assign spruenge = rest | split: 'href="#' | size | minus: 1
+      assign kopf_titel = '<h2' | append: kopf | append: '</h2>' | strip_html | strip
+      if toc_nr == 0 and punkte > 0 and punkte == spruenge
+        assign toc_nr = i
+      elsif kopf_titel != blank
+        assign titel_zahl = titel_zahl | plus: 1
+      endif
+    endfor
+  endif
+  assign mit_verzeichnis = false
+  if titel_zahl >= 6
+    assign mit_verzeichnis = true
+  endif
+
+  assign links = ''
+  capture text
+    echo teile.first
+    if anzahl > 0
+      for i in (1..anzahl)
+        assign kopf = teile[i] | split: '</h2>' | first
+        assign rest = teile[i] | remove_first: kopf | remove_first: '</h2>'
+        if mit_verzeichnis and i == toc_nr
+          # Überschrift und Liste fallen weg, was danach folgt, bleibt.
+          assign ende = '</ol>'
+          if rest contains '</ul>'
+            assign ende = '</ul>'
+          endif
+          assign liste = rest | split: ende | first | append: ende
+          echo rest | remove_first: liste
+          continue
+        endif
+        assign kopf_titel = '<h2' | append: kopf | append: '</h2>' | strip_html | strip
+        assign oeffner = kopf | split: '>' | first
+        if oeffner contains 'id="'
+          assign kopf_id = oeffner | split: 'id="' | last | split: '"' | first
+          echo '<h2'
+        else
+          assign kopf_id = 'abschnitt-' | append: i
+          echo '<h2 id="'
+          echo kopf_id
+          echo '"'
+        endif
+        echo kopf
+        echo '</h2>'
+        echo rest
+        if kopf_titel != blank and i != toc_nr
+          assign links = links | append: '<a href="#' | append: kopf_id | append: '">' | append: kopf_titel | append: '</a>'
+        endif
+      endfor
+    endif
+  endcapture
+
+  assign text = text | replace: '<table', '<div class="tabellenrahmen"><table' | replace: '</table>', '</table></div>'
+  assign text = text | replace: '<table>', '<table class="vergleichstabelle">' | replace: '<table ', '<table class="vergleichstabelle" '
+-%}
+<section class="textseite{% unless mit_verzeichnis %} textseite--schmal{% endunless %}">
+  <div class="wrap wrap--inhalt textseite-kopf">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ seitentitel }}</span>
+    </nav>
+    <h1>{{ seitentitel }}</h1>
+  </div>
+  <div class="wrap">
+    <div class="beitragslayout{% unless mit_verzeichnis %} beitragslayout--einspaltig{% endunless %}">
+      <article class="beitragstext">
+        {{ text }}
+      </article>
+      {%- if mit_verzeichnis %}
+      <aside class="beitragsseite">
+        <nav class="inhaltsverzeichnis" id="text-inhalt" aria-label="{{ 'artikel.inhaltsverzeichnis' | t }}" data-text-klapp="{{ 'artikel.inhaltsverzeichnis' | t }}">
+          <h4>{{ 'artikel.inhalt' | t }}</h4>
+          {{ links }}
+        </nav>
+      </aside>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+{% render 'bw-brot-schema', name_ende: seitentitel, url_ende: ziel_url %}
+{%- if mit_verzeichnis %}
+<script src="{{ 'beitrag.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWBeitrag) BWBeitrag.inhaltsverzeichnis('#text-inhalt', '.beitragstext h2');
+  });
+</script>
+{%- endif %}

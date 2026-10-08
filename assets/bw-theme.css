@@ -1,7 +1,8 @@
 /* ==========================================================================
    Beanwatch · Theme
    Nur was das Shopify-Theme braucht und der Prototyp nicht hat: Sprunglink,
-   Warenkorb (Schublade und Seite), Formularfelder und die Rohbau-Vorlagen.
+   Warenkorb (Schublade und Seite), Formularfelder, Shopifys Markup der
+   Rechtstexte und die Rohbau-Vorlagen.
    Farben, Radien und Abstände kommen aus den Tokens in beanwatch.css.
    Flach, ohne Schatten (CI-Guide). Gehört dem Theme, nicht der Werkstatt.
    ========================================================================== */
@@ -193,3 +194,12 @@
 @media (max-width:860px){
   .bw-rohbau-produkt{grid-template-columns:1fr;}
 }
+
+/* --- Rechtstexte (seit 0.16.0) ---------------------------------------------
+   Shopify schreibt Titel und Text der /policies/… mit eigenem Markup.
+   bw-textseite nimmt die H1 und Shopifys <style> heraus und stellt den Text
+   in die Lesespalte (.textseite in seiten.css). Hier nur noch, was Shopifys
+   Hülle mitbringen könnte: zwei Klassen gewinnen ohne !important. */
+.textseite .shopify-policy__container{max-width:none;margin:0;padding:0;}
+.textseite .shopify-policy__title{display:none;}
+.textseite .shopify-policy__body .rte > :first-child{margin-top:0;}

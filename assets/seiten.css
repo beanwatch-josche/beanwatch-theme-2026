@@ -3632,3 +3632,35 @@
 /* Im Kaffeefinder unter jedem Ergebnis: der Weg zum Probierset. */
 .finder-set{margin-top:clamp(18px,2.4vw,26px);font-weight:500;max-width:60ch;}
 .finder-set a{color:var(--redorange);text-decoration:underline;text-underline-offset:3px;}
+/* ==========================================================================
+   Textseite: die Rechtstexte aus dem Shop (Impressum, Datenschutz, AGB,
+   Widerrufsrecht, Versand) und einfache Seiten wie die Credits. Nur im
+   Theme, seit 08.10.2026 (CI-Guide 104). Schlicht, ohne Sonne und Wellen:
+   Brotkrumen und Titel über der Lesespalte der Artikel (.beitragslayout,
+   .beitragstext), ab sechs Zwischentiteln mit dem Verzeichnis in der
+   Seitenspalte. Den Text schreibt Shopify, deshalb greifen die Regeln an
+   den Elementen und nicht an eigenen Klassen.
+   ========================================================================== */
+.textseite{padding-top:clamp(112px,13vh,150px);}
+.textseite-kopf h1{
+  margin-top:18px;
+  font-size:clamp(1.9rem,4.2vw,3.2rem);
+  overflow-wrap:break-word;hyphens:auto;
+}
+/* Ohne Verzeichnis steht die Lesespalte allein, der Kopf ist so breit. */
+.textseite--schmal .wrap--inhalt{width:min(var(--seite),var(--textbreite));}
+.textseite .beitragslayout{padding-top:clamp(28px,3.5vw,44px);}
+.textseite .beitragstext > :first-child{margin-top:0;}
+/* Lange Zeichenketten brechen um: Adressen, die Unterstrich-Zeilen des
+   Muster-Widerrufsformulars. Sonst lief die Seite am Handy über den Rand. */
+.textseite .beitragstext{overflow-wrap:anywhere;}
+/* Tabellen aus dem Shop tragen border="1" und width="40%": Den Rahmen gibt
+   .tabellenrahmen, die Breite .vergleichstabelle. Zwei Spalten brauchen
+   keine Mindestbreite. */
+.textseite .tabellenrahmen{margin:20px 0 8px;}
+.textseite .vergleichstabelle{min-width:0;border:0;}
+.textseite .vergleichstabelle th,
+.textseite .vergleichstabelle td{border-top:0;border-left:0;border-right:0;}
+/* Codeblöcke (die FR-Fassung des Datenschutzes enthält welche) brechen um,
+   statt die Seite am Handy breiter zu machen. */
+.textseite pre{white-space:pre-wrap;margin-top:18px;}

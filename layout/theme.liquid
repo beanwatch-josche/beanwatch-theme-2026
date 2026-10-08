@@ -38,7 +38,18 @@
 <a class="bw-sprung" href="#inhalt">{{ 'allgemein.zum_inhalt' | t }}</a>
 {% sections 'header-group' %}
 <main id="inhalt">
+{% if request.page_type == 'policy' -%}
+  {%- comment -%}
+    Rechtstexte (/policies/…) haben keine Vorlage: Shopify schreibt Titel
+    und Text fertig in content_for_layout. Seit 0.16.0 stellt bw-textseite
+    sie schlicht in die Lesespalte. Alle übrigen Seiten bleiben, wie sie
+    sind, Zeichen für Zeichen.
+  {%- endcomment -%}
+  {%- capture richtlinie_html %}{{ content_for_layout }}{% endcapture -%}
+  {%- render 'bw-textseite', html: richtlinie_html, richtlinie: true -%}
+{%- else -%}
 {{ content_for_layout }}
+{%- endif %}
 </main>
 {% sections 'footer-group' %}
 {% render 'bw-warenkorb' %}

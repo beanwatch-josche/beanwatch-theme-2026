@@ -1,7 +1,10 @@
-{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: page.title -%}
-<section class="sektion">
-  <div class="wrap bw-rohbau-text">{{ page.content }}</div>
-</section>
+{%- comment -%}
+  Allgemeine Seite (Vorlage page): seit 0.16.0 die Textseite statt des
+  Rohbaus, schlicht wie die Rechtstexte (Entscheid Joscha 08.10.2026).
+  Heute für die Credits (Suffix page, eine Vorlage page.page gibt es nicht)
+  und, bis die Autorenseite steht, für /pages/joscha-gewinner.
+{%- endcomment -%}
+{%- render 'bw-textseite', html: page.content, titel: page.title -%}
 {% schema %}
-{ "name": "Seite (Rohbau)", "settings": [] }
+{ "name": "Seite", "settings": [] }
 {% endschema %}
