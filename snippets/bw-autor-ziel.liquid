@@ -1,0 +1,20 @@
+{%- comment -%}
+  Adresse der Autorenseite eines Artikels (seit 0.16.2, Wunsch Joscha
+  08.10.2026): aus custom.autoren_url, wie im bisherigen Shop. Zeigt das Feld
+  auf eine Seite des Shops, kommt ihre Adresse in der Sprache der Seite
+  (pages[handle].url), sonst die Adresse, wie sie im Feld steht. Ohne Feld
+  bleibt die Ausgabe leer. Gebraucht für den Namen in der Kopfzeile von
+  Artikeln und Rezepten und für den Knopf im Autorenkasten.
+  a  der Artikel
+  Aufruf: {%- capture autor_ziel -%}{%- render 'bw-autor-ziel', a: article -%}{%- endcapture -%}
+{%- endcomment -%}
+{%- liquid
+  assign ziel = a.metafields.custom.autoren_url.value | strip
+  if ziel contains '/pages/'
+    assign handle = ziel | split: '/pages/' | last | split: '?' | first | split: '#' | first | remove: '/'
+    if pages[handle] != blank
+      assign ziel = pages[handle].url
+    endif
+  endif
+  echo ziel
+-%}

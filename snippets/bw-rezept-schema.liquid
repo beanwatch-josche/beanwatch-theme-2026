@@ -110,7 +110,7 @@
   {%- if bilder.size > 0 %}
   "image": {{ bilder | json }},
   {%- endif %}
-  "author": { "@type": "Person", "name": {{ article.author | json }} },
+  "author": { "@type": "Person", "name": {{ article.author | json }}{% if article.metafields.custom.autoren_url.value != blank %}, "url": {{ article.metafields.custom.autoren_url.value | json }}{% endif %} },
   "publisher": { "@type": "Organization", "name": {{ shop.name | json }} },
   "recipeCategory": "Kaffeerezept",
   "recipeCuisine": "Coffee",

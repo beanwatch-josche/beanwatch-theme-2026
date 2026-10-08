@@ -16,6 +16,9 @@
     recipe_rating_key, rating_average, rating_count   Bewertung (Supabase)
     bild_des_autoren   fehlt bei 5 der 8 Live-Rezepte (06.10.2026), dann gilt
                        das Autorenbild aus den Theme-Einstellungen
+    autoren_url        seit 0.16.2: der Name in der Kopfzeile führt zur
+                       Autorenseite (bw-autor-ziel), seit 08.10.2026 bei allen
+                       Rezepten gefüllt
   Was fehlt, fällt weg: Ein Rezept ohne Nährwerte zeigt die Bohne weiter
   oben, wie im Generator.
 
@@ -28,6 +31,9 @@
 {%- endcomment -%}
 {%- liquid
   assign mf = article.metafields.custom
+  capture autor_ziel
+    render 'bw-autor-ziel', a: article
+  endcapture
   assign basis = mf.recipe_base.value
   assign naehrwerte = mf.recipe_nutrition.value
   assign equipment = mf.recipe_equipment.value
@@ -141,7 +147,7 @@
             {%- if autor_bild != blank -%}
             {{ autor_bild | image_url: width: 76, height: 76, crop: 'center' | image_tag: width: 38, height: 38, alt: '' }}
             {%- endif %}
-            {{ article.author }}
+            {% if autor_ziel != blank %}<a href="{{ autor_ziel }}">{{ article.author }}</a>{% else %}{{ article.author }}{% endif %}
           </span>
           {%- if mf.recipe_rating_key.value != blank %}
           <div class="rezept-bewertung rezept-bewertung--kopf" id="bewertung"

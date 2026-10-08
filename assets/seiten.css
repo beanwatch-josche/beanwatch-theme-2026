@@ -3667,3 +3667,12 @@
 /* Knopf zur Autorenseite im Autorenkasten der Wissensartikel (08.10.2026,
    wie im bisherigen Shop «Mehr über den Autor»). */
 .autorbox .btn{margin-top:18px;}
+/* Der Name in der Kopfzeile von Artikeln und Rezepten führt zur Autorenseite
+   (08.10.2026, Wunsch Joscha). Er sieht aus wie Text; erst beim Überfahren
+   zeigt er sich als Link. */
+.beitragsmeta .autor a{transition:color .25s ease;}
+.beitragsmeta .autor a:hover,
+.beitragsmeta .autor a:focus-visible{
+  color:var(--redorange);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
+}
