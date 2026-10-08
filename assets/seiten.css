@@ -3664,3 +3664,6 @@
 /* Codeblöcke (die FR-Fassung des Datenschutzes enthält welche) brechen um,
    statt die Seite am Handy breiter zu machen. */
 .textseite pre{white-space:pre-wrap;margin-top:18px;}
+/* Knopf zur Autorenseite im Autorenkasten der Wissensartikel (08.10.2026,
+   wie im bisherigen Shop «Mehr über den Autor»). */
+.autorbox .btn{margin-top:18px;}

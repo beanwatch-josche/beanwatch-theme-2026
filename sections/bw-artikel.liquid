@@ -17,7 +17,9 @@
     Text        bw-artikeltext
     Autor       Bild wie oben, «Geschrieben von», Name, «Gründer und Röster
                 von Beanwatch.», dann Vorname und custom.uber_den_autoren
-                (der Satz setzt dort nach dem Namen fort), Kontakt
+                (der Satz setzt dort nach dem Namen fort), Kontakt; seit
+                0.16.1 der Knopf «Mehr über den Autor» zu custom.autoren_url
+                (eine Seite des Shops in der Sprache der Seite)
     Passt dazu  Wissensartikel mit den meisten gemeinsamen custom.themen,
                 ohne den Artikel selbst; Liquid zeichnet vor, beitrag.js
                 zeichnet gleich neu
@@ -144,6 +146,21 @@
             {%- if mf.uber_den_autoren.value != blank %} {{ vorname }} {{ mf.uber_den_autoren.value }}{% endif %}
             {{ 'artikel.fragen_html' | t }}
           </p>
+          {%- liquid
+            # Zur Autorenseite wie im bisherigen Shop (custom.autoren_url). Zeigt
+            # das Feld auf eine Seite des Shops, kommt ihre Adresse in der
+            # Sprache der Seite; sonst die Adresse, wie sie im Feld steht.
+            assign autor_ziel = mf.autoren_url.value | strip
+            if autor_ziel contains '/pages/'
+              assign autor_handle = autor_ziel | split: '/pages/' | last | split: '?' | first | split: '#' | first | remove: '/'
+              if pages[autor_handle] != blank
+                assign autor_ziel = pages[autor_handle].url
+              endif
+            endif
+          -%}
+          {%- if autor_ziel != blank %}
+          <a class="btn btn--linie" href="{{ autor_ziel }}" data-pfeil>{{ 'artikel.autor_mehr' | t }}</a>
+          {%- endif %}
         </div>
       </div>
     </article>
