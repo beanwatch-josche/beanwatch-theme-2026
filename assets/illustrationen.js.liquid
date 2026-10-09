@@ -1170,17 +1170,50 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
     fruechtetee:     { farbe: '#C0392B', blatt: false, form: 'blatt',   kerbe: false },
     nelke:           { farbe: '#7A4B2A', blatt: false, form: 'nelke',   kerbe: false },
     cremig:          { farbe: '#F3DFC7', blatt: false, form: 'welle',   kerbe: false },
-    zuckerrohr:      { farbe: '#C9B072', blatt: false, form: 'halm',    kerbe: false }
+    zuckerrohr:      { farbe: '#C9B072', blatt: false, form: 'halm',    kerbe: false },
+    // Dazugekommen mit dem Apas FT Blend (09.10.2026).
+    haselnuss:       { farbe: '#A9683A', blatt: false, form: 'haselnuss', kerbe: false }
+  };
+
+  // Andere Schreibweisen und die Namen auf Englisch und Französisch. Im Theme
+  // liefert Shopify die Noten in der Sprache der Seite («Peach», «Pêche»);
+  // ohne diese Liste stünde dort überall die runde Ersatzform. Neue Noten
+  // bekommen hier ihre Übersetzungen aus dem Shop dazu.
+  const NOTEN_AUCH = {
+    // Deutsch
+    dunkleschokolade: 'dunkleschoggi', schoggi: 'schokolade', milchschoggi: 'milchschokolade',
+    haselnuesse: 'haselnuss', mandel: 'mandeln', kirschen: 'kirsche',
+    // Englisch
+    peach: 'pfirsich', apricot: 'aprikose', cherry: 'kirsche', cherries: 'kirsche',
+    strawberry: 'erdbeere', molasses: 'melasse', chocolate: 'schokolade',
+    darkchocolate: 'dunkleschoggi', milkchocolate: 'milchschokolade', nut: 'nuss', nuts: 'nuss',
+    hazelnut: 'haselnuss', hazelnuts: 'haselnuss', almond: 'mandeln', almonds: 'mandeln',
+    cranberry: 'cranberries', honeydew: 'honigmelone', honeydewmelon: 'honigmelone',
+    greenapple: 'gruenerapfel', cherryblossom: 'kirschbluete', fruittea: 'fruechtetee',
+    clove: 'nelke', cloves: 'nelke', creamy: 'cremig', sugarcane: 'zuckerrohr',
+    lemon: 'zitrone', flower: 'blume', floral: 'blume',
+    // Französisch (ohne Akzente, siehe bwNote)
+    peche: 'pfirsich', abricot: 'aprikose', cerise: 'kirsche', cerises: 'kirsche',
+    fraise: 'erdbeere', chocolat: 'schokolade', chocolatnoir: 'dunkleschoggi',
+    chocolataulait: 'milchschokolade', noix: 'nuss', noisette: 'haselnuss', noisettes: 'haselnuss',
+    amande: 'mandeln', amandes: 'mandeln', canneberge: 'cranberries', canneberges: 'cranberries',
+    melonmiel: 'honigmelone', pommeverte: 'gruenerapfel', fleurdecerisier: 'kirschbluete',
+    theauxfruits: 'fruechtetee', cloudegirofle: 'nelke', girofle: 'nelke',
+    cremeux: 'cremig', cremeuse: 'cremig', canneasucre: 'zuckerrohr', citron: 'zitrone',
+    fleur: 'blume', fleurs: 'blume'
   };
 
   function bwNote(name) {
     // Umlaute werden umgeschrieben statt weggeworfen, damit «Früchtetee» und
     // «Fruechtetee» denselben Eintrag finden. Der Shop schreibt sie mal so,
     // mal so; im Text stehen sie richtig, im Schlüssel immer als ae/oe/ue.
+    // Danach fallen die übrigen Akzente weg («Pêche» wird «peche»).
     const s = String(name || '').toLowerCase()
       .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z]/g, '');
-    const n = NOTEN[s] || { farbe: '#C98A4B', blatt: true, form: 'rund', kerbe: false };
+    const n = NOTEN[s] || NOTEN[NOTEN_AUCH[s]] ||
+      { farbe: '#C98A4B', blatt: true, form: 'rund', kerbe: false };
     const K = F.kontur;
 
     let koerper;
@@ -1257,6 +1290,17 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
                          fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
                    <path d="M13 40C20 33 28 24 38 12" stroke="${K}" stroke-width="1.8"
                          fill="none" stroke-linecap="round" opacity=".6"/>`;
+        break;
+      case 'haselnuss': // kurze Spitze oben, unten die helle, raue Ansatzfläche
+        koerper = `<path d="M25 9c2 3 14 8 14 20 0 8-6 13-14 13s-14-5-14-13c0-12 12-17 14-20Z"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/>
+                   <path d="M11.4 32c2.6-2 4.6 1 7-.8 2.4-1.8 4.3 1 6.6-.6 2.3 1.6 4.2-1.2 6.6.6
+                            2.4 1.8 4.4-1.2 7 .8C37 38 31.6 42 25 42s-12-4-13.6-10Z"
+                         fill="#E6CDA3" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+                   <g fill="${K}" opacity=".35"><circle cx="20" cy="37" r="1"/>
+                     <circle cx="25" cy="38.5" r="1"/><circle cx="30" cy="37" r="1"/></g>
+                   <path d="M19 16c-2 3-3 6-3 9" stroke="#fff" stroke-width="1.8" opacity=".35"
+                         stroke-linecap="round"/>`;
         break;
       default: // rund
         koerper = `<circle cx="25" cy="30" r="13" fill="${n.farbe}" stroke="${K}" stroke-width="2"/>` +
