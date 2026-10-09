@@ -1097,5 +1097,11 @@
     "band_knopf": "Vers le coffret découverte",
     "finder_espresso_html": "Tu hésites encore ? Le {{ link }} contient trois espressos à découvrir, la livraison est offerte.",
     "finder_filter_html": "Tu hésites encore ? Le {{ link }} contient trois cafés filtre à découvrir, la livraison est offerte."
+  },
+  "autor": {
+    "eyebrow": "Auteur",
+    "beitraege_eyebrow": "Articles",
+    "beitraege_titel": "Ses derniers articles.",
+    "alle_beitraege": "Tous les articles"
   }
 }

@@ -211,5 +211,49 @@ window.BWBeitrag = (function () {
     });
   }
 
-  return { inhaltsverzeichnis, verwandte, verweiskasten };
+  /* ------------------------------------------------------------------
+     Die neuesten Beiträge
+     Für die Autorenseite: die jüngsten Artikel und Rezepte aus dem
+     Bestand, unabhängig vom Thema. Das Datum steht im Bestand als Text
+     («5. Juni 2026»), darum hier die deutschen Monatsnamen. Im Theme
+     zeichnet Liquid diese Karten selbst, dort ruft niemand neueste() auf.
+     ------------------------------------------------------------------ */
+  const MONATE = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli',
+    'august', 'september', 'oktober', 'november', 'dezember'];
+
+  function datumWert(text) {
+    const m = /^(\d{1,2})\.\s*([^\s\d]+)\s+(\d{4})$/.exec((text || '').trim());
+    if (!m) return 0;
+    const monat = MONATE.indexOf(m[2].toLowerCase());
+    return monat < 0 ? 0 : Number(m[3]) * 10000 + (monat + 1) * 100 + Number(m[1]);
+  }
+
+  /**
+   * @param {string} zielAuswahl Container für die Karten
+   * @param {number} anzahl      Wie viele Karten
+   * @param {Array}  [arten]     Welche Arten zählen, sonst Artikel und Rezepte
+   */
+  function neueste(zielAuswahl, anzahl, arten) {
+    const raster = document.querySelector(zielAuswahl);
+    if (!raster || !window.BWWissen) return;
+    const zaehlt = arten || ['wissen', 'rezept'];
+
+    const treffer = BWWissen.BEITRAEGE
+      .filter(b => b.stand === 'live')
+      .filter(b => !window.BWStart || BWStart.zeigen(b.ziel))
+      .filter(b => zaehlt.includes(b.art))
+      .filter(b => datumWert(b.datum) > 0)
+      .sort((a, b) => datumWert(b.datum) - datumWert(a.datum))
+      .slice(0, anzahl || 3);
+
+    raster.innerHTML = treffer.map(BWWissen.karte).join('');
+
+    if (ruhig) return;
+    gsap.from(raster.children, {
+      opacity: 0, y: 34, duration: 0.9, stagger: 0.09,
+      scrollTrigger: { trigger: raster, start: 'top 88%', once: true }
+    });
+  }
+
+  return { inhaltsverzeichnis, verwandte, verweiskasten, neueste };
 })();

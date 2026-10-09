@@ -1097,5 +1097,11 @@
     "band_knopf": "Zum Probierset",
     "finder_espresso_html": "Noch unentschlossen? Im {{ link }} stecken drei Espressi zum Kennenlernen, den Versand übernehmen wir.",
     "finder_filter_html": "Noch unentschlossen? Im {{ link }} stecken drei Filterkaffees zum Kennenlernen, den Versand übernehmen wir."
+  },
+  "autor": {
+    "eyebrow": "Autor",
+    "beitraege_eyebrow": "Beiträge",
+    "beitraege_titel": "Zuletzt geschrieben.",
+    "alle_beitraege": "Alle Beiträge"
   }
 }

@@ -1,0 +1,173 @@
+{%- comment -%}
+  Autorenseite (seit 0.17.0), Vorlage page.autor, übertragen aus
+  joscha-gewinner.html der Werkstatt (Entscheid Joscha 09.10.2026): Kopf wie
+  ein Wissensartikel mit Foto (CI-Guide 15), die Stationen als Bildblöcke mit
+  Textlink (25, 37), zum Schluss die drei neuesten Beiträge (46).
+
+  Woher die Inhalte kommen (alles an der Seite, damit weitere Autoren
+  dieselbe Vorlage nutzen):
+    Name          page.title, auch für die Auswahl der Beiträge (article.author)
+    Lead          custom.lead_text (wie im bisherigen Shop)
+    Foto          custom.hero_bild (wie im bisherigen Shop); der Fokuspunkt
+                  aus dem Admin wird zu object-position
+    Stationen     custom.bildbloecke (Metaobjekte bildblock: anker, eyebrow,
+                  titel, text, bild, link_text, link_ziel); ein Ziel im Shop
+                  kommt über bw-shop-ziel in der Sprache der Seite, ein
+                  fremdes öffnet neu und steht im Schema als sameAs
+    Beiträge      veröffentlichte Artikel aus kaffeewissen und kaffeerezepte
+                  mit dem Namen der Seite als Autor, neuste zuerst
+  Seitentitel und Meta-Beschreibung kommen aus dem Shop (bw-kopfdaten).
+{%- endcomment -%}
+{%- liquid
+  assign mf = page.metafields.custom
+  assign lead = mf.lead_text.value | strip
+  assign foto = mf.hero_bild.value
+  assign bloecke = mf.bildbloecke.value
+  assign ueber = pages['ueber-uns']
+
+  assign same_as = ''
+  for b in bloecke
+    assign ziel = b.link_ziel.value | strip
+    if ziel != blank and ziel contains 'http'
+      unless ziel contains 'beanwatch.ch'
+        assign same_as = same_as | append: '|' | append: ziel
+      endunless
+    endif
+  endfor
+  assign same_as = same_as | remove_first: '|' | split: '|'
+
+  # Die neusten Beiträge des Autors: Schlüssel aus Datum, Blog, Art und
+  # Handle, absteigend sortiert, die ersten drei.
+  assign quellen = 'kaffeewissen:wissen,kaffeerezepte:rezept' | split: ','
+  assign schluessel = ''
+  for q in quellen
+    assign teile = q | split: ':'
+    for a in blogs[teile[0]].articles
+      if a.author == page.title
+        assign s = a.published_at | date: '%Y%m%d%H%M%S' | append: '|' | append: teile[0] | append: '|' | append: teile[1] | append: '|' | append: a.handle
+        assign schluessel = schluessel | append: ',' | append: s
+      endif
+    endfor
+  endfor
+  assign schluessel = schluessel | remove_first: ',' | split: ',' | sort | reverse
+-%}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  "url": {{ request.origin | append: page.url | json }},
+  "name": {{ page_title | json }},
+  "inLanguage": {{ request.locale.iso_code | append: '-CH' | json }},
+  "mainEntity": {
+    "@type": "Person",
+    "name": {{ page.title | json }},
+    "url": {{ request.origin | append: page.url | json }},
+    {%- if foto != blank %}
+    {%- assign bild_url = foto | image_url: width: 1440 -%}
+    {%- unless bild_url contains 'http' %}{% assign bild_url = bild_url | prepend: 'https:' %}{% endunless %}
+    "image": {{ bild_url | json }},
+    {%- endif %}
+    {%- if lead != blank %}
+    "description": {{ lead | strip_newlines | json }},
+    {%- endif %}
+    {%- if same_as.size > 0 %}
+    "sameAs": {{ same_as | json }},
+    {%- endif %}
+    "worksFor": { "@type": "Organization", "name": {{ shop.name | json }}, "url": {{ request.origin | append: routes.root_url | json }} }
+  }
+}
+</script>
+{%- if ueber != blank -%}
+{% render 'bw-brot-schema', name_1: ueber.title, url_1: ueber.url %}
+{%- else -%}
+{% render 'bw-brot-schema' %}
+{%- endif %}
+
+<section class="beitragskopf beitragskopf--person">
+  <div class="wrap">
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span>
+      {%- if ueber != blank %}
+      <a href="{{ ueber.url }}">{{ ueber.title }}</a><span class="teiler">·</span>
+      {%- endif %}
+      <span>{{ page.title }}</span>
+    </nav>
+
+    <div class="seitenkopf-raster beitragskopf-raster">
+      <div>
+        <span class="eyebrow">{{ 'autor.eyebrow' | t }}</span>
+
+        <h1 data-split="zeilen">{{ page.title }}</h1>
+
+        {%- if lead != blank %}
+        <p class="lead">{{ lead | escape | newline_to_br }}</p>
+        {%- endif %}
+      </div>
+
+      {%- if foto != blank %}
+      <div class="beitragsbild" data-reveal>
+        {%- assign fokus = foto.presentation.focal_point | append: '' -%}
+        {%- if fokus != blank -%}
+        {%- assign stil = 'object-position:' | append: fokus %}
+        {{ foto | image_url: width: 1440 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '600, 900, 1200, 1440', sizes: '(min-width: 1080px) 46vw, 100vw', alt: foto.alt, style: stil }}
+        {%- else %}
+        {{ foto | image_url: width: 1440 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '600, 900, 1200, 1440', sizes: '(min-width: 1080px) 46vw, 100vw', alt: foto.alt }}
+        {%- endif %}
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+{%- if bloecke.size > 0 %}
+<section class="sektion">
+  <div class="wrap wrap--inhalt autor-stationen">
+    {%- for b in bloecke %}
+    <div class="bildblock{% cycle '', ' bildblock--gedreht' %}" id="{{ b.anker.value | handleize }}" data-reveal>
+      {%- render 'bw-produkt-bild', bild: b.bild.value %}
+      <div>
+        {%- if b.eyebrow.value != blank %}
+        <span class="eyebrow">{{ b.eyebrow.value }}</span>
+        {%- endif %}
+        <h2>{{ b.titel.value }}</h2>
+        {%- render 'bw-absaetze', text: b.text.value %}
+        {%- assign link_text = b.link_text.value | strip -%}
+        {%- assign roh = b.link_ziel.value | strip -%}
+        {%- if link_text != blank and roh != blank -%}
+        {%- capture ziel -%}{%- render 'bw-shop-ziel', ziel: roh -%}{%- endcapture -%}
+        {%- assign fremd = false -%}
+        {%- if ziel contains 'http' -%}{%- unless ziel contains 'beanwatch.ch' -%}{%- assign fremd = true -%}{%- endunless -%}{%- endif %}
+        <a class="besser-alle" href="{{ ziel }}"{% if fremd %} target="_blank" rel="me noopener"{% endif %} data-pfeil>{{ link_text }}</a>
+        {%- endif %}
+      </div>
+    </div>
+    {%- endfor %}
+  </div>
+</section>
+{%- endif %}
+
+{%- if schluessel.size > 0 %}
+<section class="sektion verwandt">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'autor.beitraege_eyebrow' | t }}</span>
+        <h2 data-split="zeilen">{{ 'autor.beitraege_titel' | t }}</h2>
+      </div>
+      <a class="btn btn--linie" href="{{ blogs['kaffeewissen'].url }}" data-pfeil>{{ 'autor.alle_beitraege' | t }}</a>
+    </div>
+    <div class="beitraege" id="autor-beitraege">
+      {%- for s in schluessel limit: 3 -%}
+        {%- assign t = s | split: '|' -%}
+        {%- assign pfad = t[1] | append: '/' | append: t[3] -%}
+        {%- render 'bw-beitrag', a: articles[pfad], art: t[2] -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif %}
+
+{% schema %}
+{ "name": "Autorenseite", "settings": [] }
+{% endschema %}

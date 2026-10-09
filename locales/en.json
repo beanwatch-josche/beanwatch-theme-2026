@@ -1097,5 +1097,11 @@
     "band_knopf": "To the tasting set",
     "finder_espresso_html": "Still undecided? The {{ link }} holds three espressos to get to know, and shipping is on us.",
     "finder_filter_html": "Still undecided? The {{ link }} holds three filter coffees to get to know, and shipping is on us."
+  },
+  "autor": {
+    "eyebrow": "Author",
+    "beitraege_eyebrow": "Articles",
+    "beitraege_titel": "Latest writing.",
+    "alle_beitraege": "All articles"
   }
 }

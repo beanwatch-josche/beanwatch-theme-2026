@@ -1,0 +1,27 @@
+{%- comment -%}
+  Ein Link aus einem Shop-Feld (Typ url), etwa im Bildblock (seit 0.17.0).
+  Zeigt er auf ein Produkt oder eine Seite im Shop, kommt die Adresse in der
+  Sprache der Seite (all_products[handle].url, pages[handle].url), sonst die
+  Adresse, wie sie im Feld steht. Gibt nur die Adresse aus.
+  Aufruf: {%- capture ziel -%}{%- render 'bw-shop-ziel', ziel: b.link_ziel.value -%}{%- endcapture -%}
+{%- endcomment -%}
+{%- liquid
+  assign adresse = ziel | strip
+  assign erstes = adresse | slice: 0
+  assign im_shop = false
+  if adresse contains 'beanwatch.ch/' or erstes == '/'
+    assign im_shop = true
+  endif
+  if im_shop and adresse contains '/products/'
+    assign handle = adresse | split: '/products/' | last | split: '?' | first | split: '#' | first | remove: '/'
+    if all_products[handle] != blank
+      assign adresse = all_products[handle].url
+    endif
+  elsif im_shop and adresse contains '/pages/'
+    assign handle = adresse | split: '/pages/' | last | split: '?' | first | split: '#' | first | remove: '/'
+    if pages[handle] != blank
+      assign adresse = pages[handle].url
+    endif
+  endif
+  echo adresse
+-%}

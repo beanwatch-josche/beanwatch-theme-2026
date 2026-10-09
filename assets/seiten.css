@@ -3676,3 +3676,15 @@
   color:var(--redorange);
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
 }
+
+/* ==========================================================================
+   Autorenseite (08.10.2026, Entscheid Joscha)
+   Kopf wie ein Wissensartikel (.beitragskopf, Element 15) mit Eyebrow statt
+   Inhaltsart und ohne Meta-Zeile, rechts das Foto. Darunter die Stationen
+   als Bildblöcke (25), abwechselnd gedreht, mit Textlink statt Knopf (37),
+   zum Schluss die neuesten Beiträge (.verwandt, 46).
+   ========================================================================== */
+.beitragskopf--person .eyebrow{display:block;margin-top:22px;color:var(--redorange);}
+.autor-stationen{display:grid;gap:clamp(56px,7vw,104px);}
+.autor-stationen .bildblock h2{font-size:clamp(1.4rem,2.4vw,2rem);font-weight:800;letter-spacing:-.025em;}
+.bildblock .besser-alle{margin-top:22px;}
