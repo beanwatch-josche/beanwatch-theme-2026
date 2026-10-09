@@ -5,6 +5,8 @@
   05.10.2026), die Wörter kommen aus den Sprachdateien. Ein Punkt erscheint
   nur, wenn sein Ziel in Shopify existiert.
   Das Menü auf dem Handy öffnet bw-theme.js.
+  «Konto» (seit 0.18.0) führt zum Kundenkonto von Shopify, mit Bestellungen
+  und Abo, und erscheint nur, wenn der Shop Kundenkonten anbietet.
 {%- endcomment -%}
 {%- capture aktiv -%}{%- render 'bw-navschluessel' -%}{%- endcapture -%}
 {%- capture punkte -%}
@@ -35,6 +37,15 @@
     </nav>
 
     <div class="kopf-aktionen">
+      {%- if shop.customer_accounts_enabled %}
+      <a class="konto" href="{{ routes.account_url }}" aria-label="{{ 'kopf.konto' | t }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span class="wort">{{ 'kopf.konto' | t }}</span>
+      </a>
+      {%- endif %}
       <a class="warenkorb" href="{{ routes.cart_url }}" data-bw-warenkorb-oeffnen>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
