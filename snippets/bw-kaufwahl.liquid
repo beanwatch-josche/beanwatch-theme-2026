@@ -10,9 +10,16 @@
   «Einmal», damit es nicht mitgeht. bw-theme.js fängt das Absenden ab und
   öffnet die Schublade. Ohne JavaScript bleibt es beim Einmalkauf.
 
-  Der Abo-Preis kommt aus dem ersten Plan. Laut Entscheid haben alle
-  Intervalle dieselben 10 %; bekämen sie verschiedene Rabatte, müsste die
-  Preiszeile dem gewählten Intervall folgen.
+  Der Abo-Preis kommt aus dem ersten Plan. Alle Intervalle haben denselben
+  Preis; bekämen sie verschiedene Rabatte, müsste die Preiszeile dem
+  gewählten Intervall folgen.
+
+  Seit 09.10.2026 (Entscheid Joscha, vorher 10 % günstiger) kostet das Abo
+  gleich viel wie der Einmalkauf, dafür ist der Versand jeder Abo-Lieferung
+  geschenkt: Das macht der automatische Rabatt «Abo: Versand geschenkt» im
+  Shop, nur für Abos. Den Hinweis dazu schaltet die Theme-Einstellung
+  abo_versand_geschenkt (ohne Wert gilt sie als an). Mit Prozentrabatt im
+  Plan nennt der Hinweis beides.
 
   Die Pläne legt die App an (Plan «Kaffee-Abo», seit 09.10.2026) und nennt
   die Intervalle «Zustellung alle 4 Wochen», übersetzt «Delivery every 4
@@ -72,8 +79,12 @@
       assign grund_abo = grund_abo | strip
       assign rabatt = ''
       assign anpassung = erste.selling_plan.price_adjustments.first
-      if anpassung.value_type == 'percentage'
+      if anpassung.value_type == 'percentage' and anpassung.value > 0
         assign rabatt = anpassung.value
+      endif
+      assign versand = true
+      if settings.abo_versand_geschenkt == false
+        assign versand = false
       endif
     -%}
   <div class="kaufwahl" id="kaufwahl">
@@ -85,7 +96,10 @@
     <label class="kaufwahl-option" data-grundpreis="{{ grund_abo }}">
       <input type="radio" name="kaufart" value="abo">
       <span class="kaufwahl-text"><strong>{{ 'produkt.abo' | t }}</strong><span class="kaufwahl-hinweis">
-        {%- if rabatt != blank -%}{{ 'produkt.abo_hinweis' | t: rabatt: rabatt }}{%- else -%}{{ 'produkt.abo_hinweis_ohne' | t }}{%- endif -%}
+        {%- if rabatt != blank and versand -%}{{ 'produkt.abo_hinweis_beides' | t: rabatt: rabatt }}
+        {%- elsif rabatt != blank -%}{{ 'produkt.abo_hinweis' | t: rabatt: rabatt }}
+        {%- elsif versand -%}{{ 'produkt.abo_hinweis_versand' | t }}
+        {%- else -%}{{ 'produkt.abo_hinweis_ohne' | t }}{%- endif -%}
       </span></span>
       <span class="kaufwahl-preis">{{ erste.price | money }}</span>
     </label>

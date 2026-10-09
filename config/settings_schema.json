@@ -2,7 +2,7 @@
   {
     "name": "theme_info",
     "theme_name": "Beanwatch 2026",
-    "theme_version": "0.18.1",
+    "theme_version": "0.19.0",
     "theme_author": "Beanwatch Coffee",
     "theme_documentation_url": "https://github.com/beanwatch-josche/beanwatch-theme-2026",
     "theme_support_url": "https://beanwatch.ch"
@@ -21,6 +21,18 @@
         "id": "autor_bild",
         "label": "Autorenbild",
         "info": "Steht auf Rezepten und Artikeln neben dem Namen, wenn der Artikel im Metafeld «Bild des Autoren» keins hat. Quadratisch, mindestens 80 px."
+      }
+    ]
+  },
+  {
+    "name": "Abo",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "abo_versand_geschenkt",
+        "label": "Abo: Versand geschenkt",
+        "default": true,
+        "info": "Zeigt bei «Im Abo» den Hinweis «Versand geschenkt». Den Gratisversand selbst gibt der automatische Rabatt «Abo: Versand geschenkt» im Shop (Marketing → Rabatte). Beides zusammen ein- oder ausschalten."
       }
     ]
   }

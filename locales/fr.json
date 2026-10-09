@@ -80,6 +80,8 @@
     "abo": "En abonnement",
     "abo_hinweis": "{{ rabatt }} % moins cher, résiliable à tout moment",
     "abo_hinweis_ohne": "Résiliable à tout moment",
+    "abo_hinweis_versand": "Livraison offerte, résiliable à tout moment",
+    "abo_hinweis_beides": "{{ rabatt }} % moins cher, livraison offerte",
     "intervall": "Livraison toutes les",
     "intervall_praefix": "Livraison toutes les",
     "grundpreis": "{{ menge }} · {{ preis }} / 100 g",
