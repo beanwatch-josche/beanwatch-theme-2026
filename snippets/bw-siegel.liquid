@@ -8,7 +8,9 @@
   Screenreader zählt nur das aria-label.
   a      ein Metaobjekt auszeichnung (titel, jahr, stufe)
   gross  true im Bildfeld von «Ausgezeichnet»
-  Aufruf: {%- render 'bw-siegel', a: auszeichnungen.first -%}
+  Aufruf: {%- render 'bw-siegel', a: a -%} (a aus einer Schleife über
+          custom.auszeichnungen; .first liefert dort nichts)
+  Ohne Preis (titel) gibt das Snippet nichts aus, statt einer leeren Scheibe.
 {%- endcomment -%}
 {%- liquid
   assign stufe = a.stufe.value | strip
@@ -21,7 +23,8 @@
 -%}
 {%- comment -%} Die Stufe kann übersetzt sein, das Band bleibt das deutsche Original. {%- endcomment -%}
 {%- assign silber = 'Silber,Silver,Argent' | split: ',' -%}
-{%- if preis == 'Swiss Gourmet Book Award' and silber contains stufe -%}
+{%- if preis == blank -%}
+{%- elsif preis == 'Swiss Gourmet Book Award' and silber contains stufe -%}
 {%- render 'bw-siegel-swiss-gourmet', label: label, gross: gross -%}
 {%- else -%}
 <div class="siegel{% if gross %} siegel--gross{% endif %}" role="img" aria-label="{{ label | escape }}">

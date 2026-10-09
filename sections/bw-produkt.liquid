@@ -126,10 +126,14 @@
     </nav>
 
     <div class="produktkopf-raster">
+      {%- comment -%}
+        Der erste Eintrag über eine Schleife: auszeichnungen.first lieferte in
+        Shopify nichts (0.21.1), das Siegel stand dann leer da.
+      {%- endcomment -%}
       {%- capture siegel -%}
-        {%- if auszeichnungen.size > 0 -%}
-          <div class="galerie-siegel">{% render 'bw-siegel', a: auszeichnungen.first %}</div>
-        {%- endif -%}
+        {%- for a in auszeichnungen limit: 1 -%}
+          <div class="galerie-siegel">{% render 'bw-siegel', a: a %}</div>
+        {%- endfor -%}
       {%- endcapture -%}
       {%- render 'bw-galerie', p: product, siegel: siegel %}
 
