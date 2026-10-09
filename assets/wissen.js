@@ -328,7 +328,7 @@ window.BWWissen = (function () {
     rezept: { label: 'Rezept', klasse: 'beitrag-art--rezept' },
     guide:  { label: 'Brew Guide', klasse: 'beitrag-art--guide' },
     baristaguide: { label: 'Barista Guide', klasse: 'beitrag-art--guide' },
-    tool:   { label: 'Tool', klasse: 'beitrag-art--tool' }
+    tool:   { label: 'Werkzeug', klasse: 'beitrag-art--tool' }
   };
 
   const FILTER = [
@@ -337,7 +337,7 @@ window.BWWissen = (function () {
     { schluessel: 'art:rezept',  titel: 'Rezepte' },
     { schluessel: 'art:guide',   titel: 'Brew Guides' },
     { schluessel: 'art:baristaguide', titel: 'Barista Guides' },
-    { schluessel: 'art:tool',    titel: 'Tools' },
+    { schluessel: 'art:tool',    titel: 'Werkzeuge' },
     { schluessel: 'espresso',    titel: 'Espresso' },
     { schluessel: 'filter',      titel: 'Filterkaffee' },
     { schluessel: 'milch',       titel: 'Milch' },
