@@ -3774,8 +3774,10 @@
   background:var(--powderblue);
   cursor:zoom-in;
 }
+/* Ausschnitt etwas über der Mitte: Bei Hochformaten bleiben so die Köpfe im
+   Bild, Querformate schneidet das Feld ohnehin nur seitlich. */
 .anlass-bild img{
-  width:100%;height:100%;object-fit:cover;
+  width:100%;height:100%;object-fit:cover;object-position:50% 30%;
   transition:transform .6s cubic-bezier(.22,1,.36,1);
 }
 /* Bliebe in der letzten Reihe ein Foto allein (4, 7, 10 …), würde es zum

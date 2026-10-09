@@ -144,7 +144,7 @@
     "kostenlos_lesen": "Lire gratuitement",
     "eyebrow_auszeichnung": "Primé",
     "auszeichnung_titel": "{{ stufe }} au {{ preis }} {{ jahr }}",
-    "eyebrow_anlaesse": "Vernissages",
+    "eyebrow_anlaesse": "Vernissage et lecture",
     "anlaesse_titel_html": "Là où le livre<br>a été fêté.",
     "fotos_von": "Photos : {{ name }}",
     "foto_gross": "Agrandir la photo",

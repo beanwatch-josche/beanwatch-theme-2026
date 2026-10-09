@@ -144,7 +144,7 @@
     "kostenlos_lesen": "Kostenlos lesen",
     "eyebrow_auszeichnung": "Ausgezeichnet",
     "auszeichnung_titel": "{{ stufe }} beim {{ preis }} {{ jahr }}",
-    "eyebrow_anlaesse": "Vernissagen",
+    "eyebrow_anlaesse": "Vernissage und Lesung",
     "anlaesse_titel_html": "Wo das Buch<br>gefeiert wurde.",
     "fotos_von": "Fotos: {{ name }}",
     "foto_gross": "Foto vergrössern",
