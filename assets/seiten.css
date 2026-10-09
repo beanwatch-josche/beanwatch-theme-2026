@@ -3691,10 +3691,12 @@
 
 /* ==========================================================================
    Auszeichnung und Anlässe auf der Buchseite (09.10.2026, Entscheide Joscha)
-   Das Siegel ist ein eigenes Zeichen im CI, nicht das Logo des
-   Veranstalters: flache Scheibe in Dunkelblau, das Icon «Auszeichnung» in
-   Cyanblau, Schrift in Hellorange (CI-Guide 108). Es klebt unten rechts auf
-   dem Hauptbild der Galerie, gross steht es im Bildfeld von «Ausgezeichnet».
+   Das Zeichen der Auszeichnung (CI-Guide 108) ist beim Swiss Gourmet Book
+   Award dessen eigenes Band in Silber, als SVG nach Joschas Scan
+   nachgebaut (.award-band). Es hängt wie ein Lesezeichen von der Oberkante
+   des Hauptbilds, gross im Bildfeld von «Ausgezeichnet». Für andere Preise
+   bleibt das runde Siegel im CI (.siegel): flache Scheibe in Dunkelblau,
+   das Icon «Auszeichnung» in Cyanblau, Schrift in Hellorange.
    Die Anlässe (Vernissagen) zeigen ihre Fotos als Raster mit Vergrösserung
    (CI-Guide 109): Desktop drei Spalten, die letzte Reihe füllt die Breite;
    bis 860 px ein Band zum Wischen. Der Dialog kommt aus produkt.js fotos().
@@ -3737,6 +3739,16 @@
   position:absolute;right:4%;bottom:4%;z-index:1;
   pointer-events:none;
 }
+
+/* Das Band des Swiss Gourmet Book Award: Seitenverhältnis 256 : 756 wie im
+   Original, flach, ohne Schatten. Auf dem Hauptbild hängt es oben rechts von
+   der Kante, gross im Bildfeld oben in der Mitte. */
+.award-band{display:block;width:var(--band,clamp(50px,5.4vw,74px));height:auto;}
+.galerie-siegel:has(> .award-band){top:0;bottom:auto;right:7%;}
+/* Höchstens 22 % der Feldbreite: so bleibt das Band in jedem 4:3-Feld ganz
+   (Höhe 22 % × 756/256 ≈ 65 % der Breite, das Feld ist 75 % hoch). */
+.award-band--gross{--band:min(148px,22%);}
+.auszeichnung-feld:has(> .award-band){place-items:start center;}
 
 /* «Ausgezeichnet» ist ein Bildblock (Element 25). Ohne Foto steht im
    Bildfeld das Siegel gross auf dem Grund der Galerie. */
