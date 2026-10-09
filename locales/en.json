@@ -81,6 +81,7 @@
     "abo_hinweis": "Save {{ rabatt }}%, cancel anytime",
     "abo_hinweis_ohne": "Cancel anytime",
     "intervall": "Deliver every",
+    "intervall_praefix": "Delivery every",
     "grundpreis": "{{ menge }} · {{ preis }} / 100 g",
     "schwester": "The same bean as",
     "ansehen": "View",

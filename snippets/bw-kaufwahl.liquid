@@ -14,6 +14,13 @@
   Intervalle dieselben 10 %; bekämen sie verschiedene Rabatte, müsste die
   Preiszeile dem gewählten Intervall folgen.
 
+  Die Pläne legt die App an (Plan «Kaffee-Abo», seit 09.10.2026) und nennt
+  die Intervalle «Zustellung alle 4 Wochen», übersetzt «Delivery every 4
+  weeks» und «Livraison toutes les 4 semaines». Die Auswahl zeigt sie wie der
+  Prototyp hinter «Lieferung alle» nur als «4 Wochen»: Der Anfang aus
+  produkt.intervall_praefix fällt weg. Beginnt ein Name anders (etwa nach
+  einer Änderung in der App), erscheint er ganz. Vorgewählt sind 4 Wochen.
+
   p          das Produkt
   zusatz     statt des Grundpreises unter dem Preis, etwa beim Buch
              «220 Seiten · 21 × 27 cm» (seit 0.6.0)
@@ -85,8 +92,14 @@
     <div class="kaufwahl-intervall" hidden>
       <label for="kaufwahl-intervall">{{ 'produkt.intervall' | t }}</label>
       <select id="kaufwahl-intervall">
-        {%- for a in plaene %}
-        <option value="{{ a.selling_plan.id }}"{% if a.selling_plan.name contains '4 ' %} selected{% endif %}>{{ a.selling_plan.options.first.value | default: a.selling_plan.name }}</option>
+        {%- assign praefix = 'produkt.intervall_praefix' | t | strip -%}
+        {%- for a in plaene -%}
+          {%- assign intervall = a.selling_plan.options.first.value | default: a.selling_plan.name -%}
+          {%- assign anfang = intervall | slice: 0, praefix.size -%}
+          {%- if praefix != blank and anfang == praefix -%}
+            {%- assign intervall = intervall | remove_first: praefix | strip -%}
+          {%- endif %}
+        <option value="{{ a.selling_plan.id }}"{% if a.selling_plan.name contains '4 ' %} selected{% endif %}>{{ intervall }}</option>
         {%- endfor %}
       </select>
     </div>

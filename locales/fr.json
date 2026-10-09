@@ -81,6 +81,7 @@
     "abo_hinweis": "{{ rabatt }} % moins cher, résiliable à tout moment",
     "abo_hinweis_ohne": "Résiliable à tout moment",
     "intervall": "Livraison toutes les",
+    "intervall_praefix": "Livraison toutes les",
     "grundpreis": "{{ menge }} · {{ preis }} / 100 g",
     "schwester": "Le même grain en",
     "ansehen": "Voir",

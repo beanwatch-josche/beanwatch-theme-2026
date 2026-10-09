@@ -81,6 +81,7 @@
     "abo_hinweis": "{{ rabatt }} % günstiger, jederzeit kündbar",
     "abo_hinweis_ohne": "Jederzeit kündbar",
     "intervall": "Lieferung alle",
+    "intervall_praefix": "Zustellung alle",
     "grundpreis": "{{ menge }} · {{ preis }} / 100 g",
     "schwester": "Dieselbe Bohne als",
     "ansehen": "Ansehen",
