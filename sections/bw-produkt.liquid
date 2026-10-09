@@ -16,8 +16,18 @@
                   «Passt gut dazu» aus custom.passt_artikel
     Fakten        custom.fakten (Metaobjekte produktfakt: rolle, wert),
                   darunter «Für wen:» custom.fuer_wen
+    Siegel        der erste Eintrag aus custom.auszeichnungen (seit 0.20.0)
+                  als Siegel unten rechts auf dem Hauptbild (bw-siegel)
+    Ausgezeichnet custom.auszeichnungen (Metaobjekte auszeichnung: titel,
+                  jahr, stufe, kategorie, text, bild, link) als Bildblock,
+                  der erste gedreht; ohne bild steht das Siegel gross im
+                  Bildfeld. Titel aus Stufe, Preis und Jahr
     Bildblöcke    custom.bildbloecke (Metaobjekte bildblock: anker, eyebrow,
                   titel, text, bild, pillen), jeder zweite gedreht
+    Anlässe       custom.anlaesse (seit 0.20.0, Metaobjekte anlass: titel,
+                  datum, ort, text, bilder, fotograf), beim Buch die
+                  Vernissagen: je ein Fotoraster, Antippen vergrössert
+                  (produkt.js fotos(), Wörter aus data-text-*)
     Autor         custom.autor_name, _text (Rich Text), _bild
     Passt dazu    Wissensartikel zum Thema aus der Sektionseinstellung
   Seit 0.7.0 (07.10.2026, Entscheid Joscha) steht die Beschreibung wie im
@@ -29,7 +39,8 @@
   Artikel erscheinen nur, wenn der Artikel veröffentlicht ist, und zeigen
   auf die Adresse in der Sprache der Seite.
 
-  Schema: bw-produkt-schema (Product, beim Buch auch Book).
+  Schema: bw-produkt-schema (Product, beim Buch auch Book, award aus den
+  Auszeichnungen).
 {%- endcomment -%}
 {%- liquid
   assign mf = product.metafields.custom
@@ -42,6 +53,8 @@
 
   assign fakten = mf.fakten.value
   assign bloecke = mf.bildbloecke.value
+  assign auszeichnungen = mf.auszeichnungen.value
+  assign anlaesse = mf.anlaesse.value
 
   # Beim Buch stehen im zweiten Absatz der Beschreibung die Buchdaten; die
   # zeigt das Faktenraster, der Kopf nimmt deshalb nur den ersten.
@@ -111,7 +124,12 @@
     </nav>
 
     <div class="produktkopf-raster">
-      {%- render 'bw-galerie', p: product %}
+      {%- capture siegel -%}
+        {%- if auszeichnungen.size > 0 -%}
+          <div class="galerie-siegel">{% render 'bw-siegel', a: auszeichnungen.first %}</div>
+        {%- endif -%}
+      {%- endcapture -%}
+      {%- render 'bw-galerie', p: product, siegel: siegel %}
 
       <div class="produkt-kauf">
         {%- if mf.kopfzeile.value != blank %}
@@ -165,6 +183,49 @@
 </section>
 {%- endif %}
 
+{%- comment -%}
+  Ausgezeichnet: je Auszeichnung ein Bildblock, der erste gedreht, weil der
+  erste Bildblock darunter das Bild links hat. Ein Link auf eine fremde
+  Seite öffnet in einem neuen Tab.
+{%- endcomment -%}
+{%- for a in auszeichnungen %}
+{%- liquid
+  assign stufe = a.stufe.value | strip
+  assign preis = a.titel.value | strip
+  if stufe != blank
+    assign titel = 'produkt.auszeichnung_titel' | t: stufe: stufe, preis: preis, jahr: a.jahr.value
+  else
+    assign titel = preis | append: ' ' | append: a.jahr.value | escape
+  endif
+  assign link = a.link.value
+  assign fremd = true
+  if link.url contains 'beanwatch.ch' or link.url contains request.host
+    assign fremd = false
+  endif
+-%}
+<section class="sektion" id="auszeichnung{% unless forloop.first %}-{{ forloop.index }}{% endunless %}" style="padding-top:0">
+  <div class="wrap">
+    <div class="bildblock{% cycle 'auszeichnung': ' bildblock--gedreht', '' %}" data-reveal>
+      {%- if a.bild.value != blank %}
+      {%- render 'bw-produkt-bild', bild: a.bild.value %}
+      {%- else %}
+      <div class="bildblock-bild auszeichnung-feld">
+        {% render 'bw-siegel', a: a, gross: true %}
+      </div>
+      {%- endif %}
+      <div>
+        <span class="eyebrow">{{ 'produkt.eyebrow_auszeichnung' | t }}</span>
+        <h3>{{ titel }}</h3>
+        {%- render 'bw-absaetze', text: a.text.value %}
+        {%- if link.url != blank and link.text != blank %}
+        <a class="besser-alle" href="{{ link.url }}"{% if fremd %} target="_blank" rel="noopener"{% endif %} data-pfeil>{{ link.text | escape }}</a>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{%- endfor %}
+
 {%- for b in bloecke %}
 <section class="sektion" id="{{ b.anker.value | handleize }}"{% unless forloop.first %} style="padding-top:0"{% endunless %}>
   <div class="wrap">
@@ -187,6 +248,56 @@
   </div>
 </section>
 {%- endfor %}
+
+{%- comment -%}
+  Anlässe, beim Buch die Vernissagen. Pro Anlass Datum · Ort, Titel, Text,
+  Fotoraster und «Fotos: …». Die Fotos öffnet produkt.js fotos() gross,
+  in derselben Reihenfolge wie im Raster.
+{%- endcomment -%}
+{%- if anlaesse.size > 0 %}
+<section class="sektion anlaesse" id="vernissagen" style="padding-top:0" data-text-dialog="{{ 'produkt.foto_dialog' | t }}" data-text-zurueck="{{ 'produkt.foto_zurueck' | t }}" data-text-weiter="{{ 'produkt.foto_weiter' | t }}" data-text-schliessen="{{ 'produkt.foto_schliessen' | t }}">
+  <div class="wrap">
+    <div class="sektion-kopf">
+      <div class="text">
+        <span class="eyebrow">{{ 'produkt.eyebrow_anlaesse' | t }}</span>
+        <h2 data-split="zeilen">{{ 'produkt.anlaesse_titel_html' | t }}</h2>
+      </div>
+    </div>
+    {%- for a in anlaesse %}
+    {%- assign datum = a.datum.value %}
+    {%- assign ort = a.ort.value | strip %}
+    {%- assign fotos = a.bilder.value %}
+
+    <article class="anlass" data-reveal>
+      <div class="anlass-kopf">
+        {%- if datum != blank or ort != blank %}
+        <p class="anlass-meta">
+          {%- if datum != blank %}<time datetime="{{ datum | date: '%Y-%m-%d' }}">{% render 'bw-datum', datum: datum %}</time>{% endif %}
+          {%- if datum != blank and ort != blank %}<span class="teiler">·</span>{% endif %}
+          {%- if ort != blank %}<span>{{ ort | escape }}</span>{% endif -%}
+        </p>
+        {%- endif %}
+        <h3>{{ a.titel.value | escape }}</h3>
+        {%- render 'bw-absaetze', text: a.text.value %}
+      </div>
+      {%- if fotos.size > 0 %}
+      <div class="anlass-bilder">
+        {%- for f in fotos %}
+        {%- assign alt = f.alt | default: a.titel.value %}
+        <button type="button" class="anlass-bild" data-gross="{{ f | image_url: width: 2000 }}" aria-label="{{ 'produkt.foto_gross' | t }}: {{ alt | escape }}">
+          {{ f | image_url: width: 1000 | image_tag: loading: 'lazy', widths: '400, 700, 1000', sizes: '(min-width: 861px) 33vw, 78vw', alt: alt }}
+        </button>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+      {%- if a.fotograf.value != blank %}
+      <p class="anlass-fotos">{{ 'produkt.fotos_von' | t: name: a.fotograf.value }}</p>
+      {%- endif %}
+    </article>
+    {%- endfor %}
+  </div>
+</section>
+{%- endif %}
 
 {%- if mf.autor_name.value != blank %}
 <section class="sektion" id="autor"{% if bloecke.size > 0 %} style="padding-top:0"{% endif %}>

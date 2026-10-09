@@ -141,7 +141,17 @@
     "alles_wissen": "All articles",
     "leseprobe_buch": "Excerpt from the book",
     "leseprobe": "Excerpt",
-    "kostenlos_lesen": "Read for free"
+    "kostenlos_lesen": "Read for free",
+    "eyebrow_auszeichnung": "Award-winning",
+    "auszeichnung_titel": "{{ stufe }} at the {{ preis }} {{ jahr }}",
+    "eyebrow_anlaesse": "Book launches",
+    "anlaesse_titel_html": "Where the book<br>was celebrated.",
+    "fotos_von": "Photos: {{ name }}",
+    "foto_gross": "Enlarge photo",
+    "foto_dialog": "Photo",
+    "foto_zurueck": "Previous photo",
+    "foto_weiter": "Next photo",
+    "foto_schliessen": "Close"
   },
   "rohbau": {
     "hinweis": "Under construction: this page gets its final design before launch. Content, prices and cart are already live data.",

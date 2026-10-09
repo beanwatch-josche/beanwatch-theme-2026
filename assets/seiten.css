@@ -3688,3 +3688,175 @@
 .autor-stationen{display:grid;gap:clamp(56px,7vw,104px);}
 .autor-stationen .bildblock h2{font-size:clamp(1.4rem,2.4vw,2rem);font-weight:800;letter-spacing:-.025em;}
 .bildblock .besser-alle{margin-top:22px;}
+
+/* ==========================================================================
+   Auszeichnung und Anlässe auf der Buchseite (09.10.2026, Entscheide Joscha)
+   Das Siegel ist ein eigenes Zeichen im CI, nicht das Logo des
+   Veranstalters: flache Scheibe in Dunkelblau, das Icon «Auszeichnung» in
+   Cyanblau, Schrift in Hellorange (CI-Guide 108). Es klebt unten rechts auf
+   dem Hauptbild der Galerie, gross steht es im Bildfeld von «Ausgezeichnet».
+   Die Anlässe (Vernissagen) zeigen ihre Fotos als Raster mit Vergrösserung
+   (CI-Guide 109): Desktop drei Spalten, die letzte Reihe füllt die Breite;
+   bis 860 px ein Band zum Wischen. Der Dialog kommt aus produkt.js fotos().
+   ========================================================================== */
+.siegel{
+  --siegel:clamp(108px,10vw,136px);
+  position:relative;
+  width:var(--siegel);aspect-ratio:1;
+  border-radius:50%;
+  background:var(--dunkelblau);color:var(--hellorange);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  font-size:calc(var(--siegel) / 11);
+  line-height:1.1;
+  rotate:-8deg;
+  flex-shrink:0;
+}
+/* Der innere Ring macht aus der Scheibe eine Plakette. */
+.siegel::before{
+  content:'';position:absolute;inset:6%;
+  border-radius:50%;
+  border:1.5px solid rgba(255,243,232,.4);
+}
+.siegel svg{width:1.9em;height:1.9em;color:var(--cyanblau);margin-bottom:.2em;}
+.siegel-stufe{
+  font-weight:900;font-size:1.3em;
+  text-transform:uppercase;letter-spacing:.08em;
+}
+.siegel-preis{
+  max-width:7.6em;margin-top:.4em;
+  font-weight:700;font-size:.62em;line-height:1.25;
+  text-transform:uppercase;letter-spacing:.1em;
+}
+.siegel-jahr{margin-top:.3em;font-weight:800;font-size:.95em;letter-spacing:.04em;}
+.siegel--gross{--siegel:clamp(168px,19vw,256px);}
+
+/* Auf dem Hauptbild: unten rechts, die Fahne (Element 40) steht oben links.
+   Das Siegel fängt keine Klicks ab und bleibt beim Bildwechsel stehen. */
+.galerie-siegel{
+  position:absolute;right:4%;bottom:4%;z-index:1;
+  pointer-events:none;
+}
+
+/* «Ausgezeichnet» ist ein Bildblock (Element 25). Ohne Foto steht im
+   Bildfeld das Siegel gross auf dem Grund der Galerie. */
+.auszeichnung-feld{
+  display:grid;place-items:center;
+  background:linear-gradient(160deg,var(--powderblue),#dcf0f6);
+}
+
+/* Anlässe */
+.anlass + .anlass{margin-top:clamp(52px,6.4vw,96px);}
+.anlass-kopf{max-width:64ch;}
+.anlass-meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  font-weight:700;font-size:.72rem;line-height:1.3;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--redorange);
+}
+.anlass-meta .teiler{opacity:.5;}
+.anlass h3{
+  margin-top:14px;
+  font-size:clamp(1.4rem,2.4vw,2rem);font-weight:800;letter-spacing:-.025em;
+}
+.anlass-kopf p:not(.anlass-meta){margin-top:14px;line-height:1.65;opacity:.86;}
+.anlass-bilder{
+  --spalten:3;
+  display:flex;flex-wrap:wrap;gap:var(--gap);
+  margin-top:clamp(22px,2.8vw,34px);
+}
+.anlass-bild{
+  flex:1 1 calc((100% - (var(--spalten) - 1) * var(--gap)) / var(--spalten));
+  height:clamp(200px,22vw,320px);
+  padding:0;border:0;
+  border-radius:var(--radius-karte);
+  overflow:hidden;
+  background:var(--powderblue);
+  cursor:zoom-in;
+}
+.anlass-bild img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .6s cubic-bezier(.22,1,.36,1);
+}
+/* Bliebe in der letzten Reihe ein Foto allein (4, 7, 10 …), würde es zum
+   schmalen Panorama. Dann stehen die letzten vier zu zweit. Ein einzelnes
+   Foto steht nicht über die ganze Breite, sondern in 3:2. */
+.anlass-bilder:has(> .anlass-bild:last-child:nth-child(3n+4)) > .anlass-bild:nth-last-child(-n+4){
+  flex-basis:calc((100% - var(--gap)) / 2);
+}
+.anlass-bild:only-child{flex:0 1 auto;width:min(100%,760px);height:auto;aspect-ratio:3/2;}
+.anlass-bild:hover img,.anlass-bild:focus-visible img{transform:scale(1.035);}
+.anlass-bild:focus-visible{outline:2px solid var(--redorange);outline-offset:3px;}
+.anlass-fotos{margin-top:14px;font-size:.84rem;opacity:.7;}
+@media (max-width:860px){
+  /* Ein Band zum Wischen, bündig bis an den Rand des Bildschirms. 4vw ist
+     der Rand von .wrap (92vw); scroll-padding rechnet Prozente vom Band
+     selbst, darum hier feste Werte statt calc() mit 100%. */
+  .anlass-bilder{
+    flex-wrap:nowrap;
+    overflow-x:auto;overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory;
+    margin-inline:-4vw;
+    padding-inline:4vw;
+    scroll-padding-inline:4vw;
+    scrollbar-width:none;
+  }
+  .anlass-bilder::-webkit-scrollbar{display:none;}
+  .anlass-bild,
+  .anlass-bilder:has(> .anlass-bild:last-child:nth-child(3n+4)) > .anlass-bild:nth-last-child(-n+4){
+    flex:0 0 min(78%,420px);height:auto;aspect-ratio:4/3;scroll-snap-align:start;
+  }
+  .anlass-bild:only-child{flex-basis:100%;}
+}
+
+/* Das Foto gross. Ein <dialog>, damit Fokus, Escape und Hintergrund der
+   Browser übernimmt. */
+.foto-dialog{
+  width:100%;max-width:none;height:100%;max-height:none;
+  margin:0;padding:0;border:0;
+  background:transparent;color:var(--hellorange);
+  overflow:hidden;
+}
+.foto-dialog::backdrop{background:rgba(33,31,29,.94);}
+.foto-dialog[open]{display:grid;}
+.foto-dialog figure{
+  margin:0;min-height:0;
+  display:grid;grid-template-rows:minmax(0,1fr) auto;
+  justify-items:center;align-items:center;gap:14px;
+  padding:clamp(64px,8vh,84px) clamp(16px,8vw,104px) clamp(20px,3vh,32px);
+}
+.foto-dialog img{
+  max-width:100%;max-height:100%;width:auto;height:auto;
+  min-height:0;object-fit:contain;
+  border-radius:8px;
+}
+.foto-dialog figcaption{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;
+  max-width:70ch;text-align:center;font-size:.9rem;
+}
+.foto-zaehler{font-weight:700;letter-spacing:.06em;opacity:.7;}
+.foto-knopf{
+  position:absolute;
+  width:48px;height:48px;border-radius:50%;
+  display:grid;place-items:center;
+  border:0;padding:0;cursor:pointer;
+  background:var(--hellorange);color:var(--dunkelblau);
+  transition:background .25s ease,color .25s ease;
+}
+.foto-knopf svg{width:20px;height:20px;}
+.foto-knopf:hover,.foto-knopf:focus-visible{background:var(--redorange);color:var(--hellorange);}
+.foto-knopf:focus-visible{outline:2px solid var(--hellorange);outline-offset:3px;}
+.foto-zu{top:16px;right:16px;}
+.foto-zurueck,.foto-weiter{top:50%;translate:0 -50%;}
+.foto-zurueck{left:clamp(8px,2vw,28px);}
+.foto-weiter{right:clamp(8px,2vw,28px);}
+.foto-dialog[data-anzahl="1"] .foto-zurueck,
+.foto-dialog[data-anzahl="1"] .foto-weiter,
+.foto-dialog[data-anzahl="1"] .foto-zaehler{display:none;}
+@media (max-width:640px){
+  /* Am Handy liegen die Pfeile unten, das Foto bekommt die ganze Breite. */
+  .foto-dialog figure{padding-bottom:88px;}
+  .foto-zurueck,.foto-weiter{top:auto;bottom:20px;translate:none;}
+  .foto-zurueck{left:calc(50% - 60px);}
+  .foto-weiter{right:calc(50% - 60px);}
+}

@@ -34,6 +34,9 @@
                   Adresse mit ?variant=, Preis, Verfügbarkeit) statt eines
                   einzigen; die Beschreibung kommt dann wie beim Buch aus
                   dem ersten Absatz
+  Auszeichnungen aus custom.auszeichnungen (seit 0.20.0) stehen als award,
+  etwa «Swiss Gourmet Book Award 2023, Silber (Getränkebuch)»; eine als
+  Text, mehrere als Liste.
   Produkte ohne Kaffeefelder (Buch, Zubehör) bekommen die Beschreibung aus
   dem ersten Absatz der Produktbeschreibung, wie ihn die Seite im Kopf
   zeigt (seit 0.7.0, vorher custom.kurzbeschrieb), und die Eigenschaften
@@ -103,6 +106,21 @@
   endif
 
   assign bilder = p.media | where: 'media_type', 'image'
+
+  assign preise = ''
+  for a in mf.auszeichnungen.value
+    assign preis = a.titel.value | strip | append: ' ' | append: a.jahr.value
+    assign stufe = a.stufe.value | strip
+    if stufe != blank
+      assign preis = preis | append: ', ' | append: stufe
+    endif
+    assign kategorie = a.kategorie.value | strip
+    if kategorie != blank
+      assign preis = preis | append: ' (' | append: kategorie | append: ')'
+    endif
+    assign preise = preise | append: preis | append: '|||'
+  endfor
+  assign preise = preise | split: '|||'
 -%}
 {%- capture beschreibung -%}
 {{ p.title }}{% if land != blank %} {{ 'produkt.schema_aus' | t: land: land }}{% endif %}{% if region != blank %}, {{ 'produkt.fakt_region' | t }} {{ region }}{% endif %}{% if farm != blank %}, {{ 'produkt.schema_farm' | t: ort: farm }}{% endif %}.
@@ -190,6 +208,11 @@
   "isbn": {{ v.barcode | json }},
   "gtin13": {{ v.barcode | remove: '-' | remove: ' ' | json }},
   {%- endif %}
+  {%- endif %}
+  {%- if preise.size == 1 %}
+  "award": {{ preise.first | json }},
+  {%- elsif preise.size > 1 %}
+  "award": {{ preise | json }},
   {%- endif %}
   {%- if land != blank %}
   "countryOfOrigin": {{ land | json }},

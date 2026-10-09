@@ -1,0 +1,27 @@
+{%- comment -%}
+  Siegel einer Auszeichnung (seit 0.20.0, CI-Guide 108), wie in
+  products/kaffee-erlebnis-schweiz.html der Werkstatt: flache Scheibe in
+  Dunkelblau mit dem Icon «Auszeichnung», Stufe, Preis und Jahr. Ein
+  eigenes Zeichen im CI, nicht das Logo des Veranstalters (Entscheid Joscha
+  09.10.2026). Für Screenreader zählt nur das aria-label.
+  a      ein Metaobjekt auszeichnung (titel, jahr, stufe)
+  gross  true im Bildfeld von «Ausgezeichnet»
+  Aufruf: {%- render 'bw-siegel', a: auszeichnungen.first -%}
+{%- endcomment -%}
+{%- liquid
+  assign stufe = a.stufe.value | strip
+  assign preis = a.titel.value | strip
+  assign jahr = a.jahr.value
+  assign label = preis | append: ' ' | append: jahr
+  if stufe != blank
+    assign label = stufe | append: ', ' | append: label
+  endif
+-%}
+<div class="siegel{% if gross %} siegel--gross{% endif %}" role="img" aria-label="{{ label | escape }}">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.5 13.8-1.5 7.2 5-2.6 5 2.6-1.5-7.2"/></svg>
+  {%- if stufe != blank %}
+  <span class="siegel-stufe" aria-hidden="true">{{ stufe | escape }}</span>
+  {%- endif %}
+  <span class="siegel-preis" aria-hidden="true">{{ preis | escape }}</span>
+  <span class="siegel-jahr" aria-hidden="true">{{ jahr }}</span>
+</div>

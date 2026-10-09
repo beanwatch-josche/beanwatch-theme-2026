@@ -2,7 +2,10 @@
   Galerie der Produktseiten (Kaffee, Buch, Zubehör), wie in products/*.html
   der Werkstatt: Hauptbild und Vorschaubilder, produkt.js tauscht beim Klick
   das Hauptbild.
-  p   das Produkt
+  p       das Produkt
+  siegel  optional, fertiges HTML über dem Hauptbild (seit 0.20.0: das
+          Siegel der Auszeichnung auf der Seite für Buch und Zubehör).
+          Ohne siegel ist die Ausgabe dieselbe wie vorher.
   Aufruf: {%- render 'bw-galerie', p: product -%}
 {%- endcomment -%}
       <div>
@@ -15,6 +18,9 @@
             Browser bliebe beim alten Bild.
           {%- endcomment %}
           {{ bilder.first | image_url: width: 1200 | image_tag: id: 'galerie-bild', srcset: nil, loading: 'eager', fetchpriority: 'high', alt: bilder.first.alt | default: p.title }}
+          {%- endif %}
+          {%- if siegel != blank %}
+          {{ siegel }}
           {%- endif %}
         </div>
         {%- if bilder.size > 1 %}

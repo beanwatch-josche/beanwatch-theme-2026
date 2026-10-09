@@ -141,7 +141,17 @@
     "alles_wissen": "Tous les articles",
     "leseprobe_buch": "Extrait du livre",
     "leseprobe": "Extrait",
-    "kostenlos_lesen": "Lire gratuitement"
+    "kostenlos_lesen": "Lire gratuitement",
+    "eyebrow_auszeichnung": "Primé",
+    "auszeichnung_titel": "{{ stufe }} au {{ preis }} {{ jahr }}",
+    "eyebrow_anlaesse": "Vernissages",
+    "anlaesse_titel_html": "Là où le livre<br>a été fêté.",
+    "fotos_von": "Photos : {{ name }}",
+    "foto_gross": "Agrandir la photo",
+    "foto_dialog": "Photo",
+    "foto_zurueck": "Photo précédente",
+    "foto_weiter": "Photo suivante",
+    "foto_schliessen": "Fermer"
   },
   "rohbau": {
     "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",

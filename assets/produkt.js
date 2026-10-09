@@ -262,6 +262,102 @@ window.BWProdukt = (function () {
     });
   }
 
+  /* ------------------------------------------------------------------
+     Fotos der Anlässe (Vernissagen auf der Buchseite, seit 09.10.2026)
+     Antippen öffnet das Foto gross in einem <dialog>. Pfeile, Pfeiltasten
+     und Wischen blättern innerhalb desselben Anlasses, Escape oder ein
+     Klick neben das Foto schliesst, danach steht der Fokus wieder auf dem
+     Foto im Raster. Im Theme kommen die Wörter aus data-text-* an
+     .anlaesse, ohne sie spricht der Dialog deutsch.
+     ------------------------------------------------------------------ */
+  function fotos() {
+    const bereich = document.querySelector('.anlaesse');
+    if (!bereich || !bereich.querySelector('.anlass-bild')) return;
+
+    const text = (name, rueckfall) => bereich.dataset['text' + name] || rueckfall;
+    const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+
+    let dialog, bild, beschrieb, zaehler;
+    let liste = [];
+    let nr = 0;
+    let ausloeser = null;
+
+    function bauen() {
+      dialog = document.createElement('dialog');
+      dialog.className = 'foto-dialog';
+      dialog.setAttribute('aria-label', text('Dialog', 'Foto'));
+      dialog.innerHTML =
+        '<figure><img alt=""><figcaption><span class="foto-beschrieb"></span>' +
+        '<span class="foto-zaehler"></span></figcaption></figure>' +
+        `<button type="button" class="foto-knopf foto-zurueck">${svg('M19 12H5M11 6l-6 6 6 6')}</button>` +
+        `<button type="button" class="foto-knopf foto-weiter">${svg('M5 12h14M13 6l6 6-6 6')}</button>` +
+        `<button type="button" class="foto-knopf foto-zu">${svg('M6 6l12 12M18 6 6 18')}</button>`;
+      // Beschriftungen als Attribut gesetzt, nicht ins HTML geschrieben:
+      // Übersetzungen dürfen Anführungszeichen enthalten.
+      dialog.querySelector('.foto-zurueck').setAttribute('aria-label', text('Zurueck', 'Vorheriges Foto'));
+      dialog.querySelector('.foto-weiter').setAttribute('aria-label', text('Weiter', 'Nächstes Foto'));
+      dialog.querySelector('.foto-zu').setAttribute('aria-label', text('Schliessen', 'Schliessen'));
+      // Beim Öffnen steht der Fokus auf «Schliessen», auch mit nur einem Foto.
+      dialog.querySelector('.foto-zu').autofocus = true;
+      document.body.appendChild(dialog);
+
+      bild = dialog.querySelector('img');
+      beschrieb = dialog.querySelector('.foto-beschrieb');
+      zaehler = dialog.querySelector('.foto-zaehler');
+
+      dialog.querySelector('.foto-zurueck').addEventListener('click', () => zeigen(nr - 1));
+      dialog.querySelector('.foto-weiter').addEventListener('click', () => zeigen(nr + 1));
+      dialog.querySelector('.foto-zu').addEventListener('click', () => dialog.close());
+
+      // Ein Klick neben das Foto schliesst, einer aufs Foto nicht.
+      dialog.addEventListener('click', (e) => {
+        if (e.target === dialog || e.target.tagName === 'FIGURE') dialog.close();
+      });
+      dialog.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); zeigen(nr - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); zeigen(nr + 1); }
+      });
+
+      // Wischen am Handy: ab 50 px waagrecht blättern.
+      let startX = null;
+      dialog.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+      dialog.addEventListener('touchend', (e) => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        startX = null;
+        if (Math.abs(dx) > 50) zeigen(nr + (dx < 0 ? 1 : -1));
+      });
+
+      dialog.addEventListener('close', () => {
+        document.body.style.overflow = '';
+        if (ausloeser) ausloeser.focus({ preventScroll: true });
+      });
+    }
+
+    function zeigen(i) {
+      nr = (i + liste.length) % liste.length;
+      const knopf = liste[nr];
+      const vorschau = knopf.querySelector('img');
+      bild.src = knopf.dataset.gross || vorschau.currentSrc || vorschau.src;
+      bild.alt = vorschau.alt || '';
+      beschrieb.textContent = vorschau.alt || '';
+      zaehler.textContent = `${nr + 1} / ${liste.length}`;
+      if (!ruhig) gsap.fromTo(bild, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power1.out' });
+    }
+
+    bereich.addEventListener('click', (e) => {
+      const knopf = e.target.closest('.anlass-bild');
+      if (!knopf) return;
+      if (!dialog) bauen();
+      liste = Array.from(knopf.parentElement.querySelectorAll('.anlass-bild'));
+      ausloeser = knopf;
+      dialog.dataset.anzahl = liste.length;
+      zeigen(liste.indexOf(knopf));
+      document.body.style.overflow = 'hidden';
+      dialog.showModal();
+    });
+  }
+
   function start() {
     galerie();
     noten();
@@ -269,7 +365,8 @@ window.BWProdukt = (function () {
     kaufwahl();
     zusammenstellung();
     meter();
+    fotos();
   }
 
-  return { start, galerie, noten, mahlgrad, kaufwahl, zusammenstellung, meter };
+  return { start, galerie, noten, mahlgrad, kaufwahl, zusammenstellung, meter, fotos };
 })();
