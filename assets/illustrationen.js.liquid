@@ -1159,7 +1159,7 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
     blume:      { farbe: '#E7455B', blatt: false, form: 'bluete', kerbe: false },
     zitrone:    { farbe: '#FFC000', blatt: true,  form: 'oval',   kerbe: false },
     // Dazugekommen mit den übrigen Kaffees im Sortiment.
-    dunkleschoggi:   { farbe: '#4A2C17', blatt: false, form: 'tafel',   kerbe: false },
+    dunkleschoggi:   { farbe: '#4A2C17', blatt: false, form: 'tafelbruch', kerbe: false },
     milchschokolade: { farbe: '#8B5E3C', blatt: false, form: 'tafel',   kerbe: false },
     praline:         { farbe: '#5C3A21', blatt: false, form: 'praline', kerbe: false },
     mandeln:         { farbe: '#D9A566', blatt: false, form: 'mandel',  kerbe: false },
@@ -1240,6 +1240,13 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
         koerper = `<rect x="11" y="15" width="28" height="26" rx="3" fill="${n.farbe}"
                          stroke="${K}" stroke-width="2"/>
                    <path d="M25 15v26M11 28h28" stroke="${K}" stroke-width="1.8" opacity=".6"/>`;
+        break;
+      case 'tafelbruch': // Tafel mit abgebrochener Ecke, das Stück daneben (seit 09.10.2026)
+        koerper = `<path d="M12 16q0-3 3-3h9v10h12v17q0 3-3 3H15q-3 0-3-3Z" fill="${n.farbe}"
+                         stroke="${K}" stroke-width="2" stroke-linejoin="round"/>
+                   <path d="M24 23v20M12 23h12M12 33h24" stroke="#7A5236" stroke-width="1.8"/>
+                   <g transform="rotate(18 34 11)"><rect x="28.5" y="5.5" width="11" height="10" rx="1.6"
+                         fill="${n.farbe}" stroke="${K}" stroke-width="2"/></g>`;
         break;
       case 'bluete':
         koerper = `<g fill="${n.farbe}" stroke="${K}" stroke-width="1.8">
