@@ -4106,8 +4106,14 @@
    Oberkante des Stickers). Die Blase hängt in
    Blickrichtung nach links über den Bechern, bei jeder Breite; die
    Zentrierung aus faehren.css für schmale Fenster gilt hier nicht.
+   Er steht im Wasser, etwa 30 cm tief (Wunsch Joscha): Die Spur reicht
+   weiter unter die vordere Welle als beim SUP. Die Sohlen liegen .094 der
+   Szene über der Unterkante des Stickers, der Rist .12. Auch im tiefsten
+   Wellental und wenn er sich beim Umschauen reckt, bleiben die Füsse unter
+   Wasser; im Mittel steht es gut 30 cm über den Sohlen. Was unter die
+   Kante des Kopfs reicht, schneidet .seitenkopf ab.
    ========================================================================== */
-.sticker-spur--fernglas{width:calc(var(--szene) * .42);}
+.sticker-spur--fernglas{width:calc(var(--szene) * .42);bottom:calc(var(--szene) * -.115);}
 .sticker-spur--fernglas .sticker-weg .gedanke{left:68.7%;bottom:91.8%;}
 .sticker-spur--fernglas .sticker-weg .gedanke-punkt--2{right:8px;bottom:calc(var(--szene) * .028 + 10px);}
 .sticker-spur--fernglas .sticker-weg .gedanke--links .gedanke-blase{
