@@ -51,7 +51,15 @@
     "kontakt": "Contact",
     "versand": "Shipping",
     "credits": "Credits",
-    "newsletter": "Newsletter"
+    "newsletter": "Newsletter",
+    "sprache": "Language"
+  },
+  "zustimmung": {
+    "titel": "Coffee & Cookies",
+    "text": "This website uses cookies to keep the site running smoothly, analyze its usage, and improve your experience on Beanwatch.",
+    "mehr_html": "More in our <a href=\"{{ url }}\">privacy policy</a>.",
+    "alle": "Accept all cookies",
+    "notwendig": "Only necessary cookies"
   },
   "warenkorb": {
     "titel": "Cart",

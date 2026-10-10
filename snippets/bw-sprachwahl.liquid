@@ -1,0 +1,26 @@
+{%- comment -%}
+  Sprachwahl (seit 0.25.0, Entscheid Joscha 10.10.2026: im Fuss und unten
+  im Handymenü, die Kopfleiste bleibt ruhig). Markup wie shell.js der
+  Werkstatt, Stil am Ende von beanwatch.css.
+
+  Ein Formular von Shopify: Jeder Knopf schickt locale_code, Shopify führt
+  zur selben Seite in der anderen Sprache, auch wenn ihre Adresse übersetzt
+  ist. Geht ohne JavaScript. Erscheint nur bei mehr als einer Sprache. Eine
+  Landwahl wie im alten Theme braucht es nicht: ein Markt (Schweiz und
+  Liechtenstein), eine Währung. Den Namen «Sprache» trägt die Gruppe, weil
+  das Formular-Tag kein aria-label setzt.
+
+  Parameter: ort (für die id, etwa 'fuss'), zusatz (weitere Klasse, etwa
+  ' sprachwahl--menue').
+{%- endcomment -%}
+{%- if localization.available_languages.size > 1 -%}
+  {%- assign formular_id = 'sprachwahl-' | append: ort -%}
+  {%- assign klasse = 'sprachwahl' | append: zusatz -%}
+  {%- form 'localization', id: formular_id, class: klasse %}
+  <div class="sprachwahl-knoepfe" role="group" aria-label="{{ 'fuss.sprache' | t }}">
+    {%- for sprache in localization.available_languages %}
+    <button type="submit" name="locale_code" value="{{ sprache.iso_code }}" lang="{{ sprache.iso_code }}"{% if sprache.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>{{ sprache.endonym_name | capitalize }}</button>
+    {%- endfor %}
+  </div>
+  {%- endform -%}
+{%- endif -%}

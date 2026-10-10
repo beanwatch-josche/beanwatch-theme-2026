@@ -1,0 +1,43 @@
+{%- comment -%}
+  Google Tag Manager im Consent Mode (seit 0.25.0, Entscheid Joscha
+  10.10.2026: Die Wahl im Cookie-Hinweis gilt auch für Google).
+
+  Vor dem Tag Manager steht die Grundeinstellung «denied»: Google-Tags
+  messen dann ohne Cookies. Hat der Besucher schon «Alle Cookies
+  akzeptieren» gewählt (Spiegel 'bw-zustimmung' in localStorage, geschrieben
+  von zustimmung.js), folgt gleich das Update auf «granted», noch bevor der
+  Tag Manager lädt. Eine Wahl auf der Seite meldet zustimmung.js mit
+  gtag('consent', 'update', …).
+
+  Container wie im alten Theme (snippets/google-tag-manager.liquid). Den
+  noscript-Teil gibt es bewusst nicht mehr: Ohne JavaScript lässt sich keine
+  Zustimmung einholen, also misst der Tag Manager dann auch nicht.
+{%- endcomment -%}
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag() { dataLayer.push(arguments); }
+gtag('consent', 'default', {
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  analytics_storage: 'denied',
+  functionality_storage: 'granted',
+  security_storage: 'granted',
+  wait_for_update: 500
+});
+try {
+  if (localStorage.getItem('bw-zustimmung') === 'alle') {
+    gtag('consent', 'update', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+  }
+} catch (e) {}
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5F52Q9ZN');
+</script>

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+{%- render 'bw-tagmanager' -%}
 {%- render 'bw-kopfdaten' -%}
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 {{ 'Gabarito-Regular.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
@@ -32,10 +33,12 @@
 <script src="{{ 'illustrationen.js' | asset_url }}" defer></script>
 <script src="{{ 'basis.js' | asset_url }}" defer></script>
 <script src="{{ 'bw-theme.js' | asset_url }}" defer></script>
+<script src="{{ 'zustimmung.js' | asset_url }}" defer></script>
 {{ content_for_header }}
 </head>
 <body>
 <a class="bw-sprung" href="#inhalt">{{ 'allgemein.zum_inhalt' | t }}</a>
+{% render 'bw-cookie-hinweis' %}
 {% sections 'header-group' %}
 <main id="inhalt">
 {% if request.page_type == 'policy' -%}

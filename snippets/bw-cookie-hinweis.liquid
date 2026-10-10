@@ -1,0 +1,22 @@
+{%- comment -%}
+  Cookie-Hinweis «Coffee & Cookies» (seit 0.25.0). Markup 1:1 aus shell.js
+  der Werkstatt, Stil am Ende von beanwatch.css. Text wie im alten Theme
+  (general.cookies_popup), jetzt unter zustimmung.*, Französisch mit tu.
+  zustimmung.js zeigt ihn, solange keine Wahl getroffen ist, und gibt die
+  Wahl an Shopify (customerPrivacy) und an Google (Consent Mode, siehe
+  bw-tagmanager) weiter. Wer im alten Theme schon gewählt hat, sieht ihn
+  nicht mehr.
+{%- endcomment -%}
+<section class="cookie-hinweis" id="cookie-hinweis" aria-labelledby="cookie-hinweis-titel" hidden>
+  <p class="cookie-hinweis-titel" id="cookie-hinweis-titel">{{ 'zustimmung.titel' | t }}</p>
+  <p class="cookie-hinweis-text">{{ 'zustimmung.text' | t }}{% if shop.privacy_policy %} {{ 'zustimmung.mehr_html' | t: url: shop.privacy_policy.url }}{% endif %}</p>
+  <div class="cookie-hinweis-knoepfe">
+    <button type="button" class="btn btn--primaer" data-zustimmung="alle">{{ 'zustimmung.alle' | t }}</button>
+    <button type="button" class="btn btn--hell" data-zustimmung="notwendig">{{ 'zustimmung.notwendig' | t }}</button>
+  </div>
+</section>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWZustimmung) BWZustimmung.start();
+  });
+</script>

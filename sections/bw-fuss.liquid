@@ -89,6 +89,7 @@
 
     <div class="fuss-unten">
       <span>© {{ 'now' | date: '%Y' }} Kaffeerösterei Gewinner · Beanwatch</span>
+      {%- render 'bw-sprachwahl', ort: 'fuss', zusatz: '' %}
       <div class="fuss-rechtlich">
         {%- for richtlinie in shop.policies %}
         <a href="{{ richtlinie.url }}">{{ richtlinie.title | escape }}</a>

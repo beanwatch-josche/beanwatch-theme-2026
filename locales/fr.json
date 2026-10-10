@@ -51,7 +51,15 @@
     "kontakt": "Contact",
     "versand": "Livraison",
     "credits": "Crédits",
-    "newsletter": "Newsletter"
+    "newsletter": "Newsletter",
+    "sprache": "Langue"
+  },
+  "zustimmung": {
+    "titel": "Coffee & Cookies",
+    "text": "Ce site utilise des cookies afin d’assurer le bon fonctionnement du site, d’analyser son utilisation et d’améliorer ton expérience sur Beanwatch.",
+    "mehr_html": "Plus d’infos dans notre <a href=\"{{ url }}\">politique de confidentialité</a>.",
+    "alle": "Accepter tous les cookies",
+    "notwendig": "Uniquement les cookies nécessaires"
   },
   "warenkorb": {
     "titel": "Panier",
