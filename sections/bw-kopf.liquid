@@ -4,7 +4,8 @@
   CSS unverändert greifen. Die Navigation steht fest im Code (Entscheid vom
   05.10.2026), die Wörter kommen aus den Sprachdateien. Ein Punkt erscheint
   nur, wenn sein Ziel in Shopify existiert. «Shop» steht seit 0.25.1 an
-  erster Stelle (Wunsch Joscha 10.10.2026).
+  erster Stelle (Wunsch Joscha 10.10.2026), seit 0.25.2 zeigt das Mobilmenü
+  dieselben Punkte, ohne Rezepte und Werkzeuge.
   Das Menü auf dem Handy öffnet bw-theme.js.
   «Konto» (seit 0.18.0) führt zum Kundenkonto von Shopify, mit Bestellungen
   und Abo, und erscheint nur, wenn der Shop Kundenkonten anbietet.
@@ -67,12 +68,6 @@
 <div class="mobilmenue" id="mobilmenue" hidden>
   <nav aria-label="{{ 'kopf.mobile_navigation' | t }}">
     {{ punkte }}
-    {%- if blogs['kaffeerezepte'] != blank %}
-    <a href="{{ blogs['kaffeerezepte'].url }}">{{ 'kopf.rezepte' | t }}</a>
-    {%- endif %}
-    {%- if pages['werkzeuge'] != blank %}
-    <a href="{{ pages['werkzeuge'].url }}">{{ 'kopf.tools' | t }}</a>
-    {%- endif %}
   </nav>
   {%- render 'bw-sprachwahl', ort: 'menue', zusatz: ' sprachwahl--menue' %}
 </div>

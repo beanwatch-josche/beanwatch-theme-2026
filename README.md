@@ -191,6 +191,8 @@ Tag Manager, Cookie-Hinweis und Sprachwahl 0.25.0 (10.10.2026, Entscheide Joscha
 
 «Shop» zuerst 0.25.1 (10.10.2026, Wunsch Joscha): In der Hauptnavigation und im Mobilmenü steht «Shop» an erster Stelle, danach Espresso, Filterkaffee, Decaf, Wissen (`sections/bw-kopf.liquid`, wie `shell.js` der Werkstatt). Geprüft: Alle 239 gerenderten Seiten sind gleich wie 0.25.0 bis auf die Reihenfolge der Links in den zwei Navigationen; im Prototyp passt die Kopfleiste in 16 Breiten von 320 bis 1440 px.
 
+Mobilmenü wie die Hauptnavigation 0.25.2 (10.10.2026, Wunsch Joscha): Das Mobilmenü zeigt dieselben fünf Punkte wie die Kopfleiste, die Links zu Rezepten und Werkzeugen fallen dort weg (sie standen seit dem ersten Prototyp nur im Handymenü, ohne festgehaltenen Grund). Erreichbar bleiben sie über «Wissen» (Kacheln) und den Fuss. Die Schlüssel `kopf.rezepte` und `kopf.tools` sind entfernt (1108 je Sprache). Geprüft: Bei allen 239 gerenderten Seiten fehlen gegenüber 0.25.1 genau diese zwei Links im Mobilmenü, sonst ist alles gleich.
+
 ### Beim ersten Vorschau-Theme in Shopify prüfen
 
 - Zählt `blogs['brew-guides'].articles_count` nur veröffentlichte Artikel, und fehlen unveröffentlichte in `blogs[…].articles`? Davon hängt der Start-Modus ab (im Quelltext der Seite muss `window.BW_PLAN` je Blog `{}` zeigen, solange kein Guide veröffentlicht ist).
