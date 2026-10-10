@@ -1,0 +1,83 @@
+/* ==========================================================================
+   Beanwatch · Weihnachten
+   Nur in der Weihnachtszeit geladen, kurz vor dem ersten Advent bis Neujahr.
+   Im Theme hängt der Link an der Einstellung «Weihnachtszeit», so muss am
+   Stichtag nichts ausgerollt werden, nur der Schalter umgelegt.
+
+   Weihnachtssets, Entscheid Joscha 09.10.2026: zwei Sets mit eigenem Grund,
+   Espresso auf Dunkelblau, Filterkaffee auf Rotorange. Die Szenen zeichnet
+   weihnachten.js (bwWinterszene, bwSchneelaeufer), den Grund gibt dieses
+   Stylesheet. Steckbriefe im CI-Guide unter Elemente › Weihnachten.
+   ========================================================================== */
+
+/* Set-Band (103) in der Weihnachtszeit: links die beiden Sets als
+   Kacheln, rechts der Text. Die Kacheln sind die Links, darum gibt es im
+   Band keinen eigenen Knopf. */
+.set-band--weihnachten{grid-template-columns:minmax(0,1.32fr) minmax(0,.68fr);}
+.set-band--weihnachten .set-band-text h2{font-size:clamp(2rem,3.4vw,3.1rem);}
+.set-band-sets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+.set-kachel{
+  --kachel:var(--dunkelblau);
+  display:flex;flex-direction:column;
+  color:var(--dunkelblau);
+}
+.set-kachel--filter{--kachel:var(--redorange);}
+.set-kachel + .set-kachel{border-left:1px solid var(--linie);}
+.set-kachel-bild{
+  flex:1;display:flex;align-items:flex-end;
+  background:var(--kachel);
+  padding:clamp(14px,1.8vw,24px) clamp(12px,1.6vw,20px) clamp(6px,.8vw,10px);
+}
+.set-kachel-bild .winterszene{display:block;width:100%;height:auto;}
+/* Der Schnee fällt über den Rand der Szene hinaus, die Fläche schneidet ab. */
+.set-kachel-bild{overflow:hidden;}
+/* Fuss: beim Hover wechseln Fläche und Schrift gemeinsam (Hover-Regel). */
+.set-kachel-fuss{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px clamp(14px,1.6vw,20px);
+  border-top:1px solid var(--linie);
+  transition:background-color .35s ease,color .35s ease;
+}
+.set-kachel-name{font-weight:700;font-size:1.05rem;line-height:1.2;min-width:0;}
+.set-kachel-name small{display:block;margin-top:4px;font-weight:400;font-size:.8rem;opacity:.75;}
+.set-kachel-preis{display:inline-flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap;}
+.set-kachel-preis .pfeil{transition:transform .35s cubic-bezier(.65,0,.35,1);}
+.set-kachel:hover .set-kachel-fuss,
+.set-kachel:focus-visible .set-kachel-fuss{background:var(--kachel);color:var(--hellorange);border-top-color:var(--kachel);}
+.set-kachel:hover .pfeil,
+.set-kachel:focus-visible .pfeil{transform:translateX(5px);}
+.set-kachel:focus-visible{outline:2px solid var(--dunkelblau);outline-offset:-4px;}
+@media (max-width:980px){
+  .set-band--weihnachten{grid-template-columns:1fr;}
+  .set-band--weihnachten .set-band-sets{border-bottom:1px solid var(--linie);}
+}
+@media (max-width:560px){
+  .set-band-sets{grid-template-columns:1fr;}
+  .set-kachel + .set-kachel{border-left:0;border-top:1px solid var(--linie);}
+}
+
+/* Produktkopf (102): beide Szenen liegen im Galeriefeld übereinander,
+   data-set an #set-bild zeigt die gewählte, der Grund blendet mit. */
+.galerie-haupt.set-bild--weihnachten{background:var(--dunkelblau);transition:background-color .5s ease;}
+.galerie-haupt.set-bild--weihnachten[data-set="filter"]{background:var(--redorange);}
+.set-bild--weihnachten .set-szene{
+  position:absolute;inset:0;
+  display:flex;align-items:flex-end;
+  padding:5% 5% 4%;
+  transition:opacity .45s ease,visibility .45s ease;
+}
+.set-bild--weihnachten .set-szene .winterszene{display:block;width:100%;height:auto;}
+.set-bild--weihnachten[data-set="espresso"] .set-szene--filter,
+.set-bild--weihnachten[data-set="filter"] .set-szene--espresso{opacity:0;visibility:hidden;}
+
+/* Der Läufer allein im fallenden Schnee (bwSchneelaeufer): die Fläche ist
+   genau so gross wie die viewBox, damit der Schnee an ihrem Rand
+   verschwindet und oben wieder hereinkommt. Grund wie die Sets. */
+.schnee-flaeche{border-radius:var(--radius-karte);overflow:hidden;background:var(--dunkelblau);}
+.schnee-flaeche--rot{background:var(--redorange);}
+.schnee-flaeche .schneelaeufer{display:block;width:100%;height:auto;}
+
+@media (prefers-reduced-motion:reduce){
+  .set-kachel-fuss,.set-kachel-preis .pfeil,
+  .galerie-haupt.set-bild--weihnachten,.set-bild--weihnachten .set-szene{transition:none;}
+}

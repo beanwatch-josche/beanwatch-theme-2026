@@ -2,6 +2,11 @@
   Aus der Werkstatt (werkzeug/vorlagen/koffeinrechner.html), geschrieben von
   theme-export.rb. Nicht hier ändern, sondern dort und neu exportieren.
 {%- endcomment -%}
+    <!-- Knopf «Anleitung», gesetzt von BWTools.koffeinrechner()
+         (koffeinAnleitung in tools.js). Er öffnet die Anleitung als Popup,
+         vom Eintragen bis zum Teilen. Ohne Skript bleibt der Platz verborgen. -->
+    <div class="rechner-anleitung" id="koffein-anleitung" hidden></div>
+
     <div class="rechner">
 
       <!-- ---------- Eingaben ---------- -->

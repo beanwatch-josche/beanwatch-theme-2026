@@ -136,6 +136,15 @@ window.BWTools = (function () {
     return 0;
   }
 
+  /** Text einer Option in der Getränkeauswahl. */
+  function optionText(i) {
+    const g = GETRAENKE[i];
+    const wert = g.mg !== undefined
+      ? `${g.mg} mg`
+      : tx('option_menge', '{mg} mg bei {menge} {einheit}', { mg: Math.round(mgVon(i)), menge: g.standard, einheit: g.einheit });
+    return `${g.liste || g.name} · ${wert}`;
+  }
+
   /** Beschriftung für die Liste im Ergebnis. */
   function nameVon(index, menge) {
     const g = GETRAENKE[index];
@@ -147,18 +156,28 @@ window.BWTools = (function () {
   const SCHLAFGRENZE = 50;   // mg im Körper, ab hier wird Einschlafen schwerer
 
   let konsum = [];           // {getraenkIndex, stunde, menge}
+
+  // Steht beim ersten Besuch unter «Dein Tag». Die Anleitung löscht genau
+  // diese Einträge, bevor sie ihren Beispieltag einträgt.
+  const BEISPIELTAG = [
+    { getraenkIndex: 1, stunde: 7 },                   // doppelter Espresso
+    { getraenkIndex: 0, stunde: 10 },                  // einfacher Espresso
+    { getraenkIndex: 3, stunde: 14, menge: 15 }        // Filterkaffee aus 15 g
+  ];
   let schlafenszeit = 23;
 
-  function mgZurZeit(stunde) {
-    return konsum.reduce((summe, c) => {
+  /* liste: ohne Angabe der eingetragene Tag, die Anleitung rechnet damit
+     ihren eigenen Beispieltag. */
+  function mgZurZeit(stunde, liste = konsum) {
+    return liste.reduce((summe, c) => {
       if (stunde < c.stunde) return summe;
       const dosis = mgVon(c.getraenkIndex, c.menge);
       return summe + dosis * Math.pow(0.5, (stunde - c.stunde) / HALBWERTSZEIT);
     }, 0);
   }
 
-  function gesamt() {
-    return konsum.reduce((s, c) => s + mgVon(c.getraenkIndex, c.menge), 0);
+  function gesamt(liste = konsum) {
+    return liste.reduce((s, c) => s + mgVon(c.getraenkIndex, c.menge), 0);
   }
 
   /* ------------------------------------------------------------------
@@ -174,7 +193,9 @@ window.BWTools = (function () {
       .map(c => c.getraenkIndex + '@' + c.stunde + (c.menge ? 'x' + c.menge : ''))
       .join(',');
     const p = new URLSearchParams({ k, s: schlafenszeit });
-    history.replaceState(null, '', location.pathname + '?' + p.toString());
+    // In eingebetteten Vorschauen (Iframe mit Sandbox) darf das scheitern,
+    // der Rechner rechnet trotzdem weiter.
+    try { history.replaceState(null, '', location.pathname + '?' + p.toString()); } catch (e) { /* egal */ }
   }
 
   function ausAdresseLesen() {
@@ -203,12 +224,12 @@ window.BWTools = (function () {
   }
 
   /* --- Tageskurve als SVG ------------------------------------------------- */
-  function kurvePfad(vonStunde, bisStunde, breite, hoehe, maxWert) {
+  function kurvePfad(vonStunde, bisStunde, breite, hoehe, maxWert, liste = konsum) {
     const schritte = 96;
     const punkte = [];
     for (let i = 0; i <= schritte; i++) {
       const std = vonStunde + (bisStunde - vonStunde) * (i / schritte);
-      const wert = mgZurZeit(std);
+      const wert = mgZurZeit(std, liste);
       const x = (i / schritte) * breite;
       const y = hoehe - (wert / maxWert) * hoehe;
       punkte.push(`${x.toFixed(1)},${Math.max(0, y).toFixed(1)}`);
@@ -407,14 +428,11 @@ window.BWTools = (function () {
 
     if (!auswahl) return;
 
+    koffeinAnleitung();
+
     /* In der Liste steht gleich dabei, welche Getränke dazugehören.
        Sonst muss man raten, ob ein Flat White ein oder zwei Shots hat. */
-    auswahl.innerHTML = GETRAENKE.map((g, i) => {
-      const wert = g.mg !== undefined
-        ? `${g.mg} mg`
-        : tx('option_menge', '{mg} mg bei {menge} {einheit}', { mg: Math.round(mgVon(i)), menge: g.standard, einheit: g.einheit });
-      return `<option value="${i}">${g.liste || g.name} · ${wert}</option>`;
-    }).join('');
+    auswahl.innerHTML = GETRAENKE.map((g, i) => `<option value="${i}">${optionText(i)}</option>`).join('');
 
     /* Nur Getränke mit eigener Menge bekommen ein Eingabefeld. */
     function feldAnpassen() {
@@ -441,11 +459,7 @@ window.BWTools = (function () {
 
     // Ein Ergebnis aus der Adresse hat Vorrang, sonst ein typischer Tag.
     if (!ausAdresseLesen()) {
-      konsum = [
-      { getraenkIndex: 1, stunde: 7 },                 // doppelter Espresso
-      { getraenkIndex: 0, stunde: 10 },                // einfacher Espresso
-      { getraenkIndex: 3, stunde: 14, menge: 15 }      // Filterkaffee aus 15 g
-      ];
+      konsum = BEISPIELTAG.map(c => ({ ...c }));
     }
 
     hinzu.addEventListener('click', () => {
@@ -506,6 +520,993 @@ window.BWTools = (function () {
   }
 
   /* ======================================================================
+     Anleitung zum Rechner
+     Über dem Rechner steht nur der Knopf «Anleitung». Er öffnet ein Popup,
+     in dem ein Nachbau des Rechners in gut einer halben Minute (ANLEITUNG.dauer) einen Beispieltag
+     einträgt: Beispiele mit ✕ löschen, Cappuccino um 8:15, doppelter
+     Espresso um 17:15, Decaf um 20:00, das Ergebnis ablesen und es auf
+     Social Media teilen.
+
+     Zwei Formate, je nach Breite wie der echte Rechner (zweispaltig ab
+     861 px, siehe seiten.css):
+       quer  Eingaben links, Ergebnisbox rechts. Die Box rechnet nach jedem
+             ✕ und jedem «Hinzufügen» mit, wie die echte.
+       hoch  nur die Eingaben, am Schluss fährt die Ergebniskarte herein.
+
+     Gezeichnet als Inline-SVG, abgespielt mit einer GSAP-Zeitleiste. Alle
+     Beschriftungen des Nachbaus liest sie aus dem echten Rechner und aus
+     GETRAENKE, im Theme stehen sie dort schon in der Sprache der Seite. Nur
+     die eigenen Texte (Knopf, Schritte, Sprechblasen) laufen über tx(),
+     Schlüssel anleitung_*.
+
+     Platz für den Knopf ist #koffein-anleitung über dem Rechner, aus
+     werkzeug/vorlagen/koffeinrechner.html. Fehlt er, passiert nichts.
+     ====================================================================== */
+
+  // Joschas Beispieltag. uhr ist die echte Uhrzeit, stunde das, was der
+  // Regler kann: Er springt in vollen Stunden, aus 8:15 wird 08:00.
+  const ANLEITUNG = {
+    tag: [
+      { getraenkIndex: 0, stunde: 8, uhr: '8:15' },     // Cappuccino
+      { getraenkIndex: 1, stunde: 17, uhr: '17:15' },   // doppelter Espresso
+      { getraenkIndex: 6, stunde: 20, uhr: '20:00' }    // Decaf Espresso
+    ],
+    schlaf: 23,
+    // Anfang der sechs Kapitel in Sekunden, das letzte endet bei dauer.
+    kapitel: [0, 6, 13, 19, 24, 30],
+    dauer: 37,
+    // Ab hier quer, gleiche Grenze wie .rechner in seiten.css.
+    quer: '(min-width: 861px)'
+  };
+
+  // Masse des Nachbaus. Die Eingabespalte (0 bis 480) ist in beiden Formaten
+  // dieselbe, quer kommt rechts die Ergebnisbox dazu. Die Abstände folgen
+  // der echten Eingabespalte, nur etwas enger.
+  const AF = {
+    rot: '#FF4612', blau: '#004B5C', cyan: '#4FC4E2', hell: '#FFF3E8',
+    linie: 'rgba(0,75,92,.16)', rand: 'rgba(0,75,92,.28)', spur: '#3D3D3D'
+  };
+  const AB = 480, AB_QUER = 960, AH = 560;
+  const AZEILE = 44;                       // Zeilenhöhe unter «Dein Tag»
+  const AZEILEN_Y = 408;                   // oberste Zeile
+  const AOPTION = 26;                      // Zeilenhöhe der offenen Auswahl
+  const ALISTE_Y = 102;                    // Oberkante der offenen Auswahl
+  const AREGLER = {
+    zeit: { x: 26, b: 428, y: 186, von: 5, bis: 23 },
+    schlaf: { x: 26, b: 428, y: 336, von: 19, bis: 26 }
+  };
+  const AKNOPF = { x: 24, y: 232, h: 44 };
+  // hoch: Ergebniskarte, fährt am Schluss von oben herein, mit ihrer Kurve.
+  const AKARTE = { x: 16, y: 16, b: 448, h: 268 };
+  const AKURVE = { x: 40, y: 140, b: 400, h: 104 };
+  // quer: Ergebnisbox rechts, wie .rechner-ergebnis, mit ihrer Kurve.
+  const ABOX = { x: 504, y: 36, b: 432, h: 488 };
+  const ABOX_KURVE = { x: 28, y: 214, b: 376, h: 132 };
+  // Teilen: Der Knopf steht unter dem Rechner, die Seite scrollt um ASCROLL
+  // hoch, dann öffnet sich das Teilen-Fenster in der Mitte der Bühne.
+  const ATEILEN_KNOPF = { x: 24, y: 576, h: 44 };
+  const ASCROLL = 90;
+  const AFENSTER_B = 380;
+
+  const reglerX = (r, h) => r.x + (h - r.von) / (r.bis - r.von) * r.b;
+  const uhrText = (h) => String(h % 24).padStart(2, '0') + ':00';
+  // [<] statt des nackten Zeichens: Theme Check liest tools.js.liquid als
+  // HTML und hielte Schrägstrich, Kleiner-als und g für ein schliessendes Tag.
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/[<]/g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  /** Beschriftungen aus dem echten Rechner, mit deutschem Rückfall. */
+  function rechnerTexte() {
+    const q = (s) => document.querySelector(s);
+    // Nur die Textknoten direkt im Element, ohne «Aktuell 08:00» daneben.
+    const eigen = (el, ersatz) => {
+      if (!el) return ersatz;
+      const t = Array.from(el.childNodes).filter(n => n.nodeType === 3)
+        .map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim();
+      return t || ersatz;
+    };
+    const text = (el, ersatz) => (el && el.textContent.replace(/\s+/g, ' ').trim()) || ersatz;
+    const bereich = (id, ersatz) => {
+      const feld = q('#' + id) && q('#' + id).closest('.rechner-feld');
+      const spans = feld ? feld.querySelectorAll('.bereich-werte span') : [];
+      return spans.length === 2 ? [spans[0].textContent.trim(), spans[1].textContent.trim()] : ersatz;
+    };
+    const zeit = q('#konsum-zeit'), schlaf = q('#schlaf-zeit');
+    const liste = q('#konsum-liste');
+    const rest = q('#wert-rest');
+    const skala = q('.rechner-ergebnis .rechner-skala');
+    const zeilen = Array.from(document.querySelectorAll('.rechner-ergebnis .rechner-zeile'))
+      .map(z => [text(z.children[0], ''), text(z.children[1], '')]);
+    return {
+      getrunken: eigen(q('label[for="getraenk-auswahl"]'), 'Was hast Du getrunken?'),
+      uhrzeit: eigen(q('label[for="konsum-zeit"]'), 'Um wie viel Uhr?'),
+      schlafen: eigen(q('label[for="schlaf-zeit"]'), 'Wann gehst Du schlafen?'),
+      aktuell: eigen(q('label[for="konsum-zeit"] .hinweis'), 'Aktuell'),
+      tag: eigen(liste && liste.closest('.rechner-feld').querySelector('label'), 'Dein Tag'),
+      hinzufuegen: eigen(q('#hinzufuegen'), 'Hinzufügen'),
+      zeitBereich: bereich('konsum-zeit', ['05:00', '23:00']),
+      schlafBereich: bereich('schlaf-zeit', ['19:00', '02:00']),
+      rechner: text(q('.rechner-ergebnis .box-kopf .eyebrow'), 'Koffeinrechner'),
+      rest: text(rest && rest.previousElementSibling, 'Beim Schlafengehen noch im Körper'),
+      skala: skala && skala.children.length === 3
+        ? Array.from(skala.children).map(s => text(s, ''))
+        : ['0 mg', '50 mg · Schlafgrenze', '200 mg'],
+      // «Insgesamt heute» rechnet mit, «Halbwertszeit» steht fest.
+      zeilen: zeilen.length >= 2 ? zeilen.slice(0, 2) : [['Insgesamt heute', ''], ['Halbwertszeit', 'rund 5 Stunden']],
+      schlafenszeit: eigen(q('#koffein-kurve .schlaf-text'), 'Schlafenszeit'),
+      teilen: text(q('#teilen-knopf'), 'Auf Social Media teilen'),
+      leer: tx('liste_leer', 'Noch nichts eingetragen.'),
+      // Startwerte der Regler, wie sie in der Vorlage stehen.
+      zeitStart: +(zeit && zeit.getAttribute('value')) || 8,
+      schlafStart: +(schlaf && schlaf.getAttribute('value')) || 23
+    };
+  }
+
+  /** Was gerechnet wird: der Beispieltag und die Stände der Ergebnisbox. */
+  function anleitungSzenario() {
+    const tag = ANLEITUNG.tag;
+    const liste = tag.map(c => ({ getraenkIndex: c.getraenkIndex, stunde: c.stunde }));
+    const stand = (l) => {
+      const summe = gesamt(l);
+      return { liste: l, rest: mgZurZeit(ANLEITUNG.schlaf, l), summe, maxWert: Math.max(150, summe * 0.85) };
+    };
+    // Die Box zeigt erst die Beispiele, nach jedem ✕ eines weniger, dann
+    // nach jedem «Hinzufügen» ein Getränk mehr. Gelöscht wird immer oben.
+    const zustaende = [0, 1, 2, 3].map(n => stand(BEISPIELTAG.slice(n)))
+      .concat([1, 2, 3].map(n => stand(liste.slice(0, n))));
+    const ende = stand(liste);
+    return { tag, liste, rest: ende.rest, maxWert: ende.maxWert, zustaende };
+  }
+
+  /** Die sechs Schritte als Text: Untertitel, Screenreader und Ersatz ohne
+      Bewegung. nativ: Teilen läuft über das Teilen-Menü des Geräts. */
+  function anleitungSchritte(T, rest, nativ) {
+    const TT = teilenTexte();
+    const [a, b, c] = ANLEITUNG.tag;
+    const werte = (e) => ({
+      uhr: e.uhr, stunde: uhrText(e.stunde), name: GETRAENKE[e.getraenkIndex].name,
+      knopf: T.hinzufuegen, mg: Math.round(mgVon(e.getraenkIndex))
+    });
+    return [
+      {
+        kurz: tx('anleitung_1_kurz', 'Beispiele löschen'),
+        text: tx('anleitung_1_text', 'Unter «{tag}» stehen schon Beispiele. Lösch jedes mit ✕, sonst zählt es mit.', { tag: T.tag })
+      },
+      {
+        kurz: tx('anleitung_2_kurz', 'Cappuccino um {uhr}', werte(a)),
+        text: tx('anleitung_2_text', 'Ein Cappuccino zählt als einfacher Espresso. Wähl «{name}», stell den Regler auf {stunde} und drück «{knopf}». Der Regler springt in vollen Stunden, aus {uhr} wird {stunde}.', werte(a))
+      },
+      {
+        kurz: tx('anleitung_3_kurz', 'Doppelter Espresso um {uhr}', werte(b)),
+        text: tx('anleitung_3_text', 'Wähl «{name}», stell den Regler auf {stunde} und drück wieder «{knopf}».', werte(b))
+      },
+      {
+        kurz: tx('anleitung_4_kurz', 'Decaf um {uhr}', werte(c)),
+        text: tx('anleitung_4_text', 'Wähl «{name}», Regler auf {stunde}, «{knopf}». Mit {mg} mg fällt der Decaf kaum ins Gewicht.', werte(c))
+      },
+      {
+        kurz: tx('anleitung_5_kurz', 'Ergebnis ablesen'),
+        text: tx('anleitung_5_text', 'Stell ein, wann Du schlafen gehst. Neben den Eingaben, auf dem Handy darunter, steht dann, wie viel Koffein beim Einschlafen noch in Dir ist. Bei diesem Tag sind es um {schlaf} noch {mg} mg.',
+          { schlaf: uhrText(ANLEITUNG.schlaf), mg: Math.round(rest) })
+      },
+      {
+        kurz: tx('anleitung_6_kurz', 'Ergebnis teilen'),
+        text: nativ
+          ? tx('anleitung_6_text_nativ', 'Unter dem Rechner steht «{knopf}». Er baut ein Bild mit Deinem Ergebnis. «{teilen}» schickt Bild und Text an die App Deiner Wahl, zum Beispiel Instagram.',
+            { knopf: T.teilen, teilen: TT.bildTeilen })
+          : tx('anleitung_6_text_ablage', 'Unter dem Rechner steht «{knopf}». Er baut ein Bild mit Deinem Ergebnis. Klick auf die Plattform, dann liegt das Bild in der Zwischenablage und Du fügst es mit {taste} in den Beitrag ein.',
+            { knopf: T.teilen, taste: TT.taste })
+      }
+    ];
+  }
+
+  /* --- Zeichnung ------------------------------------------------------------ */
+
+  function aText(x, y, inhalt, stil, extra = '') {
+    return `<text x="${x}" y="${y}" style="${stil}" ${extra}>${inhalt}</text>`;
+  }
+  const LABEL = `font:700 11px Gabarito,sans-serif;letter-spacing:1.4px;fill:${AF.blau}`;
+  const KLEIN_HELL = `font:500 10.5px Gabarito,sans-serif;fill:${AF.hell};fill-opacity:.7`;
+
+  /** Label wie .rechner-feld label, auf Wunsch mit «Aktuell 08:00» daneben. */
+  function aLabel(y, text, wert, wertKlasse) {
+    const gross = esc(text.toLocaleUpperCase('de-CH'));
+    if (wert === undefined) return aText(24, y, gross, LABEL);
+    return `<text x="24" y="${y}" style="${LABEL}">${gross}` +
+      `<tspan dx="10" style="font:400 12px Gabarito,sans-serif;letter-spacing:0;fill-opacity:.62">${esc(wert.aktuell)}</tspan>` +
+      `<tspan dx="5" class="${wertKlasse}" style="font:800 17px Gabarito,sans-serif;letter-spacing:-.3px;fill:${AF.rot}">${esc(wert.uhr)}</tspan></text>`;
+  }
+
+  function aRegler(r, h, klasse, bereich) {
+    const x = reglerX(r, h);
+    return `<g class="${klasse}">
+      <rect x="${r.x}" y="${r.y - 2.5}" width="${r.b}" height="5" rx="2.5" fill="${AF.spur}"/>
+      <rect class="anl-fuell" x="${r.x}" y="${r.y - 2.5}" width="${x - r.x}" height="5" rx="2.5" fill="${AF.rot}"/>
+      <circle class="anl-daumen" cx="${x}" cy="${r.y}" r="8" fill="${AF.rot}" stroke="#fff" stroke-width="2.5"/>
+    </g>` +
+      aText(24, r.y + 26, esc(bereich[0]), 'font:500 11.5px Gabarito,sans-serif;fill:' + AF.blau + ';fill-opacity:.6') +
+      aText(456, r.y + 26, esc(bereich[1]), 'font:500 11.5px Gabarito,sans-serif;fill:' + AF.blau + ';fill-opacity:.6', 'text-anchor="end"');
+  }
+
+  /** Eine Zeile unter «Dein Tag», wie zeichneListe() sie schreibt. */
+  function aZeile(c, klasse, i) {
+    const name = `${uhrText(c.stunde)} · ${nameVon(c.getraenkIndex, c.menge)}`;
+    return `<g class="${klasse}" data-i="${i}">
+      ${aText(24, 28, esc(name), `font:500 15px Gabarito,sans-serif;fill:${AF.blau}`, 'data-max="300"')}
+      ${aText(420, 28, Math.round(mgVon(c.getraenkIndex, c.menge)) + ' mg', `font:700 15px Gabarito,sans-serif;fill:${AF.rot}`, 'text-anchor="end"')}
+      ${aText(446, 28, '✕', `font:700 15px Gabarito,sans-serif;fill:${AF.rot};fill-opacity:.55`, 'text-anchor="middle"')}
+      <line x1="24" y1="${AZEILE}" x2="456" y2="${AZEILE}" stroke="${AF.linie}" stroke-width="1"/>
+    </g>`;
+  }
+
+  /** Sprechblase. x/y ist die Spitze, richtung sagt, wohin sie zeigt.
+      Auf dunklem Grund (Ergebnisbox) in Rotorange statt Dunkelblau. */
+  function aBlase(klasse, text, x, y, richtung, anker, farbe = AF.blau) {
+    return `<g class="anl-blase ${klasse}" transform="translate(${x} ${y})" data-richtung="${richtung}" data-anker="${anker || 'mitte'}">
+      <g class="anl-blase-innen">
+        <rect rx="8" height="28" fill="${farbe}"/>
+        <path fill="${farbe}"/>
+        <text style="font:700 13px Gabarito,sans-serif;fill:${AF.hell}">${esc(text)}</text>
+      </g>
+    </g>`;
+  }
+
+  /** Tageskurve eines Stands: Schwelle, Fläche, Linie, Marken, Schlafenszeit
+      zeichnet der Aufrufer. Rechnet wie zeichneKurve(). */
+  function aKurve(z, b, h, klasse, markenSichtbar) {
+    const linie = kurvePfad(5, 26, b, h, z.maxWert, z.liste);
+    const ySchwelle = Math.max(12, h - (SCHLAFGRENZE / z.maxWert) * h);
+    const marken = z.liste.slice().sort((p, q) => p.stunde - q.stunde).map((c, i) => {
+      const x = ((c.stunde - 5) / 21) * b;
+      const y = Math.max(5, h - (mgZurZeit(c.stunde, z.liste) / z.maxWert) * h);
+      const yText = Math.max(10, y - (i % 2 === 0 ? 14 : 28));
+      const anker = x > b - 70 ? 'end' : (x < 50 ? 'start' : 'middle');
+      return `<g class="anl-marke"${markenSichtbar ? '' : ' opacity="0"'}>
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${AF.hell}" stroke="${AF.rot}" stroke-width="1.8"/>
+        ${aText(x.toFixed(1), yText.toFixed(1), esc(GETRAENKE[c.getraenkIndex].kurz || GETRAENKE[c.getraenkIndex].name),
+          `font:700 10px Gabarito,sans-serif;fill:${AF.hell};fill-opacity:.92`, `text-anchor="${anker}"`)}
+      </g>`;
+    }).join('');
+    return `<g class="${klasse}">
+      <line x1="0" y1="${ySchwelle.toFixed(1)}" x2="${b}" y2="${ySchwelle.toFixed(1)}" stroke="${AF.hell}" stroke-opacity=".45" stroke-width="1.2" stroke-dasharray="4 4"/>
+      ${aText(2, (ySchwelle - 5).toFixed(1), '50 mg', `font:600 10px Gabarito,sans-serif;fill:${AF.hell};fill-opacity:.75`)}
+      <path class="anl-flaeche" d="${linie} L${b},${h} L0,${h} Z" fill="${AF.rot}" opacity="0"/>
+      <path class="anl-kurve" d="${linie}" fill="none" stroke="${AF.rot}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${marken}
+    </g>`;
+  }
+
+  /** Schlafenszeit als senkrechte Linie mit Beschriftung. Die steht rechts
+      der Linie und darf über die Kurve hinaus in den Rand der Box ragen;
+      links stiesse sie an die Marke des letzten Getränks. */
+  function aSchlaf(T, b, h) {
+    const x = ((ANLEITUNG.schlaf - 5) / 21) * b;
+    return `<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${h}" stroke="${AF.cyan}" stroke-width="1.6" stroke-dasharray="3 3"/>
+      ${aText((x + 5).toFixed(1), 10, esc(T.schlafenszeit), `font:600 10px Gabarito,sans-serif;fill:${AF.cyan}`)}`;
+  }
+
+  /** hoch: die Ergebniskarte, die am Schluss von oben hereinfährt. */
+  function aErgebnisKarte(T, szenario) {
+    const ende = szenario.zustaende[szenario.zustaende.length - 1];
+    const k = AKURVE;
+    return `<g class="anl-ergebnis" opacity="0">
+      <rect x="${AKARTE.x}" y="${AKARTE.y}" width="${AKARTE.b}" height="${AKARTE.h}" rx="14" fill="${AF.blau}"
+            style="filter:drop-shadow(0 10px 22px rgba(0,75,92,.28))"/>
+      ${aText(40, 50, esc(T.rest.toLocaleUpperCase('de-CH')), `font:700 10.5px Gabarito,sans-serif;letter-spacing:1.3px;fill:${AF.cyan}`, 'data-max="400"')}
+      <text x="40" y="100" style="font:900 50px Gabarito,sans-serif;letter-spacing:-1.5px;fill:${AF.hell}"><tspan class="anl-zahl">0</tspan><tspan dx="6" style="font:700 17px Gabarito,sans-serif;letter-spacing:0;fill-opacity:.8">mg</tspan></text>
+      <rect x="40" y="116" width="400" height="8" rx="4" fill="${AF.hell}" fill-opacity=".18"/>
+      <rect class="anl-balken" x="40" y="116" width="0" height="8" rx="4" fill="${ende.rest > SCHLAFGRENZE ? AF.rot : AF.cyan}"
+            data-ziel="${(400 * Math.min(1, ende.rest / 200)).toFixed(1)}"/>
+      <g transform="translate(${k.x} ${k.y})">
+        <line x1="0" y1="${k.h}" x2="${k.b}" y2="${k.h}" stroke="${AF.hell}" stroke-opacity=".3" stroke-width="1.2"/>
+        ${aKurve(ende, k.b, k.h, 'anl-karte-kurve', false)}
+        ${aSchlaf(T, k.b, k.h)}
+      </g>
+      ${aText(40, 266, '05:00', KLEIN_HELL)}
+      ${aText(240, 266, '14:00', KLEIN_HELL, 'text-anchor="middle"')}
+      ${aText(440, 266, '02:00', KLEIN_HELL, 'text-anchor="end"')}
+    </g>`;
+  }
+
+  /** quer: die Ergebnisbox rechts, wie .rechner-ergebnis. Jeder Stand hat
+      eine eigene Kurve, die Zeitleiste blendet sie nacheinander ein. */
+  function aErgebnisBox(T, szenario) {
+    const B = ABOX, k = ABOX_KURVE;
+    const z0 = szenario.zustaende[0];
+    const innen = B.b - 2 * 28;
+    const [zeile1, zeile2] = T.zeilen;
+    return `<g class="anl-box" transform="translate(${B.x} ${B.y})">
+      <rect width="${B.b}" height="${B.h}" rx="16" fill="${AF.blau}"/>
+      ${aText(28, 42, esc(T.rechner.toLocaleUpperCase('de-CH')), `font:700 10.5px Gabarito,sans-serif;letter-spacing:1.3px;fill:${AF.cyan}`)}
+      <line x1="28" y1="62" x2="${28 + innen}" y2="62" stroke="${AF.hell}" stroke-opacity=".14"/>
+      ${aText(28, 94, esc(T.rest.toLocaleUpperCase('de-CH')), `font:700 10.5px Gabarito,sans-serif;letter-spacing:1.3px;fill:${AF.cyan}`, `data-max="${innen}"`)}
+      <text class="anl-box-zahltext" x="28" y="148" style="font:900 52px Gabarito,sans-serif;letter-spacing:-1.5px;fill:${AF.hell}"><tspan class="anl-box-zahl">${Math.round(z0.rest)}</tspan><tspan dx="6" style="font:700 18px Gabarito,sans-serif;letter-spacing:0;fill-opacity:.8">mg</tspan></text>
+      <rect x="28" y="166" width="${innen}" height="9" rx="4.5" fill="${AF.hell}" fill-opacity=".18"/>
+      <rect class="anl-box-balken" x="28" y="166" width="${(innen * Math.min(1, z0.rest / 200)).toFixed(1)}" height="9" rx="4.5"
+            fill="${z0.rest > SCHLAFGRENZE ? AF.rot : AF.cyan}"/>
+      ${aText(28, 192, esc(T.skala[0]), KLEIN_HELL)}
+      ${aText(28 + innen / 2, 192, esc(T.skala[1]), KLEIN_HELL, 'text-anchor="middle"')}
+      ${aText(28 + innen, 192, esc(T.skala[2]), KLEIN_HELL, 'text-anchor="end"')}
+      <g transform="translate(${k.x} ${k.y})">
+        <line x1="0" y1="${k.h}" x2="${k.b}" y2="${k.h}" stroke="${AF.hell}" stroke-opacity=".3" stroke-width="1.2"/>
+        ${szenario.zustaende.map((z) => aKurve(z, k.b, k.h, 'anl-stand', true)).join('')}
+        ${aSchlaf(T, k.b, k.h)}
+      </g>
+      ${aText(28, k.y + k.h + 20, '05:00', KLEIN_HELL)}
+      ${aText(28 + innen / 2, k.y + k.h + 20, '14:00', KLEIN_HELL, 'text-anchor="middle"')}
+      ${aText(28 + innen, k.y + k.h + 20, '02:00', KLEIN_HELL, 'text-anchor="end"')}
+      ${aText(28, 408, esc(zeile1[0]), `font:500 13px Gabarito,sans-serif;fill:${AF.hell}`)}
+      <text x="${28 + innen}" y="408" text-anchor="end" style="font:700 13px Gabarito,sans-serif;fill:${AF.hell}"><tspan class="anl-box-summe">${Math.round(z0.summe)}</tspan> mg</text>
+      <line x1="28" y1="426" x2="${28 + innen}" y2="426" stroke="${AF.hell}" stroke-opacity=".14"/>
+      ${aText(28, 454, esc(zeile2[0]), `font:500 13px Gabarito,sans-serif;fill:${AF.hell}`)}
+      ${aText(28 + innen, 454, esc(zeile2[1]), `font:700 13px Gabarito,sans-serif;fill:${AF.hell}`, 'text-anchor="end"')}
+    </g>`;
+  }
+
+  /** Text in Zeilen nach Zeichenzahl, für die Erklärungen im Teilen-Fenster. */
+  function aUmbruch(text, x, y, zeichen, abstand, stil, extra = '') {
+    const zeilen = [];
+    // Nur an normalen Leerzeichen trennen, feste (Strg + V) bleiben stehen.
+    String(text).split(/[ \t\n]+/).forEach((wort) => {
+      const letzte = zeilen[zeilen.length - 1];
+      if (letzte !== undefined && (letzte + ' ' + wort).length <= zeichen) zeilen[zeilen.length - 1] = letzte + ' ' + wort;
+      else zeilen.push(wort);
+    });
+    return `<text x="${x}" y="${y}" style="${stil}" ${extra}>` +
+      zeilen.map((z, i) => `<tspan x="${x}" dy="${i ? abstand : 0}">${esc(z)}</tspan>`).join('') + '</text>';
+  }
+
+  /** Umriss-Knopf wie .btn--linie, Text in der Mitte. */
+  function aLinienKnopf(x, y, b, h, text, klasse = '') {
+    return `<g class="${klasse}">
+      <rect x="${x}" y="${y}" width="${b}" height="${h}" rx="8" fill="${AF.hell}" stroke="${AF.blau}" stroke-width="1.5"/>
+      ${aText(x + b / 2, y + h / 2 + 5, esc(text), `font:600 13px Gabarito,sans-serif;fill:${AF.blau}`, 'text-anchor="middle"')}
+    </g>`;
+  }
+
+  /** Der Knopf «Auf Social Media teilen» unter dem Rechner, wie in der Vorlage. */
+  function aTeilenKnopf(T) {
+    const k = ATEILEN_KNOPF;
+    return `<g class="anl-teilen-knopf">
+      <rect x="${k.x}" y="${k.y}" width="240" height="${k.h}" rx="8" fill="${AF.rot}"/>
+      ${aText(k.x + 22, k.y + 28, esc(T.teilen), `font:600 15px Gabarito,sans-serif;fill:${AF.hell}`, 'class="anl-teilen-knopf-text"')}
+      <g class="anl-teilen-symbol" fill="none" stroke="${AF.hell}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+      </g>
+    </g>`;
+  }
+
+  /** Das Teilen-Fenster wie teilenDialog(), mit Abdunklung über der Bühne.
+      Gibt das Markup und die Ziele für den Zeiger zurück. */
+  function aTeilenFenster(T, breite, nativ) {
+    const TT = teilenTexte();
+    const ablageGeht = !!(navigator.clipboard && window.ClipboardItem);
+    const P = AFENSTER_B, innen = P - 48;
+    const zeichen = Math.floor(innen / 6.2);
+    const KLEIN = `font:400 12px Gabarito,sans-serif;fill:${AF.blau};fill-opacity:.8`;
+    const vorschau = { x: 24, y: 80, b: innen, h: 170 };
+    const bildB = Math.round(vorschau.h * 1080 / 1350);
+    let teil, hoehe, ziel;
+    if (nativ) {
+      teil = `<rect class="anl-bild-teilen" x="24" y="266" width="${innen}" height="40" rx="8" fill="${AF.rot}"/>
+        ${aText(P / 2, 291, esc(TT.bildTeilen), `font:600 14px Gabarito,sans-serif;fill:${AF.hell}`, 'text-anchor="middle"')}
+        ${aUmbruch(TT.nativ, 24, 330, zeichen, 16, KLEIN)}
+        ${aLinienKnopf(24, 362, innen, 36, TT.nurSpeichern)}`;
+      hoehe = 422;
+      ziel = { x: P / 2, y: 286 };
+    } else {
+      const n = PLATTFORMEN.length, abstand = 8;
+      const kb = (innen - (n - 1) * abstand) / n;
+      const insta = Math.max(0, PLATTFORMEN.findIndex(p => p.schluessel === 'instagram'));
+      const plattform = PLATTFORMEN[insta].name;
+      teil = `${aUmbruch(ablageGeht ? TT.ablage : TT.speichern, 24, 272, zeichen, 16, KLEIN)}
+        ${PLATTFORMEN.map((p, i) => aLinienKnopf(24 + i * (kb + abstand), 322, kb, 36, p.name, i === insta ? 'anl-plattform' : '')).join('')}
+        ${aLinienKnopf(24, 366, innen, 36, TT.nurSpeichern)}
+        ${aUmbruch(ablageGeht ? TT.inAblage(plattform) : TT.nurGespeichert(plattform), 24, 424, zeichen - 2, 16,
+          `font:600 12px Gabarito,sans-serif;fill:${AF.rot}`, 'class="anl-teilen-hinweis" opacity="0"')}`;
+      hoehe = 466;
+      ziel = { x: 24 + insta * (kb + abstand) + kb / 2, y: 340 };
+    }
+    const px = (breite - P) / 2, py = Math.round((AH - hoehe) / 2);
+    const markup = `<g class="anl-teilen">
+      <rect class="anl-dimm" width="${breite}" height="${AH}" rx="14" fill="#211F1D" fill-opacity=".55" opacity="0"/>
+      <g transform="translate(${px} ${py})"><g class="anl-teilen-fenster" opacity="0">
+        <rect width="${P}" height="${hoehe}" rx="16" fill="${AF.hell}"/>
+        ${aText(P - 22, 30, '✕', `font:400 14px Gabarito,sans-serif;fill:${AF.blau};fill-opacity:.55`, 'text-anchor="middle"')}
+        ${aText(24, 36, esc(TT.eyebrow.toLocaleUpperCase('de-CH')), `font:700 10.5px Gabarito,sans-serif;letter-spacing:1.3px;fill:${AF.rot}`)}
+        ${aText(24, 64, esc(TT.titel), `font:800 20px Gabarito,sans-serif;letter-spacing:-.3px;fill:${AF.blau}`)}
+        <rect x="${vorschau.x}" y="${vorschau.y}" width="${vorschau.b}" height="${vorschau.h}" rx="10" fill="${AF.blau}"/>
+        <image class="anl-teilbild" x="${vorschau.x + (vorschau.b - bildB) / 2}" y="${vorschau.y}" width="${bildB}" height="${vorschau.h}" preserveAspectRatio="xMidYMid meet"/>
+        ${teil}
+      </g></g>
+      ${nativ ? `<g transform="translate(${(breite - 300) / 2} ${AH - 150})"><g class="anl-menue">
+        <rect width="300" height="170" rx="16" fill="#fff" style="filter:drop-shadow(0 -6px 18px rgba(0,0,0,.18))"/>
+        <rect x="130" y="9" width="40" height="4" rx="2" fill="${AF.blau}" fill-opacity=".2"/>
+        ${[0, 1, 2, 3].map(i => `<circle cx="${42 + i * 72}" cy="58" r="22" fill="${AF.blau}" fill-opacity="${i ? .12 : .22}"/>
+          <rect x="${24 + i * 72}" y="90" width="36" height="6" rx="3" fill="${AF.blau}" fill-opacity=".14"/>`).join('')}
+      </g></g>` : ''}
+    </g>`;
+    return { markup, ziel: { x: px + ziel.x, y: py + ziel.y }, menue: { x: (breite - 300) / 2 + 42, y: AH - 150 + 58 } };
+  }
+
+  function zeichneAnleitung(T, szenario, quer, nativ) {
+    const { tag } = szenario;
+    const breite = quer ? AB_QUER : AB;
+    const startIndex = 0;   // die echte Auswahl beginnt beim ersten Getränk
+
+    // Was im geschlossenen Select steht: zuerst die Vorauswahl, dann je Getränk.
+    const auswahlTexte = [startIndex].concat(tag.map(c => c.getraenkIndex));
+    const selectTexte = auswahlTexte.map((i, n) =>
+      aText(40, 80, esc(optionText(i)), `font:500 15px Gabarito,sans-serif;fill:${AF.blau}`,
+        `class="anl-wahl" data-n="${n}" data-max="372"${n ? ' opacity="0"' : ''}`)).join('');
+    const hinweisTexte = auswahlTexte.map((i, n) =>
+      aText(24, 120, esc(GETRAENKE[i].hinweis || ''), `font:400 12.5px Gabarito,sans-serif;fill:${AF.blau};fill-opacity:.7`,
+        `class="anl-hinweis" data-n="${n}" data-max="430"${n ? ' opacity="0"' : ''}`)).join('');
+
+    const optionen = GETRAENKE.map((g, i) =>
+      aText(36, ALISTE_Y + 4 + i * AOPTION + 17, esc(optionText(i)),
+        `font:500 12.5px Gabarito,sans-serif;fill:${AF.blau}`, 'data-max="404"')).join('');
+
+    const zeiger = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+      // Finger: ein Punkt, die Spitze ist die Mitte.
+      ? `<g class="anl-zeiger-koerper"><circle r="13" fill="${AF.blau}" fill-opacity=".22" stroke="${AF.blau}" stroke-width="2"/><circle r="3.5" fill="${AF.blau}"/></g>`
+      // Maus: ein Pfeil, die Spitze ist 0/0.
+      : `<g class="anl-zeiger-koerper"><path d="M0 0 L0 21 L5.6 15.6 L9.6 24.4 L13 22.9 L9 14.2 L16.4 14.2 Z" fill="${AF.blau}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+
+    const teilen = aTeilenFenster(T, breite, nativ);
+
+    return `<svg class="anleitung-svg" viewBox="0 0 ${breite} ${AH}" role="presentation" focusable="false"
+        style="font-family:Gabarito,sans-serif" data-ziel-x="${teilen.ziel.x}" data-ziel-y="${teilen.ziel.y}"
+        data-menue-x="${teilen.menue.x}" data-menue-y="${teilen.menue.y}">
+      <rect width="${breite}" height="${AH}" rx="14" fill="${AF.hell}"/>
+      <g class="anl-inhalt">
+      <!-- Die Seite, sie scrollt im letzten Kapitel hoch zum Teilen-Knopf -->
+      <g class="anl-seite">
+
+        <!-- Was hast Du getrunken? -->
+        ${aLabel(36, T.getrunken)}
+        <rect x="24" y="50" width="432" height="48" rx="8" fill="#fff" stroke="${AF.rand}" stroke-width="1.5" class="anl-select"/>
+        ${selectTexte}
+        <path d="M432 71 l5 5 l5 -5" fill="none" stroke="${AF.blau}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        ${hinweisTexte}
+
+        <!-- Um wie viel Uhr? -->
+        ${aLabel(160, T.uhrzeit, { aktuell: T.aktuell, uhr: uhrText(T.zeitStart) }, 'anl-zeit-wert')}
+        ${aRegler(AREGLER.zeit, T.zeitStart, 'anl-zeit', T.zeitBereich)}
+
+        <!-- Hinzufügen -->
+        <g class="anl-knopf">
+          <rect x="${AKNOPF.x}" y="${AKNOPF.y}" width="150" height="${AKNOPF.h}" rx="8" fill="${AF.rot}"/>
+          ${aText(AKNOPF.x + 22, AKNOPF.y + 28, esc(T.hinzufuegen), `font:600 15px Gabarito,sans-serif;fill:${AF.hell}`, 'class="anl-knopf-text"')}
+          <path class="anl-plus" d="M0 -6 V6 M-6 0 H6" stroke="${AF.hell}" stroke-width="1.8" stroke-linecap="round"/>
+        </g>
+
+        <!-- Wann gehst Du schlafen? -->
+        ${aLabel(310, T.schlafen, { aktuell: T.aktuell, uhr: uhrText(T.schlafStart) }, 'anl-schlaf-wert')}
+        ${aRegler(AREGLER.schlaf, T.schlafStart, 'anl-schlaf', T.schlafBereich)}
+
+        <!-- Dein Tag -->
+        ${aLabel(398, T.tag)}
+        <g transform="translate(0 ${AZEILEN_Y})">
+          ${aText(24, 28, esc(T.leer), `font:400 14px Gabarito,sans-serif;fill:${AF.blau};fill-opacity:.6`, 'class="anl-leer" opacity="0"')}
+          ${BEISPIELTAG.map((c, i) => aZeile(c, 'anl-beispiel', i)).join('')}
+          ${tag.map((c, i) => aZeile(c, 'anl-neu', i)).join('')}
+        </g>
+
+        <!-- Ergebnis: quer die Box rechts, hoch die Karte am Schluss -->
+        ${quer ? aErgebnisBox(T, szenario) : ''}
+
+        <!-- Offene Auswahl -->
+        <g class="anl-liste" opacity="0">
+          <rect x="24" y="${ALISTE_Y}" width="432" height="${GETRAENKE.length * AOPTION + 8}" rx="8" fill="#fff"
+                stroke="${AF.rand}" stroke-width="1.2" style="filter:drop-shadow(0 8px 18px rgba(0,75,92,.18))"/>
+          <rect class="anl-markiert" x="28" y="${ALISTE_Y + 4}" width="424" height="${AOPTION}" rx="5" fill="${AF.rot}" fill-opacity=".14"/>
+          ${optionen}
+        </g>
+
+        ${quer ? '' : aErgebnisKarte(T, szenario)}
+
+        <!-- Sprechblasen -->
+        ${aBlase('anl-blase-loeschen', tx('anleitung_blase_loeschen', 'Erst die Beispiele löschen'), 446, AZEILEN_Y + 12, 'unten', 'ende')}
+        ${aBlase('anl-blase-cappuccino', tx('anleitung_blase_cappuccino', 'Cappuccino = einfacher Espresso'), 352, 48, 'unten', 'mitte')}
+        ${tag.map((c) => aBlase('anl-blase-runden', tx('anleitung_blase_runden', '{uhr} → {stunde}', { uhr: c.uhr, stunde: uhrText(c.stunde) }), 0, 152, 'links', 'start')).join('')}
+        ${aBlase('anl-blase-schlaf', tx('anleitung_blase_schlaf', 'Schlafenszeit einstellen'), 0, 304, 'links', 'start')}
+        ${quer ? aBlase('anl-blase-ergebnis', tx('anleitung_blase_ergebnis', 'Hier steht Dein Ergebnis'), 0, ABOX.y + 128, 'links', 'start', AF.rot) : ''}
+
+        <!-- Unter dem Rechner -->
+        ${aTeilenKnopf(T)}
+      </g>
+
+        <!-- Teilen-Fenster -->
+        ${teilen.markup}
+        ${nativ ? aBlase('anl-blase-app', tx('anleitung_blase_app', 'App wählen, zum Beispiel Instagram'), teilen.menue.x, teilen.menue.y - 30, 'unten', 'start') : ''}
+
+        <circle class="anl-ring" r="4" fill="none" stroke="${AF.rot}" stroke-width="2.5" opacity="0"/>
+        <g class="anl-zeiger" transform="translate(${AB - 10} ${AH + 30})">${zeiger}</g>
+      </g>
+    </svg>`;
+  }
+
+  /** Kürzt zu lange Texte mit … und passt die Sprechblasen an ihren Text an.
+      Läuft nach dem Einsetzen und noch einmal, wenn die Schrift geladen ist. */
+  function anleitungVermessen(svg) {
+    svg.querySelectorAll('text[data-max]').forEach((t) => {
+      if (!t.dataset.voll) t.dataset.voll = t.textContent;
+      t.textContent = t.dataset.voll;
+      const max = +t.dataset.max;
+      let s = t.dataset.voll;
+      while (s.length > 1 && t.getComputedTextLength() > max) {
+        s = s.slice(0, -1);
+        t.textContent = s.trimEnd() + '…';
+      }
+    });
+
+    svg.querySelectorAll('.anl-blase').forEach((g) => {
+      const text = g.querySelector('text');
+      const rect = g.querySelector('rect');
+      const pfeil = g.querySelector('path');
+      const b = Math.ceil(text.getComputedTextLength()) + 24, h = 28;
+      const anker = g.dataset.anker, richtung = g.dataset.richtung;
+      let x, y, spitze;
+      if (richtung === 'links') {
+        x = 10; y = -h / 2;
+        spitze = 'M10 -6 L0 0 L10 6 Z';
+      } else {
+        x = anker === 'ende' ? 18 - b : (anker === 'start' ? -18 : -b / 2);
+        y = richtung === 'unten' ? -10 - h : 10;
+        spitze = richtung === 'unten' ? 'M-7 -10.5 L0 0 L7 -10.5 Z' : 'M-7 10.5 L0 0 L7 10.5 Z';
+      }
+      rect.setAttribute('x', x); rect.setAttribute('y', y); rect.setAttribute('width', b);
+      text.setAttribute('x', x + 12); text.setAttribute('y', y + 19);
+      pfeil.setAttribute('d', spitze);
+    });
+
+    // Blasen rechts neben einem Text: an den Reglern neben «Aktuell 08:00»,
+    // quer neben der grossen Zahl der Ergebnisbox (mit Platz für drei Ziffern).
+    [['.anl-zeit-wert', '.anl-blase-runden', 154, 0], ['.anl-schlaf-wert', '.anl-blase-schlaf', 304, 0],
+     ['.anl-box-zahltext', '.anl-blase-ergebnis', ABOX.y + 128, ABOX.x + 30]].forEach(([wert, blase, y, dx]) => {
+      const el = svg.querySelector(wert);
+      if (!el) return;
+      const ziel = wert === '.anl-box-zahltext' ? el : el.parentNode;
+      const kasten = ziel.getBBox();
+      svg.querySelectorAll(blase).forEach((g) =>
+        g.setAttribute('transform', `translate(${Math.ceil(dx + kasten.x + kasten.width) + 8} ${y})`));
+    });
+
+    // Teilen-Knopf so breit wie sein Text, Symbol dahinter (24er-Raster, 0,75).
+    const teilenText = svg.querySelector('.anl-teilen-knopf-text');
+    if (teilenText) {
+      const tb = Math.ceil(teilenText.getComputedTextLength());
+      svg.querySelector('.anl-teilen-knopf rect').setAttribute('width', 22 + tb + 12 + 18 + 22);
+      svg.querySelector('.anl-teilen-symbol').setAttribute('transform',
+        `translate(${ATEILEN_KNOPF.x + 22 + tb + 12} ${ATEILEN_KNOPF.y + ATEILEN_KNOPF.h / 2 - 9}) scale(.75)`);
+    }
+
+    // Plus im Knopf hinter den Text, Knopf so breit wie sein Inhalt.
+    const knopfText = svg.querySelector('.anl-knopf-text');
+    const breite = Math.ceil(knopfText.getComputedTextLength());
+    svg.querySelector('.anl-knopf rect').setAttribute('width', breite + 22 + 12 + 14 + 22);
+    svg.querySelector('.anl-plus').setAttribute('transform',
+      `translate(${AKNOPF.x + 22 + breite + 12 + 7} ${AKNOPF.y + AKNOPF.h / 2})`);
+  }
+
+  /* --- Ablauf --------------------------------------------------------------- */
+
+  /** Baut die Zeitleiste zur Zeichnung. Gibt sie zurück, dazu sync(), das
+      Uhrzeit und Zahlen aus den Stellvertretern in die Zeichnung schreibt. */
+  function anleitungZeitleiste(svg, T, szenario, quer, nativ) {
+    const $ = (s) => svg.querySelector(s);
+    const $$ = (s) => Array.from(svg.querySelectorAll(s));
+    const { tag, rest, zustaende } = szenario;
+
+    const inhalt = $('.anl-inhalt');
+    const zeiger = $('.anl-zeiger');
+    const koerper = $('.anl-zeiger-koerper');
+    const ring = $('.anl-ring');
+    const listeOffen = $('.anl-liste');
+    const markiert = $('.anl-markiert');
+    const beispiele = $$('.anl-beispiel');
+    const neue = $$('.anl-neu');
+    const wahl = $$('.anl-wahl');
+    const hinweise = $$('.anl-hinweis');
+    const runden = $$('.anl-blase-runden');
+    const zeitDaumen = $('.anl-zeit .anl-daumen'), zeitFuell = $('.anl-zeit .anl-fuell');
+    const zeitWert = $('.anl-zeit-wert');
+    const knopf = $('.anl-knopf');
+
+    // Startzustand, auf den die Zeitleiste beim Zurückspulen zurückfällt.
+    // Uhrzeit und Zahlen hängen an Stellvertretern, die sync() schreibt.
+    const stand = { zeit: T.zeitStart, mg: quer ? zustaende[0].rest : 0, summe: zustaende[0].summe };
+    gsap.set(zeiger, { x: AB - 10, y: AH + 30 });
+    beispiele.forEach((z, i) => gsap.set(z, { y: i * AZEILE }));
+    neue.forEach((z, i) => gsap.set(z, { y: i * AZEILE, x: -14, opacity: 0 }));
+    gsap.set($$('.anl-blase'), { opacity: 0 });
+
+    // Kurven zeichnen sich über die Strichlänge.
+    const strich = (pfad, sichtbar) => {
+      const l = pfad.getTotalLength();
+      gsap.set(pfad, { strokeDasharray: l, strokeDashoffset: sichtbar ? 0 : l });
+      return l;
+    };
+
+    const tl = gsap.timeline({ paused: true, repeat: -1, defaults: { ease: 'bw-weich', immediateRender: false } });
+    const K = ANLEITUNG.kapitel;
+    K.forEach((t, i) => tl.addLabel('k' + i, t));
+
+    const optionY = (i) => ALISTE_Y + 4 + i * AOPTION;
+    const zeitX = (h) => reglerX(AREGLER.zeit, h);
+    const zeilenX = { x: 446, y: AZEILEN_Y + 23 };            // ✕ der obersten Zeile
+    const knopfMitte = { x: AKNOPF.x + 60, y: AKNOPF.y + AKNOPF.h / 2 };
+
+    const fahren = (t, x, y, d = 0.8) => tl.to(zeiger, { x, y, duration: d }, t);
+    const klick = (t, x, y) => {
+      tl.set(ring, { attr: { cx: x, cy: y } }, t)
+        .fromTo(ring, { attr: { r: 4 }, opacity: 0.95 }, { attr: { r: 24 }, opacity: 0, duration: 0.5, ease: 'power2.out' }, t)
+        .to(koerper, { scale: 0.84, transformOrigin: '50% 50%', duration: 0.09, yoyo: true, repeat: 1, ease: 'power1.inOut' }, t);
+    };
+    const zeigen = (el, t, d = 0.3) => tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: d, ease: 'bw-aus' }, t);
+    const blaseAn = (el, t) => tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'bw-aus' }, t);
+    const blaseAus = (el, t) => tl.to(el, { opacity: 0, duration: 0.25, ease: 'power1.out' }, t);
+    const umschalten = (els, n, t) => els.forEach((el, i) => tl.set(el, { opacity: i === n ? 1 : 0 }, t));
+
+    /* quer: Die Ergebnisbox wechselt zum Stand n, wie die echte nach jeder
+       Eingabe: Zahl und Summe zählen, der Balken wächst, die Kurve zeichnet
+       sich neu. */
+    const staende = quer ? $$('.anl-stand') : [];
+    const standLaengen = staende.map((g, n) => strich(g.querySelector('.anl-kurve'), n === 0));
+    staende.forEach((g, n) => gsap.set(g, { opacity: n === 0 ? 1 : 0 }));
+    if (quer) gsap.set(staende[0].querySelector('.anl-flaeche'), { opacity: 0.22 });
+    const boxBalken = $('.anl-box-balken');
+    const boxBreite = ABOX.b - 2 * 28;
+    function standWechsel(t, n) {
+      if (!quer) return;
+      const z = zustaende[n];
+      umschalten(staende, n, t);
+      tl.fromTo(staende[n].querySelector('.anl-kurve'), { strokeDashoffset: standLaengen[n] },
+        { strokeDashoffset: 0, duration: 0.9, ease: 'power2.out' }, t)
+        .fromTo(staende[n].querySelector('.anl-flaeche'), { opacity: 0 }, { opacity: 0.22, duration: 0.7, ease: 'power2.out' }, t)
+        .to(stand, { mg: z.rest, summe: z.summe, duration: 0.7, ease: 'power2.out' }, t)
+        .set(boxBalken, { attr: { fill: z.rest > SCHLAFGRENZE ? AF.rot : AF.cyan } }, t)
+        .to(boxBalken, { attr: { width: boxBreite * Math.min(1, z.rest / 200) }, duration: 0.7, ease: 'bw-aus' }, t);
+    }
+
+    /** Auswahl öffnen, Getränk wählen, schliessen. Gibt die Zeit danach zurück. */
+    function waehlen(t, vonIndex, nachIndex) {
+      fahren(t, 300, 74, 0.7);
+      klick(t + 0.75, 300, 74);
+      tl.set(markiert, { attr: { y: optionY(vonIndex) } }, t + 0.8)
+        .fromTo(listeOffen, { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.25, ease: 'bw-aus' }, t + 0.8);
+      const ty = optionY(nachIndex) + AOPTION / 2;
+      fahren(t + 1.1, 220, ty, 0.6);
+      tl.to(markiert, { attr: { y: optionY(nachIndex) }, duration: 0.6 }, t + 1.1);
+      return t + 1.8;
+    }
+    function bestaetigen(t, nachIndex, n) {
+      klick(t, 220, optionY(nachIndex) + AOPTION / 2);
+      tl.to(listeOffen, { opacity: 0, duration: 0.2, ease: 'power1.out' }, t + 0.15);
+      umschalten(wahl, n, t + 0.2);
+      umschalten(hinweise, n, t + 0.2);
+    }
+    function regeln(t, von, nach, d) {
+      fahren(t, zeitX(von), AREGLER.zeit.y, 0.6);
+      if (von === nach) return t + 0.6;
+      const dauer = d || 0.3 + Math.abs(nach - von) * 0.11;
+      fahren(t + 0.7, zeitX(nach), AREGLER.zeit.y, dauer);
+      tl.to(stand, { zeit: nach, duration: dauer }, t + 0.7)
+        .to(zeitDaumen, { attr: { cx: zeitX(nach) }, duration: dauer }, t + 0.7)
+        .to(zeitFuell, { attr: { width: zeitX(nach) - AREGLER.zeit.x }, duration: dauer }, t + 0.7);
+      return t + 0.7 + dauer;
+    }
+    function hinzufuegen(t, i) {
+      fahren(t, knopfMitte.x, knopfMitte.y, 0.55);
+      klick(t + 0.6, knopfMitte.x, knopfMitte.y);
+      tl.to(knopf, { scale: 0.96, transformOrigin: '50% 50%', duration: 0.1, yoyo: true, repeat: 1 }, t + 0.6)
+        .to(neue[i], { opacity: 1, x: 0, duration: 0.45, ease: 'bw-aus' }, t + 0.75);
+      if (i === 0) tl.to($('.anl-leer'), { opacity: 0, duration: 0.2 }, t + 0.7);
+      standWechsel(t + 0.75, BEISPIELTAG.length + 1 + i);
+    }
+
+    // Kapitel 1 · Beispiele löschen
+    tl.fromTo(inhalt, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0);
+    blaseAn($('.anl-blase-loeschen'), 0.4);
+    fahren(0.6, zeilenX.x, zeilenX.y, 1.0);
+    beispiele.forEach((z, i) => {
+      const t = 1.7 + i * 0.9;
+      klick(t, zeilenX.x, zeilenX.y);
+      tl.to(z, { opacity: 0, x: 14, duration: 0.25, ease: 'power1.in' }, t + 0.05);
+      beispiele.slice(i + 1).forEach((z2, j) => tl.to(z2, { y: j * AZEILE, duration: 0.35, ease: 'bw-aus' }, t + 0.3));
+      standWechsel(t + 0.15, i + 1);
+    });
+    blaseAus($('.anl-blase-loeschen'), 3.9);
+    zeigen($('.anl-leer'), 4.1, 0.35);
+
+    // Kapitel 2 bis 4 · je ein Getränk
+    let vorher = 0, zeitVorher = T.zeitStart;
+    tag.forEach((c, i) => {
+      const t0 = K[i + 1];
+      let t = waehlen(t0, vorher, c.getraenkIndex);
+      if (i === 0) blaseAn($('.anl-blase-cappuccino'), t0 + 1.4);
+      bestaetigen(t, c.getraenkIndex, i + 1);
+      if (i === 0) blaseAus($('.anl-blase-cappuccino'), t + 0.3);
+      t = regeln(t + 0.45, zeitVorher, c.stunde);
+      // Gerundet wird nur, wo die echte Uhrzeit keine volle Stunde ist.
+      const blase = runden[i];
+      const gerundet = c.uhr.split(':')[1] !== '00';
+      if (gerundet) blaseAn(blase, t + 0.05);
+      hinzufuegen(t + 0.5, i);
+      // Die Blase bleibt zum Lesen stehen, aber nie bis in die nächste Auswahl.
+      if (gerundet) blaseAus(blase, Math.min(t + 2.4, K[i + 2] - 0.1));
+      vorher = c.getraenkIndex;
+      zeitVorher = c.stunde;
+    });
+
+    // Kapitel 5 · Ergebnis ablesen
+    const t5 = K[4];
+    const schlafX = reglerX(AREGLER.schlaf, T.schlafStart);
+    fahren(t5, schlafX, AREGLER.schlaf.y, 0.8);
+    klick(t5 + 0.85, schlafX, AREGLER.schlaf.y);
+    blaseAn($('.anl-blase-schlaf'), t5 + 0.6);
+    blaseAus($('.anl-blase-schlaf'), t5 + 1.9);
+    if (quer) {
+      // Die Box steht schon da: Der Zeiger zeigt auf die Zahl.
+      const zahl = $('.anl-box-zahltext');
+      fahren(t5 + 1.6, ABOX.x + 34, ABOX.y + 156, 0.9);
+      blaseAn($('.anl-blase-ergebnis'), t5 + 2.4);
+      blaseAus($('.anl-blase-ergebnis'), K[5] - 0.2);
+      tl.to(zahl, { scale: 1.08, transformOrigin: '0% 100%', duration: 0.35, yoyo: true, repeat: 1, ease: 'power1.inOut' }, t5 + 2.5)
+        .to(zeiger, { opacity: 0, duration: 0.4, ease: 'power1.out' }, t5 + 2.7);
+    } else {
+      const ergebnis = $('.anl-ergebnis');
+      const kurve = ergebnis.querySelector('.anl-kurve');
+      gsap.set(ergebnis, { y: -24 });
+      strich(kurve, false);
+      fahren(t5 + 1.3, AB - 60, AH - 20, 0.9);
+      tl.to(zeiger, { opacity: 0, duration: 0.4, ease: 'power1.out' }, t5 + 1.8)
+        .to(ergebnis, { opacity: 1, y: 0, duration: 0.6, ease: 'bw-aus' }, t5 + 1.4)
+        .to(stand, { mg: rest, duration: 1.3, ease: 'power2.out' }, t5 + 1.8)
+        .to($('.anl-balken'), { attr: { width: +$('.anl-balken').dataset.ziel }, duration: 1.0, ease: 'bw-aus' }, t5 + 1.9)
+        .to(kurve, { strokeDashoffset: 0, duration: 1.5, ease: 'power2.out' }, t5 + 1.9)
+        .to(ergebnis.querySelector('.anl-flaeche'), { opacity: 0.22, duration: 0.8, ease: 'power2.out' }, t5 + 2.4)
+        .to(ergebnis.querySelectorAll('.anl-marke'), { opacity: 1, duration: 0.35, stagger: 0.12, ease: 'bw-aus' }, t5 + 2.8);
+    }
+    // Kapitel 6 · Ergebnis teilen: Die Seite scrollt zum Knopf unter dem
+    // Rechner, das Teilen-Fenster geht auf, dann je nach Gerät Instagram
+    // (Zwischenablage) oder «Bild teilen» (Teilen-Menü).
+    const t6 = K[5];
+    const seite = $('.anl-seite');
+    const teilenKnopf = $('.anl-teilen-knopf');
+    const fensterTeilen = $('.anl-teilen-fenster');
+    const knopfZiel = { x: ATEILEN_KNOPF.x + 110, y: ATEILEN_KNOPF.y + ATEILEN_KNOPF.h / 2 - ASCROLL };
+    const ziel = { x: +svg.dataset.zielX, y: +svg.dataset.zielY };
+    gsap.set(fensterTeilen, { y: 20 });
+    tl.to(zeiger, { opacity: 1, duration: 0.3, ease: 'power1.out' }, t6)
+      .to(seite, { y: -ASCROLL, duration: 0.8 }, t6);
+    fahren(t6 + 0.3, knopfZiel.x, knopfZiel.y, 0.9);
+    klick(t6 + 1.3, knopfZiel.x, knopfZiel.y);
+    tl.to(teilenKnopf, { scale: 0.96, transformOrigin: '50% 50%', duration: 0.1, yoyo: true, repeat: 1 }, t6 + 1.3)
+      .to($('.anl-dimm'), { opacity: 1, duration: 0.3, ease: 'power1.out' }, t6 + 1.5)
+      .to(fensterTeilen, { opacity: 1, y: 0, duration: 0.45, ease: 'bw-aus' }, t6 + 1.5);
+    fahren(t6 + 2.3, ziel.x, ziel.y, 0.8);
+    klick(t6 + 3.2, ziel.x, ziel.y);
+    if (nativ) {
+      const menue = $('.anl-menue');
+      gsap.set(menue, { y: 190 });
+      tl.to($('.anl-bild-teilen'), { attr: { fill: AF.blau }, duration: 0.15 }, t6 + 3.2)
+        .to(menue, { y: 0, duration: 0.5, ease: 'bw-aus' }, t6 + 3.4);
+      fahren(t6 + 3.9, +svg.dataset.menueX, +svg.dataset.menueY, 0.7);
+      blaseAn($('.anl-blase-app'), t6 + 4.1);
+    } else {
+      const plattform = $('.anl-plattform');
+      tl.to(plattform.querySelector('rect'), { attr: { fill: AF.blau }, duration: 0.15 }, t6 + 3.2)
+        .to(plattform.querySelector('text'), { fill: AF.hell, duration: 0.15 }, t6 + 3.2);
+      zeigen($('.anl-teilen-hinweis'), t6 + 3.4, 0.35);
+    }
+
+    tl.to(inhalt, { opacity: 0, duration: 0.5, ease: 'power1.in' }, ANLEITUNG.dauer - 0.7)
+      .to({}, { duration: 0.01 }, ANLEITUNG.dauer - 0.01);    // genau so lang wie dauer
+
+    const zahl = $(quer ? '.anl-box-zahl' : '.anl-zahl');
+    const summe = $('.anl-box-summe');
+    function sync() {
+      zeitWert.textContent = uhrText(Math.round(stand.zeit));
+      zahl.textContent = Math.round(stand.mg);
+      if (summe) summe.textContent = Math.round(stand.summe);
+    }
+    return { tl, sync };
+  }
+
+  /* --- Knopf und Popup ------------------------------------------------------ */
+
+  function koffeinAnleitung() {
+    const platz = document.getElementById('koffein-anleitung');
+    if (!platz || !window.gsap) return;
+
+    platz.hidden = false;
+    platz.innerHTML = `<button type="button" class="btn btn--linie anleitung-oeffnen" aria-haspopup="dialog">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 1.8v10.4L12 7z" fill="currentColor"/></svg>
+        <span>${esc(tx('anleitung_knopf', 'Anleitung'))}</span>
+      </button>`;
+    const knopf = platz.querySelector('.anleitung-oeffnen');
+    knopf.addEventListener('click', () => anleitungOeffnen(knopf));
+  }
+
+  function anleitungOeffnen(ausloeser) {
+    if (document.getElementById('anleitung-dialog')) return;
+
+    const T = rechnerTexte();
+    const szenario = anleitungSzenario();
+    // Teilen läuft wie im echten Fenster: Teilen-Menü oder Zwischenablage.
+    const nativ = kannNativTeilen();
+    const schritte = anleitungSchritte(T, szenario.rest, nativ);
+    const K = ANLEITUNG.kapitel;
+    const format = window.matchMedia(ANLEITUNG.quer);
+
+    // Gebaut wie das Teilen-Fenster: gleicher Hintergrund, gleiches ✕.
+    const dialog = document.createElement('div');
+    dialog.id = 'anleitung-dialog';
+    dialog.className = 'teilen-dialog anleitung-dialog';
+    dialog.innerHTML = `
+      <div class="anleitung-fenster" role="dialog" aria-modal="true" aria-labelledby="anleitung-titel">
+        <button type="button" class="teilen-zu" aria-label="${esc(tx('schliessen', 'Schliessen'))}">✕</button>
+        <div class="anleitung-kopf">
+          <span class="eyebrow">${esc(tx('anleitung_eyebrow', 'So geht’s · {sekunden} Sekunden', { sekunden: ANLEITUNG.dauer }))}</span>
+          <p class="anleitung-titel" id="anleitung-titel">${esc(tx('anleitung_titel', 'So trägst Du Deinen Tag ein.'))}</p>
+        </div>
+        <div class="anleitung-buehne" aria-hidden="true"></div>
+        <div class="anleitung-steuerung">
+          <ol class="anleitung-schritte">
+            ${schritte.map((s, i) => `<li>
+              <button type="button" class="anleitung-schritt" data-kapitel="${i}">
+                <span class="nr">${i + 1}</span>
+                <span class="was"><strong>${esc(s.kurz)}</strong><span class="text">${esc(s.text)}</span></span>
+                <span class="fortschritt" aria-hidden="true"><span></span></span>
+              </button>
+            </li>`).join('')}
+          </ol>
+          <button type="button" class="anleitung-knopf">
+            <svg class="ic-pause" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 2v10M10.5 2v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <svg class="ic-spielen" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 1.8v10.4L12 7z" fill="currentColor"/></svg>
+            <span class="beschriftung">${esc(tx('anleitung_pause', 'Pause'))}</span>
+          </button>
+        </div>
+        <p class="anleitung-untertitel" aria-hidden="true"><strong></strong><span></span></p>
+      </div>`;
+    document.body.appendChild(dialog);
+
+    const fenster = dialog.querySelector('.anleitung-fenster');
+    const buehne = dialog.querySelector('.anleitung-buehne');
+    const zu = dialog.querySelector('.teilen-zu');
+    const knoepfe = Array.from(dialog.querySelectorAll('.anleitung-schritt'));
+    const balken = knoepfe.map(k => k.querySelector('.fortschritt span'));
+    const pause = dialog.querySelector('.anleitung-knopf');
+    const untertitel = dialog.querySelector('.anleitung-untertitel');
+
+    // Die Seite dahinter bleibt stehen, solange das Popup offen ist.
+    const html = document.documentElement;
+    const ueberlaufVorher = html.style.overflow;
+    html.style.overflow = 'hidden';
+
+    // Das echte Teilbild des Beispieltags, verkleinert für die Vorschau im
+    // Teilen-Fenster. Es kommt asynchron, gebraucht wird es erst im 6. Kapitel.
+    let teilbild = null;
+    function teilbildSetzen() {
+      const bild = buehne.querySelector('.anl-teilbild');
+      if (bild && teilbild) bild.setAttribute('href', teilbild);
+    }
+    zeichneTeilenBild(szenario.liste, ANLEITUNG.schlaf).then((gross) => {
+      const klein = document.createElement('canvas');
+      klein.width = 324; klein.height = 405;
+      klein.getContext('2d').drawImage(gross, 0, 0, klein.width, klein.height);
+      teilbild = klein.toDataURL('image/png');
+      teilbildSetzen();
+    }).catch(() => { /* ohne Vorschau geht es auch */ });
+
+    let lauf = null;                 // { tl, sync } der aktuellen Zeichnung
+    let aktiv = -1;
+    let angehalten = ruhig;          // vom Knopf, bei reduzierter Bewegung von Anfang an
+
+    function sync() {
+      if (!lauf) return;
+      lauf.sync();
+      const t = lauf.tl.time();
+      let k = 0;
+      while (k < K.length - 1 && t >= K[k + 1]) k++;
+      if (k !== aktiv) {
+        knoepfe.forEach((b, i) => {
+          b.classList.toggle('ist-aktiv', i === k);
+          b.classList.toggle('ist-fertig', i < k);
+          if (i === k) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+        });
+        untertitel.firstChild.textContent = schritte[k].kurz;
+        untertitel.lastChild.textContent = ' ' + schritte[k].text;
+        aktiv = k;
+      }
+      const ende = k < K.length - 1 ? K[k + 1] : ANLEITUNG.dauer;
+      balken.forEach((b, i) => {
+        b.style.transform = `scaleX(${i < k ? 1 : i > k ? 0 : Math.min(1, (t - K[k]) / (ende - K[k]))})`;
+      });
+    }
+    function knopfZeigen() {
+      pause.classList.toggle('ist-angehalten', angehalten);
+      pause.querySelector('.beschriftung').textContent = angehalten
+        ? tx('anleitung_abspielen', 'Abspielen') : tx('anleitung_pause', 'Pause');
+    }
+    function laufen() {
+      if (angehalten) lauf.tl.pause(); else lauf.tl.play();
+      knopfZeigen();
+    }
+    function springen(zeit) {
+      lauf.tl.seek(zeit, false);
+      sync();
+    }
+
+    /** Zeichnung und Zeitleiste fürs aktuelle Format, weiter bei zeit. */
+    function bauen(zeit) {
+      if (lauf) lauf.tl.kill();
+      const quer = format.matches;
+      fenster.dataset.format = quer ? 'quer' : 'hoch';
+      buehne.innerHTML = zeichneAnleitung(T, szenario, quer, nativ);
+      const svg = buehne.querySelector('svg');
+      anleitungVermessen(svg);
+      teilbildSetzen();
+      lauf = anleitungZeitleiste(svg, T, szenario, quer, nativ);
+      lauf.tl.eventCallback('onUpdate', sync);
+      dialog.bwZeitleiste = lauf.tl;   // für Tests: Kapitel ansteuern, ohne zu warten
+      springen(zeit);
+      laufen();
+    }
+    function formatWechsel() { bauen(lauf ? lauf.tl.time() : 0.4); }
+
+    // Ohne Bewegung steht das fertige Bild, sonst beginnt sie bei 0,4 s:
+    // Bei 0 wäre die Bühne leer, dort blendet erst die Schleife wieder ein.
+    bauen(ruhig ? ANLEITUNG.dauer - 1 : 0.4);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { const svg = buehne.querySelector('svg'); if (svg) anleitungVermessen(svg); });
+    }
+    if (format.addEventListener) format.addEventListener('change', formatWechsel);
+
+    pause.addEventListener('click', () => { angehalten = !angehalten; laufen(); });
+    knoepfe.forEach((b, i) => b.addEventListener('click', () => {
+      if (ruhig && angehalten) {
+        // Ohne Bewegung zeigt ein Schritt sein fertiges Bild, abgespielt wird nicht.
+        springen((i < K.length - 1 ? K[i + 1] : ANLEITUNG.dauer) - 1);
+        return;
+      }
+      springen(K[i] + 0.01);
+      laufen();
+    }));
+
+    function schliessen() {
+      if (format.removeEventListener) format.removeEventListener('change', formatWechsel);
+      document.removeEventListener('keydown', taste);
+      lauf.tl.kill();
+      html.style.overflow = ueberlaufVorher;
+      ausloeser.focus();
+      if (ruhig) { dialog.remove(); return; }
+      gsap.to(dialog, { opacity: 0, duration: 0.22, onComplete: () => dialog.remove() });
+    }
+    // Esc schliesst, Tab bleibt im Fenster.
+    function taste(e) {
+      if (e.key === 'Escape') { e.preventDefault(); schliessen(); return; }
+      if (e.key !== 'Tab') return;
+      const ziele = Array.from(fenster.querySelectorAll('button'));
+      const erstes = ziele[0], letztes = ziele[ziele.length - 1];
+      if (e.shiftKey && document.activeElement === erstes) { e.preventDefault(); letztes.focus(); }
+      else if (!e.shiftKey && document.activeElement === letztes) { e.preventDefault(); erstes.focus(); }
+    }
+    zu.addEventListener('click', schliessen);
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) schliessen(); });
+    document.addEventListener('keydown', taste);
+    zu.focus();
+
+    if (!ruhig) {
+      gsap.from(dialog, { opacity: 0, duration: 0.25 });
+      gsap.from(fenster, { y: 26, scale: 0.97, duration: 0.45, ease: 'bw-aus' });
+    }
+  }
+
+  /* ======================================================================
      Teilbares Bild
      Zeichnet das Ergebnis als 1080 mal 1350 auf ein Canvas, also im Format,
      das der CI-Guide für Instagram und LinkedIn vorgibt. Bewusst selbst
@@ -550,7 +1551,9 @@ window.BWTools = (function () {
     return y;
   }
 
-  async function zeichneTeilenBild() {
+  /* liste und schlaf: ohne Angabe der eingetragene Tag, die Anleitung zeigt
+     damit das Bild ihres Beispieltags. */
+  async function zeichneTeilenBild(liste = konsum, schlaf = schlafenszeit) {
     const flaeche = document.createElement('canvas');
     flaeche.width = BILD_B;
     flaeche.height = BILD_H;
@@ -563,12 +1566,12 @@ window.BWTools = (function () {
     const signet = await signetLaden();
 
     const S = 'Gabarito, Trebuchet MS, sans-serif';
-    const rest = mgZurZeit(schlafenszeit);
-    const summe = gesamt();
-    const uhr = String(schlafenszeit % 24).padStart(2, '0') + ':00';
+    const rest = mgZurZeit(schlaf, liste);
+    const summe = gesamt(liste);
+    const uhr = String(schlaf % 24).padStart(2, '0') + ':00';
 
     // Sortierte Einträge, sie werden mehrfach gebraucht.
-    const eintraege = konsum.slice().sort((a, b) => a.stunde - b.stunde);
+    const eintraege = liste.slice().sort((a, b) => a.stunde - b.stunde);
 
     // --- Grund ---
     ctx.fillStyle = '#004B5C';
@@ -627,7 +1630,7 @@ window.BWTools = (function () {
     const punkte = [];
     for (let i = 0; i <= 120; i++) {
       const std = 5 + 21 * (i / 120);
-      const w = mgZurZeit(std);
+      const w = mgZurZeit(std, liste);
       punkte.push([kx + (i / 120) * kb, ky + kh - Math.min(1, w / maxWert) * kh]);
     }
     ctx.beginPath();
@@ -652,7 +1655,7 @@ window.BWTools = (function () {
     ctx.beginPath(); ctx.moveTo(kx, ky + kh); ctx.lineTo(kx + kb, ky + kh); ctx.stroke();
 
     // Schlafenszeit, mit Uhrzeit direkt darunter
-    const xSchlaf = kx + ((schlafenszeit - 5) / 21) * kb;
+    const xSchlaf = kx + ((schlaf - 5) / 21) * kb;
     ctx.strokeStyle = '#4FC4E2';
     ctx.setLineDash([7, 6]);
     ctx.beginPath(); ctx.moveTo(xSchlaf, ky); ctx.lineTo(xSchlaf, ky + kh); ctx.stroke();
@@ -693,7 +1696,7 @@ window.BWTools = (function () {
 
     eintraege.forEach((c, i) => {
       const x = kx + ((c.stunde - 5) / 21) * kb;
-      const w = mgZurZeit(c.stunde);
+      const w = mgZurZeit(c.stunde, liste);
       const y = ky + kh - Math.min(1, w / maxWert) * kh;
 
       ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
@@ -832,34 +1835,58 @@ window.BWTools = (function () {
     }
   }
 
+  /** Taste zum Einfügen, wie sie auf diesem Rechner heisst. Mit festen
+      Leerzeichen, damit «Strg + V» nicht über zwei Zeilen bricht. */
+  function einfuegeTaste() {
+    const taste = navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : tx('taste_strg', 'Strg + V');
+    return taste.replace(/ /g, '\u00a0');
+  }
+
+  /** Texte des Teilen-Fensters. Der Nachbau in der Anleitung zeigt dieselben. */
+  function teilenTexte() {
+    const taste = einfuegeTaste();
+    return {
+      aria: tx('teilen_aria', 'Ergebnis teilen'),
+      schliessen: tx('schliessen', 'Schliessen'),
+      eyebrow: tx('teilen_eyebrow', 'Dein Ergebnis'),
+      titel: tx('teilen_titel', 'Wohin damit?'),
+      bildTeilen: tx('bild_teilen', 'Bild teilen'),
+      nativ: tx('nativ_erklaerung', 'Bild und Text gehen zusammen an die App Deiner Wahl.'),
+      ablage: tx('ablage_erklaerung', 'Ein Klick legt das Bild in die Zwischenablage und öffnet die Plattform. Dort fügst Du es mit {taste} in den Beitrag ein.', { taste }),
+      speichern: tx('speichern_erklaerung', 'Das Bild wird gespeichert und die Plattform öffnet sich. Lade es dort im Beitrag hoch.'),
+      nurSpeichern: tx('nur_speichern', 'Nur speichern'),
+      inAblage: (plattform) => tx('in_ablage', 'Bild ist in der Zwischenablage. Im Beitrag auf {plattform} mit {taste} einfügen.', { plattform, taste }),
+      nurGespeichert: (plattform) => tx('nur_gespeichert', 'Bild gespeichert. Im Beitrag auf {plattform} hochladen.', { plattform }),
+      taste
+    };
+  }
+
   function teilenDialog(flaeche) {
     const alt = document.getElementById('teilen-dialog');
     if (alt) alt.remove();
 
     const nativ = kannNativTeilen();
     const ablageGeht = !!(navigator.clipboard && window.ClipboardItem);
+    const TT = teilenTexte();
 
     const dialog = document.createElement('div');
     dialog.id = 'teilen-dialog';
     dialog.className = 'teilen-dialog';
     dialog.innerHTML = `
-      <div class="teilen-fenster" role="dialog" aria-modal="true" aria-label="${tx('teilen_aria', 'Ergebnis teilen')}">
-        <button class="teilen-zu" aria-label="${tx('schliessen', 'Schliessen')}">✕</button>
-        <span class="eyebrow" style="color:var(--redorange)">${tx('teilen_eyebrow', 'Dein Ergebnis')}</span>
-        <h3 style="margin-top:12px">${tx('teilen_titel', 'Wohin damit?')}</h3>
+      <div class="teilen-fenster" role="dialog" aria-modal="true" aria-label="${TT.aria}">
+        <button class="teilen-zu" aria-label="${TT.schliessen}">✕</button>
+        <span class="eyebrow" style="color:var(--redorange)">${TT.eyebrow}</span>
+        <h3 style="margin-top:12px">${TT.titel}</h3>
         <div class="teilen-vorschau"></div>
 
         ${nativ ? `
           <button class="btn btn--primaer" data-nativ style="width:100%;justify-content:center">
-            ${tx('bild_teilen', 'Bild teilen')}
+            ${TT.bildTeilen}
           </button>
-          <p class="teilen-erklaerung">${tx('nativ_erklaerung', 'Bild und Text gehen zusammen an die App Deiner Wahl.')}</p>
+          <p class="teilen-erklaerung">${TT.nativ}</p>
         ` : `
           <p class="teilen-erklaerung">
-            ${ablageGeht
-              ? tx('ablage_erklaerung', 'Ein Klick legt das Bild in die Zwischenablage und öffnet die Plattform. Dort fügst Du es mit {taste} in den Beitrag ein.',
-                { taste: navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : tx('taste_strg', 'Strg + V') })
-              : tx('speichern_erklaerung', 'Das Bild wird gespeichert und die Plattform öffnet sich. Lade es dort im Beitrag hoch.')}
+            ${ablageGeht ? TT.ablage : TT.speichern}
           </p>
           <div class="teilen-knoepfe">
             ${PLATTFORMEN.map(p => `
@@ -869,7 +1896,7 @@ window.BWTools = (function () {
         `}
 
         <button class="btn btn--linie" data-speichern style="margin-top:12px;width:100%;justify-content:center">
-          ${tx('nur_speichern', 'Nur speichern')}
+          ${TT.nurSpeichern}
         </button>
         <p class="teilen-hinweis" role="status"></p>
       </div>`;
@@ -938,10 +1965,7 @@ window.BWTools = (function () {
         const kopiert = await inAblage();
         if (!kopiert) speichern();
 
-        const taste = navigator.platform && /Mac/i.test(navigator.platform) ? 'Cmd + V' : tx('taste_strg', 'Strg + V');
-        hinweis.textContent = kopiert
-          ? tx('in_ablage', 'Bild ist in der Zwischenablage. Im Beitrag auf {plattform} mit {taste} einfügen.', { plattform: p.name, taste })
-          : tx('nur_gespeichert', 'Bild gespeichert. Im Beitrag auf {plattform} hochladen.', { plattform: p.name });
+        hinweis.textContent = kopiert ? TT.inAblage(p.name) : TT.nurGespeichert(p.name);
 
         window.open(p.url, '_blank', 'noopener');
       });

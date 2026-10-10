@@ -1,7 +1,8 @@
 {%- comment -%}
   Datenblock #bw-tools-texte (seit 0.11.0) für tools.js aus der Werkstatt:
   die Texte, die der Koffeinrechner, das Teilen-Fenster, der Wasserrechner
-  und der Brüh-Timer zur Laufzeit schreiben, die zwölf Getränke, das
+  und der Brüh-Timer zur Laufzeit schreiben, seit 0.23.0 auch die Anleitung
+  zum Koffeinrechner (anleitung_*), die zwölf Getränke, das
   Dezimalzeichen der Sprache und die Adresse der Rechnerseite (für das
   geteilte Bild und den Teiltext). Ohne den Block schreibt tools.js den
   deutschen Wortlaut des Prototyps. Texte in locales/ unter tools.*.
@@ -86,6 +87,30 @@
   "timer_pause": {{ 'tools.timer_pause' | t | json }},
   "timer_weiter": {{ 'tools.timer_weiter' | t | json }},
   "timer_start": {{ 'tools.timer_start' | t | json }},
+  "anleitung_knopf": {{ 'tools.anleitung_knopf' | t | json }},
+  "anleitung_eyebrow": {{ 'tools.anleitung_eyebrow' | t | json }},
+  "anleitung_titel": {{ 'tools.anleitung_titel' | t | json }},
+  "anleitung_1_kurz": {{ 'tools.anleitung_1_kurz' | t | json }},
+  "anleitung_1_text": {{ 'tools.anleitung_1_text' | t | json }},
+  "anleitung_2_kurz": {{ 'tools.anleitung_2_kurz' | t | json }},
+  "anleitung_2_text": {{ 'tools.anleitung_2_text' | t | json }},
+  "anleitung_3_kurz": {{ 'tools.anleitung_3_kurz' | t | json }},
+  "anleitung_3_text": {{ 'tools.anleitung_3_text' | t | json }},
+  "anleitung_4_kurz": {{ 'tools.anleitung_4_kurz' | t | json }},
+  "anleitung_4_text": {{ 'tools.anleitung_4_text' | t | json }},
+  "anleitung_5_kurz": {{ 'tools.anleitung_5_kurz' | t | json }},
+  "anleitung_5_text": {{ 'tools.anleitung_5_text' | t | json }},
+  "anleitung_blase_loeschen": {{ 'tools.anleitung_blase_loeschen' | t | json }},
+  "anleitung_blase_cappuccino": {{ 'tools.anleitung_blase_cappuccino' | t | json }},
+  "anleitung_blase_runden": {{ 'tools.anleitung_blase_runden' | t | json }},
+  "anleitung_blase_schlaf": {{ 'tools.anleitung_blase_schlaf' | t | json }},
+  "anleitung_blase_ergebnis": {{ 'tools.anleitung_blase_ergebnis' | t | json }},
+  "anleitung_6_kurz": {{ 'tools.anleitung_6_kurz' | t | json }},
+  "anleitung_6_text_ablage": {{ 'tools.anleitung_6_text_ablage' | t | json }},
+  "anleitung_6_text_nativ": {{ 'tools.anleitung_6_text_nativ' | t | json }},
+  "anleitung_blase_app": {{ 'tools.anleitung_blase_app' | t | json }},
+  "anleitung_pause": {{ 'tools.anleitung_pause' | t | json }},
+  "anleitung_abspielen": {{ 'tools.anleitung_abspielen' | t | json }},
   "getraenke": [
     { "name": {{ 'tools.getraenk_1_name' | t | json }}, "kurz": {{ 'tools.getraenk_1_kurz' | t | json }}, "liste": {{ 'tools.getraenk_1_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_1_hinweis' | t | json }} },
     { "name": {{ 'tools.getraenk_2_name' | t | json }}, "kurz": {{ 'tools.getraenk_2_kurz' | t | json }}, "liste": {{ 'tools.getraenk_2_liste' | t | json }}, "hinweis": {{ 'tools.getraenk_2_hinweis' | t | json }} },
