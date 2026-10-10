@@ -4091,3 +4091,20 @@
   .suchfeld{flex-direction:column;}
   .suchfeld .btn{justify-content:center;}
 }
+
+/* ==========================================================================
+   404: der Fernglas-Mann als Pappsticker (10.10.2026, Wunsch Joscha)
+   bwPappsticker({ motiv: 'fernglas' }), bewegt von BWHub.verloren(): Er
+   steht und schaut sich um, statt zu fahren. Der Sticker ist hochformatig
+   (rund 1 : 1,55), darum schmaler als der SUP, damit er etwa so hoch
+   steht. Die Blase steigt über seinem Kopf auf und hängt nach rechts über
+   die Becher hinweg; am Handy steht sie wie beim SUP mittig.
+   ========================================================================== */
+.sticker-spur--fernglas{width:calc(var(--szene) * .42);}
+.sticker-spur--fernglas .sticker-weg .gedanke{left:14%;bottom:100%;}
+/* Beim Umschauen neigt er sich um 5 Grad um den Fuss, die Becher wandern
+   dabei rund ein Achtel der Breite nach rechts. Am Handy stünden sie mit
+   right:2 % ausserhalb des Bildes, darum mehr Abstand zum Rand. */
+@media (max-width:699px){
+  .sticker-spur--fernglas{right:9%;}
+}

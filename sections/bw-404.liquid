@@ -1,13 +1,15 @@
 {%- comment -%}
   Seite nicht gefunden, seit 0.22.0 im Design von 404.html der Werkstatt:
-  heller Kopf mit Wasser wie der Espresso-Hub, das SUP als Pappsticker
-  denkt «Hier war doch eben noch eine Seite?» (Entscheid Joscha
-  10.10.2026). hubs.js zeichnet und bewegt ihn (BWHub.verloren()), den
-  Gedanken nimmt es übersetzt aus data-text-gedanke. Darunter drei
+  heller Kopf mit Wasser wie der Espresso-Hub. Seit 0.24.0 steht dort der
+  Fernglas-Mann aus dem Logo «Becher-Fernglas» als Pappsticker, Cyanblau
+  auf Dunkelblau, und denkt «Upsi, 404-Fehler. Ich kann die Seite nicht
+  finden.» (Wunsch Joscha 10.10.2026). Er fährt nicht, er bleibt stehen
+  und schaut sich um. hubs.js zeichnet und bewegt ihn (BWHub.verloren()),
+  den Gedanken nimmt es übersetzt aus data-text-gedanke. Darunter drei
   Kacheln (bw-wegweiser). Kein Suchfeld, die Suche hat bewusst keinen
   Einstieg.
 {%- endcomment -%}
-{%- capture spur -%}<div class="szene-spur sticker-spur"><div class="sticker-weg"><div class="sticker-welle"></div></div></div>{%- endcapture -%}
+{%- capture spur -%}<div class="szene-spur sticker-spur sticker-spur--fernglas"><div class="sticker-weg"><div class="sticker-welle"></div></div></div>{%- endcapture -%}
 <section class="seitenkopf seitenkopf--hell seitenkopf--wasser seitenkopf--sticker" id="kopf-404" data-text-gedanke="{{ 'fehler.gedanke' | t }}">
   <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
   {% render 'bw-sonne-wellen', teil: 'sonne' %}

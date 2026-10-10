@@ -1029,6 +1029,41 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
       'L877.7 2897.2 L862.8 2928.1 L831.7 3047.8 Z'
   };
 
+  /* Drittes Motiv seit dem 10.10.2026, fuer die 404 (Wunsch Joscha): der
+     Mann, der durch zwei Take-away-Becher wie durch ein Fernrohr schaut, in
+     den Farben des Etiketts vom Guji Megadu Espresso. Cyanblau auf
+     Dunkelblau. Das Signet ist fernglas-signet.svg, aus
+     fernglas-vertikal.svg abgeleitet mit werkzeug/fernglas-signet.py, die
+     Kontur kommt aus werkzeug/sticker-kontur.py mit --massstab 4.057
+     (Breite 2416,1 gegen 595,6) und --fuss-mitte 680: Die Becher ragen weit
+     nach rechts, der Fuss gehoert unter die Fuesse links. Dicke und Rand im
+     selben Verhaeltnis wie beim Jetski. Die Kante eine Stufe dunkler als
+     das Dunkelblau. */
+  const PAPP_FERNGLAS_KONTUR = {
+    x: 47.8, y: -17.3, breite: 2589.9, hoehe: 3954.5,
+    fuss: { x: 294.6, y: 3551.8, breite: 770.8, hoehe: 385.4 },
+    d: 'M87.3 1382.4 L98.4 1434.4 L87.2 1502.4 L70.5 1682.7 L49.4 1810.3 L47.8 1877.6 L52.6 1964.1 ' +
+      'L82.0 2231.6 L122.9 2471.4 L132.7 2506.0 L146.5 2534.1 L165.4 2558.2 L193.1 2581.9 L201.6 ' +
+      '2596.9 L256.4 2882.6 L277.8 3021.0 L292.3 3216.9 L288.5 3382.6 L294.7 3443.3 L295.6 3926.6 ' +
+      'L301.3 3934.1 L311.1 3937.2 L1054.8 3936.1 L1062.3 3930.4 L1065.4 3920.7 L1065.4 3456.0 L1069.2 ' +
+      '3424.7 L1064.0 3391.8 L1046.5 3358.3 L1017.5 3329.5 L969.8 3300.8 L847.8 3245.2 L831.7 3229.7 ' +
+      'L826.1 3209.3 L840.0 3137.3 L913.3 2925.3 L921.2 2880.8 L966.9 2744.7 L1030.2 2509.4 L1038.0 ' +
+      '2496.4 L1068.1 2470.9 L1086.8 2446.1 L1100.7 2414.0 L1109.8 2373.0 L1116.2 2261.2 L1110.2 ' +
+      '2120.1 L1084.9 1819.9 L1076.6 1775.7 L1060.0 1720.5 L1058.1 1700.2 L1061.0 1638.5 L1078.7 ' +
+      '1488.9 L1111.9 1448.3 L1124.1 1439.6 L1258.2 1407.2 L1367.3 1373.1 L1455.5 1335.4 L1496.7 ' +
+      '1305.4 L1521.5 1271.1 L1536.1 1229.7 L1541.3 1115.2 L1537.1 1023.8 L1543.7 1005.6 L1560.2 991.6 ' +
+      'L1583.0 988.2 L1627.4 1001.0 L1669.0 1005.8 L1761.5 998.1 L1803.9 984.6 L1843.1 953.6 L1863.7 ' +
+      '947.0 L1941.5 953.7 L2027.0 953.7 L2075.6 957.6 L2109.9 955.2 L2176.7 963.0 L2228.5 962.3 ' +
+      'L2288.6 956.1 L2348.6 931.6 L2410.0 897.3 L2462.4 851.1 L2509.6 820.1 L2531.3 799.4 L2551.7 ' +
+      '772.5 L2588.5 699.7 L2617.4 611.4 L2635.6 521.7 L2637.8 457.0 L2629.0 391.6 L2613.3 330.2 ' +
+      'L2583.3 252.5 L2541.8 181.2 L2494.8 130.7 L2443.5 95.2 L2422.2 72.1 L2400.4 55.2 L2275.5 -9.8 ' +
+      'L2227.4 -17.3 L2151.9 -14.5 L2078.5 4.6 L2041.4 7.1 L1866.3 43.1 L1846.3 37.6 L1813.7 9.3 ' +
+      'L1786.6 -4.5 L1754.8 -11.3 L1707.9 -11.7 L1642.4 -6.2 L1593.0 2.9 L1325.7 94.7 L1233.1 131.6 ' +
+      'L1107.3 190.8 L957.3 251.9 L861.7 302.3 L846.1 304.5 L781.0 299.0 L716.6 303.3 L658.5 314.9 ' +
+      'L605.6 334.4 L557.0 362.9 L516.6 399.4 L485.2 442.9 L463.9 492.8 L454.6 535.9 L452.8 578.6 ' +
+      'L460.9 632.1 L485.9 720.7 L485.1 736.4 L478.4 750.7 L461.7 764.1 L309.8 838.2 L243.2 880.6 ' +
+      'L180.9 938.4 L157.1 970.5 L138.7 1003.7 L121.8 1047.3 L106.7 1102.1 L85.4 1231.3 L82.2 1341.4 Z'
+  };
   // Je Motiv eine Garnitur. sup ist die Voreinstellung, bwPappsticker()
   // ohne Angabe zeichnet also wie bisher.
   const PAPP_MOTIVE = {
@@ -1036,7 +1071,10 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
            flaeche: F.papier, kante: PAPP_KANTE },
     jetski: { kontur: PAPP_JETSKI_KONTUR,
               logo: { datei: '{{ 'logo-hellorange-jetski-signet.svg' | asset_url }}', x: 782.7, y: 1342.5, breite: 2737.3, hoehe: 2262.7 },
-              dicke: 91.9, rand: 27.6, flaeche: '#E7455B', kante: '#C53A4C' }
+              dicke: 91.9, rand: 27.6, flaeche: '#E7455B', kante: '#C53A4C' },
+    fernglas: { kontur: PAPP_FERNGLAS_KONTUR,
+                logo: { datei: '{{ 'logo-cyanblau-fernglas-signet.svg' | asset_url }}', x: 135.0, y: 69.7, breite: 2416.1, hoehe: 3395.9 },
+                dicke: 81.1, rand: 24.3, flaeche: F.kontur, kante: '#00323D' }
   };
 
   function bwPappsticker(o) {
@@ -1067,7 +1105,11 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
       anteil: ((x - links) / breite * 100).toFixed(1) + '% ' + ((y - oben) / hoehe * 100).toFixed(1) + '%'
     };
   }
-  bwPappsticker.haende = { sup: pappHand(PAPP_MOTIVE.sup), jetski: pappHand(PAPP_MOTIVE.jetski) };
+  bwPappsticker.haende = {
+    sup: pappHand(PAPP_MOTIVE.sup),
+    jetski: pappHand(PAPP_MOTIVE.jetski),
+    fernglas: pappHand(PAPP_MOTIVE.fernglas)
+  };
   bwPappsticker.hand = bwPappsticker.haende.sup;
 
   /* ======================================================================

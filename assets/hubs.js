@@ -1566,12 +1566,20 @@ window.BWHub = (function () {
     blaseAb: 0.15
   };
 
-  /* Seite nicht gefunden (10.10.2026): dasselbe SUP wie im Espresso-Kopf,
-     gleiche Fahrt, nur denkt der Mann etwas anderes (Entscheid Joscha). */
-  const VERLOREN = Object.assign({}, STICKER, {
+  /* Seite nicht gefunden (10.10.2026, Wunsch Joscha): der Mann mit dem
+     Becher-Fernglas, Cyanblau auf Dunkelblau. Er faehrt nicht, er steht und
+     schaut sich um (umschauen()). Die Blase steht gleich nach dem Auftritt,
+     ohne Scrollen: Auf einer 404 scrollt kaum jemand. */
+  const VERLOREN = {
     kopf: 'kopf-404',
-    gedanke: 'Hier war doch eben\nnoch eine Seite?'
-  });
+    motiv: 'fernglas',
+    richtung: 1,
+    gedanke: 'Upsi, 404-Fehler.\nIch kann die Seite nicht finden.',
+    umschauen: true,
+    winkel: 5,        // Grad, so weit neigt er sich nach links und rechts
+    heben: 0.025,     // Anteil der Stickerbreite, so hoch reckt er sich dabei
+    blaseNach: 1.3    // Sekunden nach dem Laden, dann denkt er laut
+  };
 
   function pappsticker(o) {
     const kopf = document.getElementById(o.kopf);
@@ -1603,6 +1611,10 @@ window.BWHub = (function () {
 
     gsap.from(spur, { y: 40, autoAlpha: 0, duration: 1.2, ease: 'bw-aus', delay: 0.3 });
     gsap.to(dreh, { y: -5, duration: 4.1, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 1 });
+    if (o.umschauen) {
+      umschauen(o, spur, welle, hand, gedanke);
+      return;
+    }
     gsap.to(dreh, { rotation: 2.5 * nase, duration: 5.3, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 1.4 });
 
     // Ohne faehren.js keine Fahrt und kein Gedanke, der Sticker wiegt nur.
@@ -1631,6 +1643,31 @@ window.BWHub = (function () {
       .fromTo(welle, { rotation: 0 }, { rotation: o.neigung * nase, ease: hang }, 0);
 
     B.blasen(fahrt, [gedanke], o.blaseAb);
+  }
+
+  /* Umschauen statt fahren (die 404, seit dem 10.10.2026): Der Sticker
+     bleibt stehen. Ueber die Zeit, nicht am Scroll, neigt er sich um die
+     versteckte Hand nach links, haelt, nach rechts, haelt und kommt
+     zurueck, dabei reckt er sich etwas, als suche er mit dem Fernglas den
+     Horizont ab. Das Neigen liegt auf .sticker-welle, das Heben im
+     Leerlauf weiter auf .sticker-dreh; die Blase haengt an .sticker-weg
+     und bleibt gerade. Sie ploppt wie bei den Faehren auf, aber zur Zeit
+     o.blaseNach statt ab einem Teil der Fahrt. */
+  function umschauen(o, spur, welle, hand, gedanke) {
+    gsap.set(welle, { transformOrigin: hand.anteil });
+    if (gedanke) {
+      const [klein, gross] = gedanke.querySelectorAll('.gedanke-punkt');
+      const blase = gedanke.querySelector('.gedanke-blase');
+      gsap.timeline({ delay: o.blaseNach })
+        .fromTo(klein, { scale: 0, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(2.4)' })
+        .fromTo(gross, { scale: 0, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.3, ease: 'back.out(2.4)' }, '-=0.12')
+        .fromTo(blase, { scale: 0.25, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.75, ease: 'back.out(1.6)' }, '-=0.1');
+    }
+    const hoch = () => -spur.clientWidth * o.heben;
+    gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: o.blaseNach + 0.6, defaults: { ease: 'sine.inOut' } })
+      .to(welle, { rotation: -o.winkel, y: hoch, duration: 1.2 })
+      .to(welle, { rotation: o.winkel, duration: 1.8 }, '+=0.9')
+      .to(welle, { rotation: 0, y: 0, duration: 1.2 }, '+=0.9');
   }
 
   /* ======================================================================
