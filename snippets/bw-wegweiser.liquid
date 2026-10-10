@@ -1,0 +1,53 @@
+{%- comment -%}
+  Drei Einstiegskacheln wie in 404.html der Werkstatt (seit 0.22.0): Shop,
+  Kaffeewissen und Rezepte, nur was es gibt. Für die 404 und für die Suche
+  ohne Treffer. Drei Kacheln stehen ab 1081 px in drei Spalten (seiten.css,
+  Regel der Wissensseite).
+
+  Aufruf: {%- render 'bw-wegweiser' -%}
+{%- endcomment -%}
+{%- liquid
+  assign wissen = blogs['kaffeewissen']
+  assign rezepte = blogs['kaffeerezepte']
+  assign n_wissen = wissen.articles_count | plus: 0
+  assign n_rezepte = rezepte.articles_count | plus: 0
+-%}
+{%- capture pfeil -%}<svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>{%- endcapture -%}
+<div class="einstiege" data-batch>
+  <a class="einstieg" href="{{ routes.collections_url }}">
+    <span class="icon">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </span>
+    <h3>{{ 'wegweiser.shop_titel' | t }}</h3>
+    <p>{{ 'wegweiser.shop_text' | t }}</p>
+    <span class="mehr">{{ 'wegweiser.shop_mehr' | t }} {{ pfeil }}</span>
+  </a>
+  {%- if n_wissen > 0 %}
+
+  <a class="einstieg" href="{{ wissen.url }}">
+    <span class="icon">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 1-2-2Z"/><path d="M20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 0 2-2Z"/>
+      </svg>
+    </span>
+    <h3>{{ 'wissen.eyebrow' | t }}</h3>
+    <p>{{ 'wegweiser.wissen_text' | t }}</p>
+    <span class="mehr">{{ 'wegweiser.wissen_mehr' | t }} {{ pfeil }}</span>
+  </a>
+  {%- endif %}
+  {%- if n_rezepte > 0 %}
+
+  <a class="einstieg" href="{{ rezepte.url }}">
+    <span class="icon">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 3v7a5 5 0 0 0 10 0V3"/><path d="M12 15v6"/><path d="M8 21h8"/>
+      </svg>
+    </span>
+    <h3>{{ 'wissen.rezepte_titel' | t }}</h3>
+    <p>{{ 'wissen.rezepte_text' | t }}</p>
+    <span class="mehr">{{ 'wegweiser.rezepte_mehr' | t }} {{ pfeil }}</span>
+  </a>
+  {%- endif %}
+</div>

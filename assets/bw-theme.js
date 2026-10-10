@@ -89,21 +89,26 @@
       if (fuss) fuss.hidden = true;
       return;
     }
-    inhalt.innerHTML = `<ul class="bw-zeilen">${korb.items.map((z) => `
-      <li class="bw-zeile" data-schluessel="${sicher(z.key)}">
-        ${z.image ? `<a class="bw-zeile-bild" href="${sicher(z.url)}"><img src="${sicher(bildUrl(z.image))}" alt="" loading="lazy"></a>` : ''}
-        <div class="bw-zeile-text">
-          <a class="bw-zeile-titel" href="${sicher(z.url)}">${sicher(z.product_title)}</a>
-          ${z.product_has_only_default_variant ? '' : `<span class="bw-zeile-variante">${sicher(z.variant_title)}</span>`}
-          ${z.selling_plan_allocation ? `<span class="bw-zeile-variante">${sicher(z.selling_plan_allocation.selling_plan.name)}</span>` : ''}
-          <button type="button" class="bw-zeile-weg" data-menge="0">${sicher(T.entfernen)}</button>
+    // Dieselben Zeilen wie auf der Warenkorbseite (bw-warenkorb-seite,
+    // .korb-zeile in seiten.css), nur schmaler und mit Knöpfen statt
+    // Formular: data-menge geht an /cart/change.js, 0 nimmt die Zeile heraus.
+    inhalt.innerHTML = `<ul class="korb-zeilen korb-zeilen--schmal">${korb.items.map((z) => `
+      <li class="korb-zeile" data-schluessel="${sicher(z.key)}">
+        <a class="korb-bild" href="${sicher(z.url)}" tabindex="-1" aria-hidden="true">${z.image ? `<img src="${sicher(bildUrl(z.image))}" alt="" loading="lazy">` : ''}</a>
+        <div class="korb-text">
+          <a class="korb-titel" href="${sicher(z.url)}">${sicher(z.product_title)}</a>
+          ${z.product_has_only_default_variant ? '' : `<span class="korb-detail">${sicher(z.variant_title)}</span>`}
+          ${z.selling_plan_allocation ? `<span class="korb-detail">${sicher(z.selling_plan_allocation.selling_plan.name)}</span>` : ''}
         </div>
-        <div class="bw-menge" role="group" aria-label="${sicher(T.anzahl)}">
-          <button type="button" data-menge="${z.quantity - 1}" aria-label="${sicher(T.weniger)}">−</button>
-          <span>${z.quantity}</span>
-          <button type="button" data-menge="${z.quantity + 1}" aria-label="${sicher(T.mehr)}">+</button>
+        <div class="korb-unten">
+          <div class="korb-menge" role="group" aria-label="${sicher(T.anzahl)}">
+            <button type="button" data-menge="${z.quantity - 1}" aria-label="${sicher(T.weniger)}">−</button>
+            <span>${z.quantity}</span>
+            <button type="button" data-menge="${z.quantity + 1}" aria-label="${sicher(T.mehr)}">+</button>
+          </div>
+          <button type="button" class="korb-weg" data-menge="0">${sicher(T.entfernen)}</button>
         </div>
-        <span class="bw-preis">${betrag(z.final_line_price)}</span>
+        <span class="korb-preis">${z.original_line_price > z.final_line_price ? `<s>${betrag(z.original_line_price)}</s>` : ''}${betrag(z.final_line_price)}</span>
       </li>`).join('')}</ul>`;
     if (summe) summe.textContent = betrag(korb.total_price);
     if (notiz && document.activeElement !== notiz) notiz.value = korb.note || '';

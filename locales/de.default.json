@@ -63,13 +63,18 @@
     "anzahl": "Anzahl",
     "fehler": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
     "zwischensumme": "Zwischensumme",
-    "versand_hinweis": "Versand und Rabatte berechnen wir an der Kasse.",
-    "aktualisieren": "Mengen übernehmen",
+    "versand_hinweis": "Versand berechnen wir an der Kasse. Einen Rabattcode gibst Du dort ein.",
     "zur_kasse": "Zur Kasse",
     "zur_seite": "Warenkorb ansehen",
     "schliessen": "Warenkorb schliessen",
     "notiz": "Anweisungen zur Bestellung",
-    "notiz_hinweis": "Etwa eine Widmung fürs Buch oder ein Hinweis zur Lieferung"
+    "notiz_hinweis": "Etwa eine Widmung fürs Buch oder ein Hinweis zur Lieferung",
+    "ueberschrift": "Dein Warenkorb.",
+    "lead": "Prüf Deine Auswahl, dann geht es weiter zur Kasse.",
+    "leer_lead": "Im Shop findest Du alle Kaffees.",
+    "leer_lead_finder": "Im Shop findest Du alle Kaffees, im Kaffeefinder den passenden.",
+    "bestellung": "Deine Bestellung",
+    "zum_shop": "Zum Shop"
   },
   "produkt": {
     "in_den_warenkorb": "In den Warenkorb",
@@ -153,20 +158,25 @@
     "foto_weiter": "Nächstes Foto",
     "foto_schliessen": "Schliessen"
   },
-  "rohbau": {
-    "hinweis": "Rohbau: Diese Seite bekommt bis zum Start ihr Design aus dem Prototyp. Inhalte, Preise und Warenkorb sind schon echt.",
-    "leer": "Hier gibt es noch nichts."
-  },
   "suche": {
     "titel": "Suche",
     "begriff": "Suchbegriff",
     "suchen": "Suchen",
-    "nichts": "Zu «{{ begriff }}» haben wir nichts gefunden."
+    "nichts": "Zu «{{ begriff }}» haben wir nichts gefunden.",
+    "ueberschrift": "Was suchst Du?",
+    "treffer": "{{ n }} Treffer zu «{{ begriff }}»",
+    "treffer_eins": "1 Treffer zu «{{ begriff }}»",
+    "gruppe_produkte": "Kaffees und Produkte",
+    "gruppe_beitraege": "Beiträge",
+    "gruppe_seiten": "Seiten",
+    "nichts_lead": "Vielleicht hilft Dir einer dieser Wege weiter."
   },
   "fehler": {
-    "titel": "Diese Seite gibt es nicht.",
-    "text": "Vielleicht wurde sie verschoben. Auf der Startseite findest Du alles wieder.",
-    "zur_startseite": "Zur Startseite"
+    "titel": "Diese Seite ist abgetaucht.",
+    "text": "Vielleicht wurde sie verschoben oder umbenannt. Hier geht es weiter.",
+    "zur_startseite": "Zur Startseite",
+    "brot": "Seite nicht gefunden",
+    "gedanke": "Hier war doch eben\nnoch eine Seite?"
   },
   "rezept": {
     "art": "Rezept",
@@ -1117,5 +1127,238 @@
     "beitraege_eyebrow": "Beiträge",
     "beitraege_titel": "Zuletzt geschrieben.",
     "alle_beitraege": "Alle Beiträge"
+  },
+  "wegweiser": {
+    "shop_titel": "Shop",
+    "shop_text": "Alle Kaffees, das Probierset und das Buch.",
+    "shop_mehr": "Zum Shop",
+    "wissen_text": "Artikel, Rezepte und kostenlose Werkzeuge rund um Kaffee.",
+    "wissen_mehr": "Zum Kaffeewissen",
+    "rezepte_mehr": "Zu den Rezepten"
+  },
+  "shopify": {
+    "links": {
+      "powered_by_shopify": "&nbsp;<a href=\"https://beanwatch.ch/policies/legal-notice\">Impressum</a> · <a href=\"https://beanwatch.ch/policies/privacy-policy\">Datenschutz</a> · <a href=\"https://beanwatch.ch/policies/terms-of-service\">AGB</a> · <a href=\"https://beanwatch.ch/policies/refund-policy\">Widerrufsrecht</a> · <a href=\"https://beanwatch.ch/policies/shipping-policy\">Versand</a> · <a href=\"/pages/credits\">Credits</a> · <a href=\"/pages/contact\">Kontakt</a>"
+    },
+    "checkout": {
+      "general": {
+        "close_modal_label": "Schliessen",
+        "close_notice_label": "Schliessen",
+        "autocomplete_close": "Vorschläge schliessen",
+        "errors": {
+          "payment": {
+            "positive_amount_expected": "Der zu zahlende Betrag muss grösser als 0 sein."
+          },
+          "captcha": {
+            "metadata_missing": "Das Abschliessen einer Captcha-Validierung ist in diesem Checkout erforderlich.",
+            "token_missing": "Ein Captcha-Token muss bereitgestellt werden, um den Checkout abzuschliessen.",
+            "token_expired": "Das angegebene Captcha-Token ist abgelaufen. Schliesse eine neue Captcha-Validierung ab, um mit dem Checkout fortzufahren.",
+            "token_invalid": "Das angegebene Captcha-Token ist ungültig. Schliesse eine neue Captcha-Validierung ab, um mit dem Checkout fortzufahren."
+          }
+        },
+        "finalize_order_accessibility_label": "Bestellung abschliessen"
+      },
+      "contact": {
+        "street_name_label": "Strasse",
+        "optional_street_name_label": "Strasse (optional)"
+      },
+      "order_summary": {
+        "error_duties_tooltip": "Diese Bestellung wird aus einem anderen Land versendet. Das heisst, eventuell fallen Zollgebühren und Steuern für die Zustellung an.",
+        "price_after_discount_aria_text": "Ermässigter Preis"
+      },
+      "shipping": {
+        "subscription_delivery_description": {
+          "initial_order_discounted": "Kosten für den Erstversand %{discounted_shipping_cost}, anschliessend %{frequency_description}",
+          "prepaid_initial_order_discounted_with_renewal": "Kosten für den Erstversand %{discounted_shipping_price} %{prepaid_delivery_frequency}, anschliessend %{shipping_price} %{billing_cycle}",
+          "prepaid_initial_order_discounted_with_per_delivery_price_and_renewal": "Kosten für den Erstversand %{discounted_shipping_price} %{prepaid_delivery_frequency} (%{discounted_cost_per_delivery}), anschliessend %{shipping_price} %{billing_cycle}"
+        }
+      },
+      "payment": {
+        "offsite_gateway_redirect_hint": "Du wirst zu %{gateway_label} weitergeleitet, um deinen Kauf abzuschliessen.",
+        "missing_credit_card_error": "Gib deine Kartendaten ein, um die Zahlung abzuschliessen",
+        "delete_customer_mandate_modal_cancel": "Schliessen",
+        "mor_disclaimer_html": "Indem du unten klickst und deine Bestellung abschliesst, stimmst du dem Kauf eines Artikels (von Artikeln) von Global-e als eingetragener Händler \nfür diese Transaktion mit den <a class=\"link--small\" data-modal=\"true\" data-title-text=\"%{mor_terms}\" href=\"%{terms_href}\">Geschäftsbedingungen</a>\nund der <a class=\"link--small\" data-modal=\"true\" data-title-text=\"%{privacy_policy}\" href=\"%{policy_href}\">Datenschutzerklärung</a> von Global-e zu. Global-e ist ein internationaler\nFulfillmentdienstanbieter für %{shop_name}\n",
+        "purchase_options_card_update_agreement_label_html": "Indem du deine Zahlungsmethode aktualisierst, autorisierst du Zahlungen für wiederkehrende Käufe oder Käufe mit Zahlungsaufschub gemäss der <a class=\"link--small\" data-modal=\"true\" data-title-text=\"%{cancellation_policy}\" href=\"%{policy_href}\">Stornierungsrichtlinie</a> dieses Shops.",
+        "saved_credit_cards_modal": {
+          "cancel": "Schliessen"
+        },
+        "order_edit_banner_subtitle": "Deine Bestellung {{order_number}} wurde aktualisiert. Überprüfe diese Änderungen und bezahle anschliessend, um deine Bestellung zu bestätigen.",
+        "markets_pro_disclaimer_label": "Indem du deine Bestellung aufgibst, stimmst du zu, als eingetragener Händler gemäss den %{markets_pro_terms} und der %{privacy_policy} von Global-e bei Global-e einzukaufen und deine Daten mit %{shop_name} zu teilen.",
+        "add_credit_card_modal": {
+          "cancel": "Schliessen"
+        },
+        "delete_credit_card_modal": {
+          "cancel": "Schliessen"
+        },
+        "edit_credit_card_modal": {
+          "cancel": "Schliessen"
+        },
+        "offsite_gateway_review_page_redirect_hint": "Nachdem du deine Bestellung überprüft hast, wirst du zu %{gateway_label} weitergeleitet, um deinen Kauf abzuschliessen.",
+        "offsite_gateway_redirect_hint_no_button_label": "Du wirst zu %{gateway_label} weitergeleitet, um deinen Kauf abzuschliessen.",
+        "crypto_modal": {
+          "error": {
+            "close": "schliessen"
+          }
+        },
+        "bank_account_choose": "Wähle ein Konto, um deinen Kauf sicher abzuschliessen"
+      },
+      "field_errors": {
+        "payment_gateway_incompatible_with_multi_currency": "Um den Checkout in deiner Landeswährung abzuschliessen, musst du mit Kreditkarte bezahlen.",
+        "address_street_name_blank": "Gib einen Strassennamen ein.",
+        "address_street_name_too_long": "Strasse ist zu lang (maximal {{count}} Zeichen)",
+        "address_street_name_contains_emojis": "Strasse darf keine Emojis enthalten.",
+        "address_street_name_contains_html_tags": "Strasse darf keine HTML-Tags enthalten.",
+        "address_street_name_contains_mathematical_symbols": "Strasse darf keine mathematischen Symbole enthalten."
+      },
+      "payment_errors": {
+        "amount_too_small": "Der Mindestzahlungsbetrag muss grösser als 0,50 USD sein. Versuche es mit einem höheren Betrag erneut.",
+        "paypal_over_capture": "Dein Bestellbetrag wurde aktualisiert. Bezahl mit {{walletName}}, um deine Bestellung abzuschliessen.",
+        "captcha_required": "Gib deine Zahlungsinformationen ein und löse das CAPTCHA, um deinen Kauf abzuschliessen.",
+        "captcha_required_without_payment_information": "Löse das CAPTCHA, um deinen Kauf abzuschliessen."
+      },
+      "shipping_errors": {
+        "shipping_method_not_available": "Dein Warenkorb wurde aktualisiert und die von dir hinzugefügten Artikel können nicht an deine Adresse geliefert werden. Entferne die Artikel, um deine Bestellung abzuschliessen."
+      },
+      "processing": {
+        "complete_your_purchase_title": "Schliesse deinen Einkauf ab",
+        "wait": {
+          "long": "Du erhältst eine E-Mail, sobald deine Bestellung bearbeitet worden ist. Wir verzeichnen derzeit eine grosse Anzahl an Bestellungen."
+        }
+      },
+      "failed_payment": {
+        "payment_not_processed_text": "Dir wurde nichts berechnet. Kehre zu deinem Warenkorb zurück, um deinen Einkauf abzuschliessen."
+      },
+      "thank_you": {
+        "announcement": {
+          "close": "Schliessen"
+        }
+      },
+      "review": {
+        "review_title": "Schliesse deine Bestellung ab",
+        "blocks": {
+          "review_title_free_order": "Bestellung überprüfen und abschliessen"
+        }
+      },
+      "marketing": {
+        "sms": {
+          "disclaimer": {
+            "description_html": "Wenn du dich für den Erhalt von Textnachrichten registrierst, erhältst du über die angegebene Telefonnummer wiederkehrende automatisierte Marketing-Nachrichten, einschliesslich Warenkorb-Erinnerungen. Die Einwilligung stellt keine Einkaufsbedingung dar. Antworte mit dem Wort STOPPEN, um das Abo abzubestellen. Antworte mit dem Wort HILFE, um Unterstützung anzufordern. Die Häufigkeit der Nachrichten variiert. Es fallen u. U. Gebühren für die Nachrichten und Datennutzung an. Schau dir unsere %{privacy_policy_link} und %{terms_of_service_link} an."
+          }
+        }
+      },
+      "order_payment_collection": {
+        "checkout_review_and_pay": "Deine Bestellung %{order_name} wurde aktualisiert. Überprüfe diese Änderungen und bezahle anschliessend, um deine Bestellung zu bestätigen."
+      },
+      "post_purchase": {
+        "components": {
+          "close": "Schliessen"
+        }
+      },
+      "subscriptions": {
+        "recurring_totals_with_policies": {
+          "following_cycles": ", anschliessend %{total_price} alle bzw. jede/n %{interval}"
+        },
+        "recurring_totals_with_initial_order_shipping_discount": "Erste Zahlung %{total_price_with_discount}, anschliessend %{recurring_total}",
+        "recurring_totals_with_initial_order_shipping_discount_with_policies": {
+          "first_cycles": {
+            "one": ", anschliessend %{count} Zahlung über %{total_price}",
+            "other": ", anschliessend %{count} Zahlungen über je %{total_price}"
+          }
+        }
+      },
+      "no_address_location": {
+        "message": "Wende dich an uns, um eine Adresse für diesen Standort hinzuzufügen und den Checkout abzuschliessen."
+      },
+      "notice_banner": {
+        "all_violations_content": "Rufe uns an oder {{emailLink}}, um diese Informationen zu aktualisieren und deine Bestellung abzuschliessen:",
+        "editable_shipping_address_violations_message_title": "Füge diese Informationen hinzu, um deine Bestellung abzuschliessen:"
+      },
+      "captcha": {
+        "title": "CAPTCHA zum Fortfahren abschliessen",
+        "errors": {
+          "not_solved": "CAPTCHA zum Fortfahren abschliessen"
+        }
+      },
+      "wallets": {
+        "errors": {
+          "unavailable": {
+            "unavailable_for_country": "{{walletName}} ist in {{countryName}} nicht verfügbar. Wähle eine andere Zahlungsmethode aus, um deinen Kauf abzuschliessen"
+          },
+          "detour": {
+            "stock_problems": "Einige Artikel sind nicht mehr lieferbar. Schliesse {{walletName}} und versuche es erneut.",
+            "price_change": "Einige Artikelpreise haben sich geändert. Schliesse {{walletName}}, um deine Bestellung zu überprüfen, und versuche es erneut.",
+            "queue": "Du wurdest zur Warteschlange für den Checkout hinzugefügt. Schliesse {{walletName}}, um fortzufahren."
+          },
+          "unsupported": {
+            "wallet_is_unavailable": "{{walletName}} kann mit dieser Adresse nicht verwendet werden. Wähle eine andere Adresse aus oder schliesse {{walletName}}, um deinen Kauf abzuschliessen."
+          },
+          "subscription_review_required": "Deine Bestellung enthält ein Abonnement. Du musst die nachstehenden Bedingungen prüfen, bevor du deine Bestellung abschliesst."
+        },
+        "redirection_notice": "Du wirst zu {{walletName}} weitergeleitet, um deinen Kauf abzuschliessen",
+        "recovery_notice": "Es gibt ein Problem mit den Bestelldetails. Aktualisiere deine Daten, um die Zahlung abzuschliessen."
+      },
+      "markets": {
+        "invalid_market_manager_error": "Deine Kontaktinformationen überprüfen, bevor du die Zahlung abschliesst"
+      },
+      "note": {
+        "length_exceeds_maximum": "Reduziere die Grösse der Anmerkung auf 5000 oder weniger Zeichen."
+      },
+      "shop_pay_external": {
+        "errors": {
+          "try_again_later": "Überprüfe deine Verbindung oder schliesse dieses Fenster und versuche es in ein paar Minuten noch einmal.",
+          "checkout_has_expired": "Dein Checkout ist abgelaufen. Schliesse dieses Fenster und versuche erneut, bei {{shopName}} auszuchecken."
+        }
+      },
+      "payment_challenge_modal": {
+        "instructions": "Schliesse deinen Einkauf mit deinem {{paymentMethod}}-Code ab.",
+        "qr_code": {
+          "instructions": "Schliesse deinen Einkauf mit deinem {{paymentMethod}}-Code ab.",
+          "wechat_instructions": "Scanne diesen QR-Code mit der WeChat-App auf deinem Smartphone, um deinen Kauf abzuschliessen",
+          "wechat_instructions_mobile": "Scanne diesen QR-Code mit der WeChat-App auf einem anderen Gerät, um deinen Kauf abzuschliessen"
+        },
+        "external": {
+          "instructions": "Bestätige die Zahlung in der App, um diesen Kauf abzuschliessen."
+        },
+        "close": "Identitätsprüfung schliessen"
+      },
+      "remote": {
+        "errors": {
+          "only_remote_merchandise_lines": "Der Checkout enthält nur Merchandise-Artikel aus einem anderen Shop. Um den Checkout abzuschliessen, ist eine Weiterleitung zum anderen Shop erforderlich."
+        }
+      },
+      "remote_merchandise_only": {
+        "title": "Schliesse deinen Einkauf ab",
+        "remote_only_notice": "Diese Artikel werden von anderen Shops verkauft und versendet. Schliesse den Kauf bei jedem Shop ab, um Deine Bestellung zu vollenden.",
+        "single_shop_transition": "Du wirst zu %{advertiser} weitergeleitet, um deinen Kauf abzuschliessen."
+      },
+      "taxes": {
+        "vat_number": {
+          "domestic_order": "Die Befreiung von der Umkehrung der Steuerschuldnerschaft gilt nur für länderübergreifende EU-Bestellungen. Für lokale Bestellungen wird der standardmässige Mehrwertsteuersatz berechnet."
+        }
+      },
+      "required_extensions": {
+        "errors": {
+          "interaction_required": "Zum Abschliessen des Checkouts ist eine Erweiterungsinteraktion erforderlich."
+        }
+      }
+    },
+    "errors": {
+      "shop_404": {
+        "owner_ctas": {
+          "fix_domain": "Schliesse die Einrichtung deiner neuen Webadresse ab, gehe zu %{domain_settings_link}. Klicke auf &quot;Domain verbinden&quot; und gib Folgendes ein: %{domain}.<br>Wenn du Probleme beim Anmelden in deinem Shop hast, versuche es auf der Seite %{forgot_your_store_link}."
+        },
+        "ctas": {
+          "sell_in_person": {
+            "caption": "Erhalte Zugriff auf die Funktionen, die du brauchst, um dein Einzelhandelsgeschäft zu führen, ob du gerade erst beginnst oder dich vergrössern möchtest."
+          }
+        }
+      }
+    },
+    "notices": {
+      "cart": {
+        "shipping_address_invalid": "Bei der Berechnung deiner Versandtarife ist ein Problem aufgetreten. Fahre mit dem Checkout fort, um einen Versandtarif zu wählen, bevor du deine Bestellung abschliessen.",
+        "cart_too_large": "Warenkorb ist zu gross."
+      }
+    }
   }
 }

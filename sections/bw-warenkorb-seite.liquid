@@ -1,56 +1,125 @@
 {%- comment -%}
-  Die Warenkorbseite /cart. Funktioniert ohne JavaScript: Mengen ändern
-  über das Formular, Entfernen über url_to_remove, Bezahlen über
-  name="checkout". Die Notiz («Anweisungen zur Bestellung», seit 0.6.0)
-  geht mit jedem Absenden mit, wie im bisherigen Shop. Die Schublade (snippets/bw-warenkorb.liquid) ist der
-  schnelle Weg, diese Seite der sichere.
+  Die Warenkorbseite /cart, seit 0.22.0 im Design von warenkorb.html der
+  Werkstatt: heller Kopf, links die Zeilen, rechts die Kasse.
+
+  Funktioniert ohne JavaScript: − und + schicken updates[KEY] mit der
+  neuen Menge an /cart/update (formaction), die Seite lädt neu; 0 nimmt die
+  Zeile heraus. «Entfernen» ist item.url_to_remove, «Zur Kasse» schickt
+  name="checkout" an /cart. Die Notiz («Anweisungen zur Bestellung», seit
+  0.6.0) geht mit jedem Absenden mit. Kein Rabattfeld, nur der Hinweis auf
+  die Kasse (Entscheid Joscha 10.10.2026).
+
+  Die Klasse bw-warenkorb-form braucht bw-theme.js: Auf dieser Seite öffnet
+  der Warenkorb im Kopf keine Schublade. Die Zeilen gleichen denen der
+  Schublade (.korb-zeile, gezeichnet in bw-theme.js).
+
+  Leer: Der Kopf sagt es, darunter Shop und, wenn es ihn gibt, der
+  Kaffeefinder.
 {%- endcomment -%}
-{%- assign titel = 'warenkorb.titel' | t -%}
-{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel -%}
-<section class="sektion">
+{%- liquid
+  assign finder = pages['welcher-kaffee']
+  assign leer = false
+  if cart.item_count == 0
+    assign leer = true
+  endif
+-%}
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
   <div class="wrap">
-    {%- if cart.item_count == 0 %}
-    <p>{{ 'warenkorb.leer' | t }}</p>
-    <p><a class="btn btn--primaer" href="{{ routes.collections_url }}" data-pfeil>{{ 'warenkorb.weiter_einkaufen' | t }}</a></p>
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ 'warenkorb.titel' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'warenkorb.titel' | t }}</span>
+    {%- if leer %}
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'warenkorb.leer' | t }}</h1>
+    <p class="lead">{% if finder != blank %}{{ 'warenkorb.leer_lead_finder' | t }}{% else %}{{ 'warenkorb.leer_lead' | t }}{% endif %}</p>
+    <div class="kopf-aktionen-reihe">
+      <a class="btn btn--primaer" href="{{ routes.collections_url }}" data-pfeil>{{ 'warenkorb.zum_shop' | t }}</a>
+      {%- if finder != blank %}
+      <a class="btn btn--linie" href="{{ finder.url }}">{{ 'ueber.band_finder' | t }}</a>
+      {%- endif %}
+    </div>
     {%- else %}
-    <form action="{{ routes.cart_url }}" method="post" class="bw-warenkorb-form">
-      <ul class="bw-zeilen">
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'warenkorb.ueberschrift' | t }}</h1>
+    <p class="lead">{{ 'warenkorb.lead' | t }}</p>
+    {%- endif %}
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+{%- unless leer %}
+
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    <form class="korb-raster bw-warenkorb-form" action="{{ routes.cart_url }}" method="post">
+      <ul class="korb-zeilen" data-reveal>
         {%- for item in cart.items %}
-        <li class="bw-zeile">
-          {%- if item.image %}
-          <a class="bw-zeile-bild" href="{{ item.url }}">{{ item.image | image_url: width: 160 | image_tag: loading: 'lazy', alt: item.product.title }}</a>
-          {%- endif %}
-          <div class="bw-zeile-text">
-            <a href="{{ item.url }}" class="bw-zeile-titel">{{ item.product.title }}</a>
-            {%- unless item.product.has_only_default_variant %}<span class="bw-zeile-variante">{{ item.variant.title }}</span>{% endunless %}
-            {%- if item.selling_plan_allocation %}<span class="bw-zeile-variante">{{ item.selling_plan_allocation.selling_plan.name }}</span>{% endif %}
-            <a class="bw-zeile-weg" href="{{ item.url_to_remove }}">{{ 'warenkorb.entfernen' | t }}</a>
+        {%- liquid
+          assign aktualisieren = 'updates[' | append: item.key | append: ']'
+          capture grund
+            render 'bw-grundpreis', preis: item.final_price, v: item.variant, kurz: true
+          endcapture
+          assign grund = grund | strip
+          assign kopfzeile = item.product.metafields.custom.kopfzeile.value
+        -%}
+        <li class="korb-zeile">
+          <a class="korb-bild" href="{{ item.url }}" tabindex="-1" aria-hidden="true">
+            {%- if item.image %}{{ item.image | image_url: width: 240 | image_tag: loading: 'lazy', alt: item.product.title, widths: '120, 240', sizes: '104px' }}{% endif -%}
+          </a>
+          <div class="korb-text">
+            <a class="korb-titel" href="{{ item.url }}">{{ item.product.title }}</a>
+            {%- unless item.product.has_only_default_variant %}
+            <span class="korb-detail">{{ item.variant.title }}</span>
+            {%- endunless %}
+            {%- if item.selling_plan_allocation %}
+            <span class="korb-detail">{{ item.selling_plan_allocation.selling_plan.name }}</span>
+            {%- endif %}
+            {%- if grund != blank %}
+            <span class="korb-detail">{{ grund }}</span>
+            {%- elsif kopfzeile != blank %}
+            <span class="korb-detail">{{ kopfzeile }}</span>
+            {%- endif %}
+            {%- for rabatt in item.line_level_discount_allocations %}
+            <span class="korb-detail">{{ rabatt.discount_application.title }} (−{{ rabatt.amount | money }})</span>
+            {%- endfor %}
           </div>
-          <label class="bw-feld bw-feld--klein">
-            <span>{{ 'warenkorb.anzahl' | t }}</span>
-            <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" inputmode="numeric">
-          </label>
-          <span class="bw-preis">{{ item.final_line_price | money }}</span>
+          <div class="korb-unten">
+            <div class="korb-menge" role="group" aria-label="{{ 'warenkorb.anzahl' | t }}">
+              <button type="submit" formaction="{{ routes.cart_update_url }}" name="{{ aktualisieren }}" value="{{ item.quantity | minus: 1 }}" aria-label="{{ 'warenkorb.weniger' | t }}">−</button>
+              <span>{{ item.quantity }}</span>
+              <button type="submit" formaction="{{ routes.cart_update_url }}" name="{{ aktualisieren }}" value="{{ item.quantity | plus: 1 }}" aria-label="{{ 'warenkorb.mehr' | t }}">+</button>
+            </div>
+            <a class="korb-weg" href="{{ item.url_to_remove }}">{{ 'warenkorb.entfernen' | t }}</a>
+          </div>
+          <span class="korb-preis">
+            {%- if item.original_line_price > item.final_line_price %}<s>{{ item.original_line_price | money }}</s>{% endif -%}
+            {{ item.final_line_price | money }}
+          </span>
         </li>
         {%- endfor %}
       </ul>
-      <label class="bw-feld bw-notiz">
-        <span>{{ 'warenkorb.notiz' | t }}</span>
-        <textarea name="note" rows="3" placeholder="{{ 'warenkorb.notiz_hinweis' | t }}">{{ cart.note }}</textarea>
-      </label>
-      <div class="bw-summe">
-        <span>{{ 'warenkorb.zwischensumme' | t }}</span>
-        <strong>{{ cart.total_price | money }}</strong>
-      </div>
-      <p class="bw-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
-      <div class="bw-knoepfe">
-        <button type="submit" name="update" class="btn btn--linie">{{ 'warenkorb.aktualisieren' | t }}</button>
-        <button type="submit" name="checkout" class="btn btn--primaer" data-pfeil>{{ 'warenkorb.zur_kasse' | t }}</button>
-      </div>
+
+      <aside class="korb-kasse" data-reveal>
+        <span class="eyebrow">{{ 'warenkorb.bestellung' | t }}</span>
+        {%- for rabatt in cart.cart_level_discount_applications %}
+        <div class="korb-rabatt"><span>{{ rabatt.title }}</span><span>−{{ rabatt.total_allocated_amount | money }}</span></div>
+        {%- endfor %}
+        <div class="korb-summe"><span>{{ 'warenkorb.zwischensumme' | t }}</span><span>{{ cart.total_price | money }}</span></div>
+        <p class="korb-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
+        <div class="formular-feld">
+          <label for="korb-notiz">{{ 'warenkorb.notiz' | t }}</label>
+          <textarea id="korb-notiz" name="note" rows="3" placeholder="{{ 'warenkorb.notiz_hinweis' | t }}">{{ cart.note }}</textarea>
+        </div>
+        <button class="btn btn--primaer" type="submit" name="checkout" data-pfeil>{{ 'warenkorb.zur_kasse' | t }}</button>
+        <p class="korb-weiter">
+          <a class="besser-alle" href="{{ routes.collections_url }}">{{ 'warenkorb.weiter_einkaufen' | t }} <svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </p>
+      </aside>
     </form>
-    {%- endif %}
   </div>
 </section>
+{%- endunless %}
+
 {% schema %}
 { "name": "Warenkorb", "settings": [] }
 {% endschema %}

@@ -1,28 +1,124 @@
-{%- assign titel = 'suche.titel' | t -%}
-{%- render 'bw-rohbau-kopf', eyebrow: shop.name, titel: titel -%}
-<section class="sektion">
+{%- comment -%}
+  Die Suche /search, seit 0.22.0 im Design von suche.html der Werkstatt.
+  Shopify liefert die Seite immer aus. Sie hat bewusst keinen Einstieg,
+  weder im Kopf noch im Fuss noch auf der 404 (Entscheid Joscha
+  10.10.2026), und trägt noindex (bw-kopfdaten).
+
+  Kopf mit Suchfeld. Die Treffer einer Seite (24 je Seite) stehen in drei
+  Gruppen: Produkte als Produktkarten (bw-produkt-karte), Artikel als
+  Beitragskarten (bw-beitrag), Seiten als Textlinks. Die Art eines
+  Artikels (Rezept, Guide, Wissen) kommt vom Blog; ein Artikel kennt ihn in
+  Liquid nicht, darum der Abgleich über die IDs der Blogs. Ohne Begriff
+  oder ohne Treffer stehen die drei Kacheln der 404 da (bw-wegweiser).
+  Unveröffentlichte und versteckte Inhalte (seo.hidden, «Unlisted») nimmt
+  Shopify selbst aus den Treffern.
+{%- endcomment -%}
+{%- capture pfeil -%}<svg class="pfeil" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>{%- endcapture -%}
+<section class="seitenkopf seitenkopf--hell">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
   <div class="wrap">
-    <form action="{{ routes.search_url }}" method="get" role="search" class="bw-suche-form">
-      <label class="bw-feld">
-        <span>{{ 'suche.begriff' | t }}</span>
-        <input type="search" name="q" value="{{ search.terms | escape }}">
-      </label>
-      <button type="submit" class="btn btn--primaer">{{ 'suche.suchen' | t }}</button>
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ 'suche.titel' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">{{ 'suche.titel' | t }}</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'suche.ueberschrift' | t }}</h1>
+    <form class="suchfeld" action="{{ routes.search_url }}" method="get" role="search">
+      <input type="search" name="q" value="{{ search.terms | escape }}" aria-label="{{ 'suche.begriff' | t }}" autocomplete="off">
+      <button class="btn btn--primaer" type="submit">{{ 'suche.suchen' | t }}</button>
     </form>
-    {%- if search.performed %}
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen' %}
+</section>
+
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    {%- if search.performed and search.results_count > 0 %}
     {%- paginate search.results by 24 %}
-    <ul class="bw-rohbau-liste">
-      {%- for treffer in search.results %}
-      <li><a href="{{ treffer.url }}">{{ treffer.title }}</a></li>
-      {%- else %}
-      <li>{{ 'suche.nichts' | t: begriff: search.terms }}</li>
-      {%- endfor %}
-    </ul>
-    {%- if paginate.pages > 1 %}{{ paginate | default_pagination }}{% endif %}
+    {%- liquid
+      assign produkte = search.results | where: 'object_type', 'product'
+      assign artikel = search.results | where: 'object_type', 'article'
+      assign seiten = search.results | where: 'object_type', 'page'
+      assign ids_rezept = blogs['kaffeerezepte'].articles | map: 'id' | join: ','
+      assign ids_rezept = ',' | append: ids_rezept | append: ','
+      assign ids_brew = blogs['brew-guides'].articles | map: 'id' | join: ','
+      assign ids_brew = ',' | append: ids_brew | append: ','
+      assign ids_barista = blogs['barista-guides'].articles | map: 'id' | join: ','
+      assign ids_barista = ',' | append: ids_barista | append: ','
+    -%}
+    <p class="suche-zahl">
+      {%- if search.results_count == 1 -%}
+      {{ 'suche.treffer_eins' | t: begriff: search.terms }}
+      {%- else -%}
+      {{ 'suche.treffer' | t: n: search.results_count, begriff: search.terms }}
+      {%- endif -%}
+    </p>
+    {%- if produkte.size > 0 %}
+
+    <div class="suche-gruppe">
+      <h2>{{ 'suche.gruppe_produkte' | t }}</h2>
+      <div class="produkt-raster" data-batch>
+        {%- for p in produkte %}
+        {% render 'bw-produkt-karte', p: p %}
+        {%- endfor %}
+      </div>
+    </div>
+    {%- endif %}
+    {%- if artikel.size > 0 %}
+
+    <div class="suche-gruppe">
+      <h2>{{ 'suche.gruppe_beitraege' | t }}</h2>
+      <div class="beitraege">
+        {%- for a in artikel %}
+        {%- liquid
+          assign kennung = ',' | append: a.id | append: ','
+          assign art = 'wissen'
+          if ids_rezept contains kennung
+            assign art = 'rezept'
+          elsif ids_brew contains kennung
+            assign art = 'guide'
+          elsif ids_barista contains kennung
+            assign art = 'baristaguide'
+          endif
+        -%}
+        {% render 'bw-beitrag', a: a, art: art %}
+        {%- endfor %}
+      </div>
+    </div>
+    {%- endif %}
+    {%- if seiten.size > 0 %}
+
+    <div class="suche-gruppe">
+      <h2>{{ 'suche.gruppe_seiten' | t }}</h2>
+      <ul class="seiten-liste">
+        {%- for s in seiten %}
+        <li><a class="besser-alle" href="{{ s.url }}">{{ s.title }} {{ pfeil }}</a></li>
+        {%- endfor %}
+      </ul>
+    </div>
+    {%- endif %}
+    {%- if paginate.pages > 1 %}
+
+    <nav class="bw-blaettern" aria-label="{{ 'shop.blaettern' | t }}">
+      {%- if paginate.previous %}
+      <a class="btn btn--linie" href="{{ paginate.previous.url }}" rel="prev">{{ 'shop.zurueck' | t }}</a>
+      {%- endif %}
+      <span>{{ 'allgemein.seite' | t: nummer: paginate.current_page }}</span>
+      {%- if paginate.next %}
+      <a class="btn btn--linie" href="{{ paginate.next.url }}" rel="next">{{ 'shop.weiter' | t }}</a>
+      {%- endif %}
+    </nav>
+    {%- endif %}
     {%- endpaginate %}
+    {%- else %}
+    {%- if search.performed %}
+    <p class="suche-leer">{{ 'suche.nichts' | t: begriff: search.terms }} {{ 'suche.nichts_lead' | t }}</p>
+    {%- endif %}
+    {% render 'bw-wegweiser' %}
     {%- endif %}
   </div>
 </section>
+
 {% schema %}
-{ "name": "Suche (Rohbau)", "settings": [] }
+{ "name": "Suche", "settings": [] }
 {% endschema %}

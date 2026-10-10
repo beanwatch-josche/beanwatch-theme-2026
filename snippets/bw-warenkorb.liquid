@@ -2,7 +2,8 @@
   Die Warenkorb-Schublade. Gefüllt wird sie von bw-theme.js aus /cart.js,
   geöffnet über den Warenkorb im Kopf oder nach «In den Warenkorb». Ohne
   JavaScript führt der Link im Kopf auf die Warenkorbseite. Seit 0.6.0 mit
-  dem Notizfeld wie auf der Warenkorbseite.
+  dem Notizfeld wie auf der Warenkorbseite. Seit 0.22.0 mit den Zeilen und
+  Klassen der Warenkorbseite (.korb-zeile, .korb-summe, .formular-feld).
 {%- endcomment -%}
 <div class="bw-schublade" id="bw-warenkorb" hidden>
   <div class="bw-schublade-schleier" data-bw-zu></div>
@@ -16,15 +17,12 @@
     <div class="bw-schublade-inhalt" id="bw-warenkorb-inhalt" aria-live="polite"></div>
     <form class="bw-schublade-fuss" action="{{ routes.cart_url }}" method="post" id="bw-warenkorb-fuss" hidden>
       {%- comment -%} Notiz wie im bisherigen Shop («Anweisungen zur Bestellung»), etwa für eine Widmung im Buch. bw-theme.js speichert sie beim Tippen, ohne JavaScript geht sie beim Bezahlen mit. {%- endcomment %}
-      <label class="bw-feld bw-notiz">
-        <span>{{ 'warenkorb.notiz' | t }}</span>
+      <div class="formular-feld">
+        <label for="bw-warenkorb-notiz">{{ 'warenkorb.notiz' | t }}</label>
         <textarea name="note" id="bw-warenkorb-notiz" rows="2" placeholder="{{ 'warenkorb.notiz_hinweis' | t }}">{{ cart.note }}</textarea>
-      </label>
-      <div class="bw-summe">
-        <span>{{ 'warenkorb.zwischensumme' | t }}</span>
-        <strong id="bw-warenkorb-summe"></strong>
       </div>
-      <p class="bw-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
+      <div class="korb-summe"><span>{{ 'warenkorb.zwischensumme' | t }}</span><span id="bw-warenkorb-summe"></span></div>
+      <p class="korb-hinweis">{{ 'warenkorb.versand_hinweis' | t }}</p>
       <button type="submit" name="checkout" class="btn btn--primaer" data-pfeil>{{ 'warenkorb.zur_kasse' | t }}</button>
       <a class="bw-schublade-seite" href="{{ routes.cart_url }}">{{ 'warenkorb.zur_seite' | t }}</a>
     </form>

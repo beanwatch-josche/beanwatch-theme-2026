@@ -1,11 +1,45 @@
-{%- assign titel = 'fehler.titel' | t -%}
-{%- assign lead = 'fehler.text' | t -%}
-{%- render 'bw-rohbau-kopf', eyebrow: '404', titel: titel, lead: lead -%}
-<section class="sektion">
+{%- comment -%}
+  Seite nicht gefunden, seit 0.22.0 im Design von 404.html der Werkstatt:
+  heller Kopf mit Wasser wie der Espresso-Hub, das SUP als Pappsticker
+  denkt «Hier war doch eben noch eine Seite?» (Entscheid Joscha
+  10.10.2026). hubs.js zeichnet und bewegt ihn (BWHub.verloren()), den
+  Gedanken nimmt es übersetzt aus data-text-gedanke. Darunter drei
+  Kacheln (bw-wegweiser). Kein Suchfeld, die Suche hat bewusst keinen
+  Einstieg.
+{%- endcomment -%}
+{%- capture spur -%}<div class="szene-spur sticker-spur"><div class="sticker-weg"><div class="sticker-welle"></div></div></div>{%- endcapture -%}
+<section class="seitenkopf seitenkopf--hell seitenkopf--wasser seitenkopf--sticker" id="kopf-404" data-text-gedanke="{{ 'fehler.gedanke' | t }}">
+  <div class="hero-himmel" style="position:absolute;inset:0;z-index:0"></div>
+  {% render 'bw-sonne-wellen', teil: 'sonne' %}
   <div class="wrap">
-    <a class="btn btn--primaer" href="{{ routes.root_url }}" data-pfeil>{{ 'fehler.zur_startseite' | t }}</a>
+    <nav class="brotkrumen" aria-label="{{ 'rezept.brotkrumen' | t }}">
+      <a href="{{ routes.root_url }}">{{ 'rezept.brot_start' | t }}</a><span class="teiler">·</span><span>{{ 'fehler.brot' | t }}</span>
+    </nav>
+    <span class="eyebrow" style="color:var(--redorange);display:block;margin-top:20px">404</span>
+    <h1 data-split="zeilen" style="max-width:16ch">{{ 'fehler.titel' | t }}</h1>
+    <p class="lead">{{ 'fehler.text' | t }}</p>
+    <div class="kopf-aktionen-reihe">
+      <a class="btn btn--primaer" href="{{ routes.root_url }}" data-pfeil>{{ 'fehler.zur_startseite' | t }}</a>
+    </div>
+  </div>
+  {% render 'bw-sonne-wellen', teil: 'wellen', spur: spur %}
+</section>
+
+<section class="sektion" style="padding-top:clamp(48px,6vw,80px)">
+  <div class="wrap">
+    {% render 'bw-wegweiser' %}
   </div>
 </section>
+
+{{ 'faehren.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faehren.js' | asset_url }}" defer></script>
+<script src="{{ 'hubs.js' | asset_url }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BWHub) BWHub.verloren();
+  });
+</script>
+
 {% schema %}
-{ "name": "Nicht gefunden (Rohbau)", "settings": [] }
+{ "name": "Nicht gefunden", "settings": [] }
 {% endschema %}

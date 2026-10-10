@@ -63,13 +63,18 @@
     "anzahl": "Quantité",
     "fehler": "Cela n’a pas fonctionné. Merci de réessayer.",
     "zwischensumme": "Sous-total",
-    "versand_hinweis": "Livraison et réductions calculées lors du paiement.",
-    "aktualisieren": "Mettre à jour les quantités",
+    "versand_hinweis": "Les frais de port sont calculés à la caisse, où tu peux aussi saisir un code de réduction.",
     "zur_kasse": "Passer commande",
     "zur_seite": "Voir le panier",
     "schliessen": "Fermer le panier",
     "notiz": "Instructions pour la commande",
-    "notiz_hinweis": "Par exemple, une dédicace dans le livre ou une remarque sur la livraison"
+    "notiz_hinweis": "Par exemple, une dédicace dans le livre ou une remarque sur la livraison",
+    "ueberschrift": "Ton panier.",
+    "lead": "Vérifie ta sélection, puis passe à la caisse.",
+    "leer_lead": "Tu trouves tous nos cafés dans la boutique.",
+    "leer_lead_finder": "Tous nos cafés sont dans la boutique. Quelques questions suffisent pour trouver celui qui te convient.",
+    "bestellung": "Ta commande",
+    "zum_shop": "Vers la boutique"
   },
   "produkt": {
     "in_den_warenkorb": "Ajouter au panier",
@@ -153,20 +158,25 @@
     "foto_weiter": "Photo suivante",
     "foto_schliessen": "Fermer"
   },
-  "rohbau": {
-    "hinweis": "En construction : cette page recevra son design final avant le lancement. Contenus, prix et panier sont déjà réels.",
-    "leer": "Rien ici pour le moment."
-  },
   "suche": {
     "titel": "Recherche",
     "begriff": "Terme de recherche",
     "suchen": "Rechercher",
-    "nichts": "Aucun résultat pour « {{ begriff }} »."
+    "nichts": "Aucun résultat pour « {{ begriff }} ».",
+    "ueberschrift": "Que cherches-tu ?",
+    "treffer": "{{ n }} résultats pour « {{ begriff }} »",
+    "treffer_eins": "1 résultat pour « {{ begriff }} »",
+    "gruppe_produkte": "Cafés et produits",
+    "gruppe_beitraege": "Articles et recettes",
+    "gruppe_seiten": "Pages",
+    "nichts_lead": "Peut-être qu’une de ces pistes t’aidera."
   },
   "fehler": {
-    "titel": "Cette page n’existe pas.",
-    "text": "Elle a peut-être été déplacée. Tu retrouveras tout sur la page d’accueil.",
-    "zur_startseite": "Vers l’accueil"
+    "titel": "Cette page a fait un plongeon.",
+    "text": "Elle a peut-être été déplacée ou renommée. Voici comment continuer.",
+    "zur_startseite": "Vers l’accueil",
+    "brot": "Page introuvable",
+    "gedanke": "Il n’y avait pas\nune page ici ?"
   },
   "rezept": {
     "art": "Recette",
@@ -1117,5 +1127,13 @@
     "beitraege_eyebrow": "Articles",
     "beitraege_titel": "Ses derniers articles.",
     "alle_beitraege": "Tous les articles"
+  },
+  "wegweiser": {
+    "shop_titel": "Boutique",
+    "shop_text": "Tous nos cafés, le coffret découverte et le livre.",
+    "shop_mehr": "Vers la boutique",
+    "wissen_text": "Articles, recettes et outils gratuits autour du café.",
+    "wissen_mehr": "Vers le savoir café",
+    "rezepte_mehr": "Vers les recettes"
   }
 }

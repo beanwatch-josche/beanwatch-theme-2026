@@ -61,7 +61,8 @@
 {%- comment -%}
   Vor Suchmaschinen versteckt (seit 0.11.0): Seiten, Artikel, Produkte und
   Kollektionen mit dem Feld seo.hidden = 1, etwa die Finder- und Tool-Seiten
-  bis zum Start. Shopify nimmt sie dann auch aus der Sitemap.
+  bis zum Start. Shopify nimmt sie dann auch aus der Sitemap. Seit 0.22.0
+  auch die Suche: Sie hat keinen Einstieg und gehört nicht in Google.
 {%- endcomment -%}
 {%- liquid
   case request.page_type
@@ -73,6 +74,8 @@
       assign versteckt = product.metafields.seo.hidden.value
     when 'collection'
       assign versteckt = collection.metafields.seo.hidden.value
+    when 'search'
+      assign versteckt = 1
   endcase
 -%}
 {%- if versteckt == 1 %}

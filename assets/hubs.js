@@ -1493,6 +1493,11 @@ window.BWHub = (function () {
     pappsticker(JETSKI);
   }
 
+  /* Seite nicht gefunden: nur der Sticker im Kopf. */
+  function verloren() {
+    pappsticker(VERLOREN);
+  }
+
   /* Der Pappsticker im Seitenkopf
      Gebaut wie der Arm im Filterkaffee-Kopf: auftauchen, dann Heben und
      Neigen im Takt der Wellen, mit denselben Dauern 4,1 und 5,3 Sekunden.
@@ -1560,6 +1565,13 @@ window.BWHub = (function () {
     neigung: 4,
     blaseAb: 0.15
   };
+
+  /* Seite nicht gefunden (10.10.2026): dasselbe SUP wie im Espresso-Kopf,
+     gleiche Fahrt, nur denkt der Mann etwas anderes (Entscheid Joscha). */
+  const VERLOREN = Object.assign({}, STICKER, {
+    kopf: 'kopf-404',
+    gedanke: 'Hier war doch eben\nnoch eine Seite?'
+  });
 
   function pappsticker(o) {
     const kopf = document.getElementById(o.kopf);
@@ -1942,7 +1954,7 @@ window.BWHub = (function () {
     giessen();
   }
 
-  return { espresso, filter, wissen, getraenkeRaster, getraenkeFilter, guideRaster, baristaRaster,
+  return { espresso, filter, wissen, verloren, getraenkeRaster, getraenkeFilter, guideRaster, baristaRaster,
            maschinenSchnitt, maschinenfinder, methodenfinder, klappRaster, schritteBand,
            GETRAENKE, GUIDES, BARISTA_GUIDES };
 })();

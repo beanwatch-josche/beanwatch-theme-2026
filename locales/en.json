@@ -63,13 +63,18 @@
     "anzahl": "Quantity",
     "fehler": "That did not work. Please try again.",
     "zwischensumme": "Subtotal",
-    "versand_hinweis": "Shipping and discounts are calculated at checkout.",
-    "aktualisieren": "Update quantities",
+    "versand_hinweis": "Shipping is calculated at checkout, where you can also enter a discount code.",
     "zur_kasse": "Checkout",
     "zur_seite": "View cart",
     "schliessen": "Close cart",
     "notiz": "Order instructions",
-    "notiz_hinweis": "For example, a dedication in the book or a delivery note"
+    "notiz_hinweis": "For example, a dedication in the book or a delivery note",
+    "ueberschrift": "Your cart.",
+    "lead": "Check your selection, then continue to checkout.",
+    "leer_lead": "You’ll find all our coffees in the shop.",
+    "leer_lead_finder": "You’ll find all our coffees in the shop, and the right one for you in the coffee finder.",
+    "bestellung": "Your order",
+    "zum_shop": "To the shop"
   },
   "produkt": {
     "in_den_warenkorb": "Add to cart",
@@ -153,20 +158,25 @@
     "foto_weiter": "Next photo",
     "foto_schliessen": "Close"
   },
-  "rohbau": {
-    "hinweis": "Under construction: this page gets its final design before launch. Content, prices and cart are already live data.",
-    "leer": "Nothing here yet."
-  },
   "suche": {
     "titel": "Search",
     "begriff": "Search term",
     "suchen": "Search",
-    "nichts": "We found nothing for “{{ begriff }}”."
+    "nichts": "We found nothing for “{{ begriff }}”.",
+    "ueberschrift": "What are you looking for?",
+    "treffer": "{{ n }} results for “{{ begriff }}”",
+    "treffer_eins": "1 result for “{{ begriff }}”",
+    "gruppe_produkte": "Coffees and products",
+    "gruppe_beitraege": "Articles and recipes",
+    "gruppe_seiten": "Pages",
+    "nichts_lead": "Maybe one of these will help."
   },
   "fehler": {
-    "titel": "This page does not exist.",
-    "text": "It may have moved. You will find everything on the home page.",
-    "zur_startseite": "Go to home page"
+    "titel": "This page has gone for a dip.",
+    "text": "Maybe it was moved or renamed. Here’s where to go next.",
+    "zur_startseite": "Go to home page",
+    "brot": "Page not found",
+    "gedanke": "Wasn’t there a page\nhere just now?"
   },
   "rezept": {
     "art": "Recipe",
@@ -1117,5 +1127,13 @@
     "beitraege_eyebrow": "Articles",
     "beitraege_titel": "Latest writing.",
     "alle_beitraege": "All articles"
+  },
+  "wegweiser": {
+    "shop_titel": "Shop",
+    "shop_text": "All our coffees, the tasting set and the book.",
+    "shop_mehr": "To the shop",
+    "wissen_text": "Articles, recipes and free tools all about coffee.",
+    "wissen_mehr": "To coffee knowledge",
+    "rezepte_mehr": "To the recipes"
   }
 }

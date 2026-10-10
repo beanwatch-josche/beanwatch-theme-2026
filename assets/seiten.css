@@ -639,6 +639,117 @@
   opacity:.9;
 }
 
+/* Anleitung zum Koffeinrechner (koffeinAnleitung in tools.js). Über dem
+   Rechner steht nur der Knopf «Anleitung». Er öffnet ein Popup im Stil des
+   Teilen-Fensters (.teilen-dialog, .teilen-zu), darin der Nachbau des
+   Rechners, der einen Beispieltag einträgt und das Ergebnis teilt. Ab 861 px
+   ist es quer wie der Rechner am Desktop (data-format="quer"), darunter hoch
+   wie auf dem Handy. Unter der Bühne die Nummern der sechs Schritte und der
+   aktive Schritt als Untertitel. */
+.rechner-anleitung{margin-bottom:clamp(20px,2.5vw,32px);}
+.beitragstext .rechner-anleitung{margin-top:24px;}
+.anleitung-oeffnen{padding:11px 20px;}
+
+.anleitung-dialog{padding:clamp(10px,2.5vw,24px);}
+.anleitung-fenster{
+  position:relative;
+  width:min(480px,100%);
+  max-height:calc(100vh - 2 * clamp(10px,2.5vw,24px));
+  max-height:calc(100dvh - 2 * clamp(10px,2.5vw,24px));
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:14px;
+  padding:clamp(16px,2.4vw,28px);
+  background:#fff;
+  border-radius:var(--radius-karte);
+}
+.anleitung-fenster[data-format="quer"]{width:min(1100px,100%);}
+.anleitung-kopf{padding-right:44px;}
+.anleitung-kopf .eyebrow{color:var(--redorange);display:block;}
+.anleitung-titel{
+  margin-top:6px;
+  font-weight:800;letter-spacing:-.02em;line-height:1.15;
+  font-size:clamp(1.2rem,2vw,1.5rem);
+}
+.anleitung-buehne{width:100%;margin-inline:auto;flex-shrink:0;}
+/* Quer richtet sich die Bühne nach der Höhe, damit sie samt Nummern und
+   Untertitel auch auf einem Laptop ganz zu sehen ist (viewBox 960 × 560). */
+.anleitung-fenster[data-format="quer"] .anleitung-buehne{
+  width:min(100%, calc((100vh - 300px) * 960 / 560));
+  width:min(100%, calc((100dvh - 300px) * 960 / 560));
+}
+.anleitung-svg{display:block;width:100%;height:auto;}
+
+.anleitung-steuerung{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+}
+.anleitung-schritte{
+  list-style:none;margin:0;padding:0;
+  display:flex;gap:6px;
+}
+.anleitung-schritt{
+  position:relative;
+  display:grid;grid-template-columns:30px;
+  padding:0;
+  border:0;border-radius:50%;
+  background:none;color:inherit;font:inherit;
+  cursor:pointer;
+}
+.anleitung-schritt:focus-visible{outline:2px solid var(--redorange);outline-offset:2px;}
+.anleitung-schritt .nr{
+  width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;
+  font-weight:800;font-size:.84rem;
+  border:1.5px solid var(--linie-stark);
+  transition:background-color .3s ease,border-color .3s ease,color .3s ease;
+}
+.anleitung-schritt:hover .nr{border-color:var(--dunkelblau);}
+.anleitung-schritt.ist-fertig .nr{background:var(--dunkelblau);border-color:var(--dunkelblau);color:var(--hellorange);}
+.anleitung-schritt.ist-aktiv .nr{background:var(--redorange);border-color:var(--redorange);color:var(--hellorange);}
+/* Titel und Text jedes Schritts bleiben für Screenreader im Knopf, zu sehen
+   ist nur der Untertitel des aktiven. */
+.anleitung-schritt .was{
+  position:absolute;width:1px;height:1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
+}
+.anleitung-schritt .fortschritt{
+  position:absolute;left:5px;width:20px;bottom:-7px;
+  height:2px;border-radius:2px;overflow:hidden;
+  background:var(--linie);
+  opacity:0;
+}
+.anleitung-schritt.ist-aktiv .fortschritt{opacity:1;}
+/* Hoch passen sechs Nummern und «Pause» so auch bei 390 px in eine Zeile. */
+.anleitung-fenster[data-format="hoch"] .anleitung-schritte{gap:5px;}
+.anleitung-fenster[data-format="hoch"] .anleitung-schritt{grid-template-columns:28px;}
+.anleitung-fenster[data-format="hoch"] .anleitung-schritt .nr{width:28px;height:28px;font-size:.8rem;}
+.anleitung-fenster[data-format="hoch"] .anleitung-schritt .fortschritt{left:4px;width:20px;}
+.anleitung-schritt .fortschritt span{
+  display:block;height:100%;
+  background:var(--redorange);
+  transform-origin:0 50%;transform:scaleX(0);
+}
+.anleitung-untertitel{
+  margin:0;min-height:5.9em;
+  font-size:.92rem;line-height:1.45;
+}
+.anleitung-fenster[data-format="quer"] .anleitung-untertitel{min-height:2.9em;max-width:80ch;}
+.anleitung-untertitel strong{display:block;font-weight:700;}
+.anleitung-fenster[data-format="quer"] .anleitung-untertitel strong{display:inline;margin-right:.35em;}
+
+.anleitung-knopf{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 15px;
+  border:1.5px solid var(--dunkelblau);border-radius:var(--radius-pill);
+  background:none;color:var(--dunkelblau);
+  font:inherit;font-weight:700;font-size:.84rem;
+  cursor:pointer;
+  transition:background-color .3s ease,color .3s ease;
+}
+.anleitung-knopf:hover,.anleitung-knopf:focus-visible{background:var(--dunkelblau);color:var(--hellorange);}
+.anleitung-knopf .ic-spielen,
+.anleitung-knopf.ist-angehalten .ic-pause{display:none;}
+.anleitung-knopf.ist-angehalten .ic-spielen{display:block;}
+
 /* ==========================================================================
    Artikel- und Rezeptseiten
    ========================================================================== */
@@ -3873,4 +3984,109 @@
   .foto-zurueck,.foto-weiter{top:auto;bottom:20px;translate:none;}
   .foto-zurueck{left:calc(50% - 60px);}
   .foto-weiter{right:calc(50% - 60px);}
+}
+
+/* ==========================================================================
+   Warenkorb, Suche und 404 (10.10.2026)
+
+   Warenkorb (warenkorb.html, im Theme cart.json und die Schublade): links
+   die Zeilen, rechts die Kasse als weisse Karte wie .kontakt-karte, unter
+   900 px gestapelt. Eine Zeile ist ein Raster aus Bild, Text und Preis, die
+   Menge steht unter dem Text. Die Knöpfe − und + sind rund wie beim
+   Portionsrechner (.portionen). Die Schublade nutzt dieselben Zeilen und
+   stellt sie mit .korb-zeilen--schmal enger.
+
+   Suche (suche.html, im Theme search.json): das Feld steht im Kopf unter
+   der H1, die Treffer in Gruppen mit eigener H2. Die Karten sind die
+   bekannten Produkt- und Beitragskarten, Seiten eine Liste von Textlinks.
+
+   Die 404 (404.html) braucht nichts Eigenes: Pappsticker-Kopf wie im
+   Espresso-Hub und drei Einstiegskacheln (drei Spalten ab 1081 px, Regel
+   oben bei den Kacheln der Wissensseite).
+   ========================================================================== */
+.korb-raster{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:var(--gap);align-items:start;}
+.korb-zeilen{list-style:none;margin:0;padding:0;border-top:1px solid var(--linie);}
+.korb-zeile{
+  display:grid;
+  grid-template-columns:clamp(72px,8vw,104px) minmax(0,1fr) auto;
+  grid-template-areas:"bild text preis" "bild unten preis";
+  column-gap:clamp(14px,2vw,24px);
+  row-gap:12px;
+  align-items:start;
+  padding:clamp(16px,2vw,22px) 0;
+  border-bottom:1px solid var(--linie);
+}
+.korb-bild{grid-area:bild;display:block;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--hellorange);}
+.korb-bild img{width:100%;height:100%;object-fit:cover;}
+.korb-text{grid-area:text;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.korb-titel{font-weight:700;font-size:1.02rem;line-height:1.3;overflow-wrap:break-word;transition:color .25s ease;}
+.korb-titel:hover,.korb-titel:focus-visible{color:var(--redorange);}
+.korb-detail{font-size:.86rem;opacity:.75;}
+.korb-preis{grid-area:preis;text-align:right;font-weight:700;white-space:nowrap;}
+.korb-preis s{display:block;font-weight:500;font-size:.84rem;opacity:.55;}
+.korb-unten{grid-area:unten;display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;}
+.korb-menge{display:inline-flex;align-items:center;gap:10px;}
+.korb-menge > span{min-width:2ch;text-align:center;font-weight:700;}
+.korb-menge button{
+  width:30px;height:30px;border-radius:50%;
+  border:1.5px solid var(--dunkelblau);color:var(--dunkelblau);
+  font-weight:700;font-size:1.05rem;line-height:1;
+  display:grid;place-items:center;
+  transition:background-color .25s ease,color .25s ease,opacity .25s ease;
+}
+.korb-menge button:hover:not(:disabled),
+.korb-menge button:focus-visible{background:var(--dunkelblau);color:var(--hellorange);}
+.korb-menge button:disabled{opacity:.3;cursor:default;}
+.korb-weg{font-size:.84rem;text-decoration:underline;text-underline-offset:3px;opacity:.75;color:inherit;transition:color .25s ease,opacity .25s ease;}
+.korb-weg:hover,.korb-weg:focus-visible{color:var(--redorange);opacity:1;}
+.korb-kasse{
+  border-radius:var(--radius-karte);
+  border:1px solid var(--linie);
+  background:#fff;
+  padding:clamp(24px,3vw,36px);
+  position:sticky;top:110px;
+}
+.korb-summe{
+  display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+  margin-top:16px;padding:16px 0;
+  border-top:1px solid var(--linie);border-bottom:1px solid var(--linie);
+  font-weight:700;font-size:1.12rem;
+}
+.korb-rabatt{display:flex;justify-content:space-between;gap:16px;margin-top:10px;font-size:.92rem;color:var(--redorange);}
+.korb-hinweis{margin:14px 0 22px;font-size:.86rem;line-height:1.5;opacity:.75;}
+.korb-kasse .formular-feld textarea{min-height:96px;}
+.korb-kasse .btn{width:100%;justify-content:center;}
+.korb-weiter{margin-top:18px;text-align:center;}
+/* Schublade: schmaler, kleineres Bild, Preis unter dem Titel. */
+.korb-zeilen--schmal .korb-zeile{grid-template-columns:72px minmax(0,1fr) auto;column-gap:14px;padding:16px 0;}
+.korb-zeilen--schmal .korb-titel{font-size:.95rem;}
+@media (max-width:900px){
+  .korb-raster{grid-template-columns:1fr;}
+  .korb-kasse{position:static;}
+}
+@media (max-width:480px){
+  .korb-zeile{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"bild text" "bild preis" "unten unten";}
+  .korb-preis{text-align:left;}
+}
+
+.suchfeld{display:flex;gap:10px;max-width:560px;margin-top:clamp(22px,3vw,32px);position:relative;z-index:2;}
+.suchfeld input{
+  flex:1;min-width:0;
+  padding:14px 18px;
+  border-radius:var(--radius-button);
+  border:1.5px solid var(--linie-stark);
+  background:#fff;
+  font:inherit;font-weight:500;color:inherit;
+  outline:none;
+  transition:border-color .3s ease;
+}
+.suchfeld input:focus{border-color:var(--redorange);}
+.suchfeld .btn{flex-shrink:0;}
+.suche-zahl{font-weight:700;text-transform:uppercase;letter-spacing:.13em;font-size:.72rem;opacity:.75;margin-bottom:clamp(22px,3vw,34px);}
+.suche-gruppe + .suche-gruppe{margin-top:clamp(48px,6vw,80px);}
+.suche-gruppe > h2{font-size:clamp(1.5rem,2.6vw,2.1rem);margin-bottom:clamp(18px,2.4vw,28px);}
+.seiten-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;}
+.suche-leer{max-width:60ch;margin-bottom:clamp(26px,3vw,40px);font-size:1.05rem;line-height:1.55;}
+@media (max-width:480px){
+  .suchfeld{flex-direction:column;}
 }
