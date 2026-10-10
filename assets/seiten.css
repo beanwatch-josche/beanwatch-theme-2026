@@ -4095,16 +4095,28 @@
 /* ==========================================================================
    404: der Fernglas-Mann als Pappsticker (10.10.2026, Wunsch Joscha)
    bwPappsticker({ motiv: 'fernglas' }), bewegt von BWHub.verloren(): Er
-   steht und schaut sich um, statt zu fahren. Der Sticker ist hochformatig
-   (rund 1 : 1,55), darum schmaler als der SUP, damit er etwa so hoch
-   steht. Die Blase steigt über seinem Kopf auf und hängt nach rechts über
-   die Becher hinweg; am Handy steht sie wie beim SUP mittig.
+   steht und schaut sich um, statt zu fahren. Gespiegelt, er schaut nach
+   links in die Seite. Der Sticker ist hochformatig (rund 1 : 1,55), darum
+   schmaler als der SUP, damit er etwa so hoch steht.
+   Die Blase steigt von seiner Stirn auf, sonst sähe es aus, als dächte
+   jemand ausserhalb des Bildes: Der Anker steht an der Papierkante über
+   der Stirn, in Prozent der Zeichnung, der erste Punkt sitzt knapp
+   darüber. Die Punkte überbrücken den Weg bis über die Becher und wachsen
+   dafür mit der Szene (.054 der Szene ist der Abstand vom Anker bis zur
+   Oberkante des Stickers). Die Blase hängt in
+   Blickrichtung nach links über den Bechern, bei jeder Breite; die
+   Zentrierung aus faehren.css für schmale Fenster gilt hier nicht.
    ========================================================================== */
 .sticker-spur--fernglas{width:calc(var(--szene) * .42);}
-.sticker-spur--fernglas .sticker-weg .gedanke{left:14%;bottom:100%;}
-/* Beim Umschauen neigt er sich um 5 Grad um den Fuss, die Becher wandern
-   dabei rund ein Achtel der Breite nach rechts. Am Handy stünden sie mit
-   right:2 % ausserhalb des Bildes, darum mehr Abstand zum Rand. */
+.sticker-spur--fernglas .sticker-weg .gedanke{left:68.7%;bottom:91.8%;}
+.sticker-spur--fernglas .sticker-weg .gedanke-punkt--2{right:8px;bottom:calc(var(--szene) * .028 + 10px);}
+.sticker-spur--fernglas .sticker-weg .gedanke--links .gedanke-blase{
+  left:auto;right:14px;margin-inline:0;transform-origin:100% 100%;
+  bottom:calc(var(--szene) * .054 + 22px);
+  white-space:pre-line;max-width:none;
+}
+/* Beim Umschauen neigt er sich um 5 Grad um den Fuss. Am Handy braucht er
+   darum Abstand zum Rand. */
 @media (max-width:699px){
   .sticker-spur--fernglas{right:9%;}
 }

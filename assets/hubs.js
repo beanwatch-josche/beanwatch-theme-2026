@@ -1573,7 +1573,8 @@ window.BWHub = (function () {
   const VERLOREN = {
     kopf: 'kopf-404',
     motiv: 'fernglas',
-    richtung: 1,
+    richtung: -1,     // gespiegelt, er schaut nach links in die Seite
+    seite: 'links',   // die Blase haengt in Blickrichtung ueber den Bechern
     gedanke: 'Upsi, 404-Fehler.\nIch kann die Seite nicht finden.',
     umschauen: true,
     winkel: 5,        // Grad, so weit neigt er sich nach links und rechts
@@ -1599,12 +1600,13 @@ window.BWHub = (function () {
     const B = window.BWFaehren;
     // Im Theme kommt der Gedanke übersetzt aus data-text-gedanke am Kopf;
     // ein Zeilenumbruch darin bleibt (white-space:pre-line).
-    const gedanke = B ? B.gedankeAnhaengen(weg, 'rechts', wortlaut(kopf, 'Gedanke', o.gedanke)) : null;
+    const gedanke = B ? B.gedankeAnhaengen(weg, o.seite || 'rechts', wortlaut(kopf, 'Gedanke', o.gedanke)) : null;
 
     if (ruhig) {
       // Keine Fahrt. Anders als bei den Faehren ist ueber dem Sticker Platz,
-      // die Blase steht darum ruhig da.
-      gsap.set(dreh, { rotation: 2 * nase });
+      // die Blase steht darum ruhig da. Wer sich umschaut, steht gerade,
+      // sonst stuenden die Punkte der Blase neben seiner Stirn.
+      gsap.set(dreh, { rotation: o.umschauen ? 0 : 2 * nase });
       if (gedanke) gsap.set(gedanke.children, { scale: 1, autoAlpha: 1 });
       return;
     }
@@ -1652,9 +1654,24 @@ window.BWHub = (function () {
      Horizont ab. Das Neigen liegt auf .sticker-welle, das Heben im
      Leerlauf weiter auf .sticker-dreh; die Blase haengt an .sticker-weg
      und bleibt gerade. Sie ploppt wie bei den Faehren auf, aber zur Zeit
-     o.blaseNach statt ab einem Teil der Fahrt. */
+     o.blaseNach statt ab einem Teil der Fahrt.
+     Ihre Punkte steigen von der Stirn auf (der Anker steht dort, in
+     seiten.css), damit kein anderer zu denken scheint. Beim Neigen wandert
+     die Stirn um gut einen Zehntel der Stickerbreite zur Seite; folgen()
+     fuehrt die Blase darum mit: dieselbe Drehung um die Hand und derselbe
+     Hub, nur auf den Anker gerechnet, der Text bleibt gerade. */
   function umschauen(o, spur, welle, hand, gedanke) {
     gsap.set(welle, { transformOrigin: hand.anteil });
+    const folgen = () => {
+      if (!gedanke) return;
+      const a = gsap.getProperty(welle, 'rotation') * Math.PI / 180;
+      const [px, py] = hand.anteil.split(' ').map((v, i) => parseFloat(v) / 100 * (i ? welle.offsetHeight : welle.offsetWidth));
+      const dx = gedanke.offsetLeft - px, dy = gedanke.offsetTop - py;
+      gsap.set(gedanke, {
+        x: dx * Math.cos(a) - dy * Math.sin(a) - dx,
+        y: dx * Math.sin(a) + dy * Math.cos(a) - dy + gsap.getProperty(welle, 'y')
+      });
+    };
     if (gedanke) {
       const [klein, gross] = gedanke.querySelectorAll('.gedanke-punkt');
       const blase = gedanke.querySelector('.gedanke-blase');
@@ -1664,7 +1681,7 @@ window.BWHub = (function () {
         .fromTo(blase, { scale: 0.25, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.75, ease: 'back.out(1.6)' }, '-=0.1');
     }
     const hoch = () => -spur.clientWidth * o.heben;
-    gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: o.blaseNach + 0.6, defaults: { ease: 'sine.inOut' } })
+    gsap.timeline({ repeat: -1, repeatDelay: 1.4, delay: o.blaseNach + 0.6, defaults: { ease: 'sine.inOut' }, onUpdate: folgen })
       .to(welle, { rotation: -o.winkel, y: hoch, duration: 1.2 })
       .to(welle, { rotation: o.winkel, duration: 1.8 }, '+=0.9')
       .to(welle, { rotation: 0, y: 0, duration: 1.2 }, '+=0.9');

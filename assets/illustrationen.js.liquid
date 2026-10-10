@@ -1038,7 +1038,12 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
      (Breite 2416,1 gegen 595,6) und --fuss-mitte 680: Die Becher ragen weit
      nach rechts, der Fuss gehoert unter die Fuesse links. Dicke und Rand im
      selben Verhaeltnis wie beim Jetski. Die Kante eine Stufe dunkler als
-     das Dunkelblau. */
+     das Dunkelblau.
+     Auf der 404 schaut er nach links, in die Seite hinein (Wunsch Joscha,
+     am selben Abend). Dafuer spiegelt bwPappsticker() ihn beim Zeichnen
+     (spiegeln: true), Kontur, Kante und Bild zusammen. Die Logo-Datei
+     bleibt, wie sie ist; Kontur und Masse hier gelten fuer die
+     ungespiegelte Figur. */
   const PAPP_FERNGLAS_KONTUR = {
     x: 47.8, y: -17.3, breite: 2589.9, hoehe: 3954.5,
     fuss: { x: 294.6, y: 3551.8, breite: 770.8, hoehe: 385.4 },
@@ -1074,8 +1079,13 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
               dicke: 91.9, rand: 27.6, flaeche: '#E7455B', kante: '#C53A4C' },
     fernglas: { kontur: PAPP_FERNGLAS_KONTUR,
                 logo: { datei: '{{ 'logo-cyanblau-fernglas-signet.svg' | asset_url }}', x: 135.0, y: 69.7, breite: 2416.1, hoehe: 3395.9 },
-                dicke: 81.1, rand: 24.3, flaeche: F.kontur, kante: '#00323D' }
+                dicke: 81.1, rand: 24.3, flaeche: F.kontur, kante: '#00323D', spiegeln: true }
   };
+
+  // Linker Rand und Breite der viewBox eines Motivs. Gespiegelt wird um
+  // ihre Mitte: x wird zu spiegelX - x.
+  const pappRahmen = (m) => ({ links: m.kontur.x - m.rand, breite: m.kontur.breite + 2 * m.rand });
+  const spiegelX = (m) => { const r = pappRahmen(m); return 2 * r.links + r.breite; };
 
   function bwPappsticker(o) {
     const m = PAPP_MOTIVE[(o && o.motiv) || 'sup'];
@@ -1083,11 +1093,19 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
     const vb = [k.x - m.rand, k.y - m.rand, k.breite + 2 * m.rand,
                 k.hoehe + m.dicke + 2 * m.rand].map((n) => n.toFixed(1)).join(' ');
     const linie = ' stroke="' + F.kontur + '" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"';
+    const zeichnung = `<path class="sticker-kante" d="${k.d}" transform="translate(0 ${m.dicke})" fill="${m.kante}"${linie}/>
+      <path class="sticker-flaeche" d="${k.d}" fill="${m.flaeche}"${linie}/>
+      <image href="${logo.datei}" x="${logo.x}" y="${logo.y}" width="${logo.breite}" height="${logo.hoehe}"/>`;
+    // Gespiegelt in einer eigenen Gruppe innerhalb von .sticker-dreh: Der
+    // Drehpunkt aus pappHand() liegt dann schon auf der gespiegelten Seite.
+    const inhalt = m.spiegeln
+      ? `<g class="sticker-spiegel" transform="matrix(-1 0 0 1 ${spiegelX(m).toFixed(1)} 0)">
+      ${zeichnung}
+      </g>`
+      : zeichnung;
     return `<svg class="pappsticker" viewBox="${vb}" fill="none" aria-hidden="true">
     <g class="sticker-dreh">
-      <path class="sticker-kante" d="${k.d}" transform="translate(0 ${m.dicke})" fill="${m.kante}"${linie}/>
-      <path class="sticker-flaeche" d="${k.d}" fill="${m.flaeche}"${linie}/>
-      <image href="${logo.datei}" x="${logo.x}" y="${logo.y}" width="${logo.breite}" height="${logo.hoehe}"/>
+      ${inhalt}
     </g>
   </svg>`;
   }
@@ -1096,10 +1114,11 @@ ${kaffee}    <path class="tasse-randlinie" d="M93.5 199 Q114 202.5 134.5 199" st
   // so liest ihn hubs.js.
   function pappHand(m) {
     const k = m.kontur;
-    const x = k.fuss.x + k.fuss.breite / 2;
+    const mitte = k.fuss.x + k.fuss.breite / 2;
+    const x = m.spiegeln ? spiegelX(m) - mitte : mitte;
     const y = k.fuss.y + k.fuss.hoehe;
-    const links = k.x - m.rand, oben = k.y - m.rand;
-    const breite = k.breite + 2 * m.rand, hoehe = k.hoehe + m.dicke + 2 * m.rand;
+    const { links, breite } = pappRahmen(m);
+    const oben = k.y - m.rand, hoehe = k.hoehe + m.dicke + 2 * m.rand;
     return {
       punkt: x.toFixed(1) + ' ' + y.toFixed(1),
       anteil: ((x - links) / breite * 100).toFixed(1) + '% ' + ((y - oben) / hoehe * 100).toFixed(1) + '%'
