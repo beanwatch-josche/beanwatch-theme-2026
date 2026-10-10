@@ -4089,4 +4089,5 @@
 .suche-leer{max-width:60ch;margin-bottom:clamp(26px,3vw,40px);font-size:1.05rem;line-height:1.55;}
 @media (max-width:480px){
   .suchfeld{flex-direction:column;}
+  .suchfeld .btn{justify-content:center;}
 }
